@@ -1,0 +1,40 @@
+{
+    "personaje": {
+        "nombre": "Adrian"
+    },
+    "nombre_sistema": "Bella",
+    "stats": {
+        "Edad": 1,
+        "Nivel": 1,
+        "Vida": 1,
+        "Ataque": 1
+    },
+    "inventario": [],
+    "habilidades": [],
+    "titulos": [
+        {
+            "nombre": "Inocente",
+            "descripcion": "Es mu inocente el chaval",
+            "origen": "De su alma",
+            "tipo": "pasivo",
+            "efectos": {
+                "Vida": 149
+            }
+        }
+    ],
+    "maldiciones": [
+        {
+            "nombre": "po",
+            "descripcion": "oap",
+            "origen": "poa",
+            "tipo": "nno",
+            "efectos": {}
+        }
+    ],
+    "historia": {
+        "tipo": "original",
+        "sinopsis": "A",
+        "personajes_principales": "Adrian"
+    },
+    "linea_temporal": []
+}

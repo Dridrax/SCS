@@ -1,0 +1,60 @@
+Quiero que esto sea un sistema de almacenamiento de datos para mis historias donde el protagonista tiene un sistema 
+Pues es jodidamente lioso cuando el sistema a avanzado mucho con la historia y se an añadido mis mecanicas mas al sistema
+
+FUNDAMENTOS BASICOS DEL SISTEMA#
+
+1. Tiene que poder almacenar los datos y Stats del jugador, Nombre|Edad|Nivel|Vida|Ataque (Esos son los mas basicos de los basicos)
+2. Tiene que tener un sistema de almacenamiento del Inventario que tiene el personaje, es decir, Que en dicho sistema yo pueda añadir objetos con sus nombres, clases, categorias, efectos y todo eso ademas de eliminarlos.
+3. Tiene que haber un sistema de habilidades donde pueda añadir habilidades y eliminar habilidades (Pudiendo poner el nombre de la hablidad, el tipo, los efectos)
+4. Tiene que haber un sistema de Titulos que funcione igual que las habilidades.
+5. Tiene que haber un sistema de Maldiciones que funcione igual que el de habilidades y Titulos.
+
+En este archivo se escribira las Opciones que tienen que aparecer una vez se ejecute el programa (Nombre por decidirse).
+Funciones que tienen que haber:
+    1. Crear Nuevo Sistema/Personaje
+
+        Tiene que reyenar el formulari/Ficha de Sistema.
+        ¿Cual es el nombre del Personaje?
+    
+        ¿Tiene nombre el sistema?
+            Si: Nombre del sistema
+            No: Pasa al siguiente apartado
+        
+        Introduzca Stats:
+            Edad:
+            Nivel:
+            Vida:
+            Ataque:
+        
+        ¿Hay mas Stats?
+            Si: Añadir Nuevo Stats.
+            No: Pasar al siguiente apartado.
+
+        ¿Tiene Objetos ya en el inventario?
+            Si: Añadir Objeto
+            No: Pasar al siguiente apartado.
+
+        ¿Tiene Habilidades?
+            Si: Añadir Habilidades
+            No: Pasar al siguiente apartado.
+
+        ¿Tiene Titulos?
+            Si: Añadir Titulo.
+            No: Pasar al siguiente apartado.
+        
+        ¿Tiene Maldiciones?
+            Si: Añadir Maldicion.
+            No: Pasar al siguiente apartado.
+
+        Tipo De Historia:
+            Original:
+                Introduzca De que va la historia, Sinopsis + Personajes principales
+
+            Fanfiction:
+                Escribe de que fandom es la historia, Sinopsis + Personajes + Parejas
+
+
+
+    2. Cargar Sistema/Personaje
+    
+    3. Salir
