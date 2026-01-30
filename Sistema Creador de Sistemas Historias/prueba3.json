@@ -1,0 +1,63 @@
+{
+    "personaje": {
+        "nombre": "Noa"
+    },
+    "nombre_sistema": "Yue",
+    "stats": {
+        "Edad": 23,
+        "Nivel": 1,
+        "Vida": 100,
+        "Ataque": 10,
+        "Defensa": 5
+    },
+    "inventario": [
+        {
+            "nombre": "palo",
+            "clase": "Arma",
+            "categoria": "1",
+            "efectos": "Da fuerza al utilizarla"
+        }
+    ],
+    "habilidades": [
+        {
+            "nombre": "Golpe leve",
+            "tipo": "Activa",
+            "descripcion": "Incrementa el poder de ataque al activarla",
+            "efectos": "+15% de poder de ataque al utilizarla"
+        }
+    ],
+    "titulos": [
+        {
+            "nombre": "Heroe",
+            "descripcion": "Dado por la humanidad",
+            "origen": "El mundo",
+            "tipo": "Pasivo",
+            "efectos": {
+                "Ataque": 4002,
+                "Vida": 31393,
+                "Inteligencia": 242
+            }
+        }
+    ],
+    "bendiciones": [],
+    "maldiciones": [
+        {
+            "nombre": "Perezoso",
+            "descripcion": "Una pereza inigualable",
+            "origen": "Noa",
+            "tipo": "Pasivo",
+            "efectos": {}
+        }
+    ],
+    "linea_temporal": [
+        {
+            "titulo": "Prueba 1",
+            "resumen": "funcionamiento prueba"
+        }
+    ],
+    "historia": {
+        "tipo": "original",
+        "sinopsis": "De momento Nada",
+        "personajes_principales": "Noa"
+    }
+}
