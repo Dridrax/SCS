@@ -1,0 +1,32 @@
+{
+    "personaje": {
+        "nombre": "non"
+    },
+    "nombre_sistema": null,
+    "stats": {
+        "Edad": 1,
+        "Nivel": 1,
+        "Vida": 1,
+        "Ataque": 1
+    },
+    "inventario": [],
+    "habilidades": [],
+    "titulos": [],
+    "bendiciones": [],
+    "maldiciones": [],
+    "linea_temporal": [],
+    "historia": {
+        "tipo": "n",
+        "fandom": "n",
+        "sinopsis": "n",
+        "personajes": "n",
+        "parejas": "n"
+    },
+    "plugins_activos": {
+        "inventario": false,
+        "habilidades": false,
+        "bendiciones": false,
+        "maldiciones": false,
+        "titulos": false
+    }
+}

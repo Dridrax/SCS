@@ -1,0 +1,68 @@
+{
+    "personaje": {
+        "nombre": "Noa"
+    },
+    "nombre_sistema": null,
+    "stats": {
+        "Edad": 12,
+        "Nivel": 1,
+        "Vida": 2,
+        "Ataque": 2,
+        "Defensa": -13,
+        "Inteligencia": 10,
+        "Carisma": -50
+    },
+    "inventario": [
+        {
+            "nombre": "Palo",
+            "clase": "Arma",
+            "categoria": "Blanco",
+            "efectos": "+2 daño"
+        },
+        {
+            "nombre": "Zanahoria",
+            "clase": "Comida",
+            "categoria": "Blanco",
+            "efectos": "+5 Vida"
+        }
+    ],
+    "habilidades": [
+        {
+            "nombre": "Puño serio",
+            "tipo": "Activo",
+            "descripcion": "Al Activarse Da un Puñetazo Serio Tipo Saitama",
+            "efectos": "+1000000 Ataque"
+        }
+    ],
+    "titulos": null,
+    "bendiciones": [
+        {
+            "nombre": "Beso del Dragon",
+            "descripcion": "Te hace mas atractivo",
+            "origen": "Dragon Guapo",
+            "tipo": "pasivo",
+            "efectos": {
+                "Carisma": 1000
+            }
+        }
+    ],
+    "maldiciones": null,
+    "linea_temporal": [
+        {
+            "titulo": "Prueba 1",
+            "resumen": "Aaaaa"
+        }
+    ],
+    "historia": {
+        "tipo": "original",
+        "sinopsis": "Prueba Sistema",
+        "personajes_principales": "Noa"
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "habilidades": true,
+        "bendiciones": true,
+        "maldiciones": false,
+        "titulos": false
+    }
+}

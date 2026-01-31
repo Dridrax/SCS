@@ -1,0 +1,32 @@
+{
+    "personaje": {
+        "nombre": "nanaoan"
+    },
+    "nombre_sistema": null,
+    "stats": {
+        "Edad": 1,
+        "Nivel": 1,
+        "Vida": 1,
+        "Ataque": 1
+    },
+    "inventario": [],
+    "habilidades": [],
+    "titulos": [],
+    "bendiciones": [],
+    "maldiciones": [],
+    "linea_temporal": [],
+    "historia": {
+        "tipo": "n",
+        "fandom": "n",
+        "sinopsis": "n",
+        "personajes": "n",
+        "parejas": "n"
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "habilidades": true,
+        "bendiciones": true,
+        "maldiciones": true,
+        "titulos": true
+    }
+}

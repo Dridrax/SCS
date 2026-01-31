@@ -1,20 +1,17 @@
-
 from core.estado_global import estado
-
 from core.sistemas.crear_sistema import crear_nuevo_sistema
-from core.sistemas.mostrar_sistema import mostrar_ficha
-
-from core.inventario.inventario import menu_inventario, mostrar_inventario
-from core.stats.stats import menu_stats, mostrar_stats
-from core.historia.linea_temporal import menu_historia, mostrar_linea_temporal
-from core.titulos.titulos import menu_titulos, mostrar_titulos
-from core.maldiciones.maldiciones import menu_maldiciones, mostrar_maldiciones
-from core.bendiciones.bendiciones import menu_bendiciones, mostrar_bendiciones
-
+from core.sistemas.mostrar_sistema import mostrar_ficha, mostrar_stats_completos
 from core.guardado.archivos import guardar_sistema, cargar_sistema, guardar_como
 from core.utils.salida import salir_programa
+from core.stats.stats import menu_stats, mostrar_stats
+from core.historia.linea_temporal import menu_historia, mostrar_linea_temporal
 from core.utils.exportar_pdf import exportar_ficha_pdf
 
+# Plugins
+from plugins.inventario.inventario import menu_inventario, mostrar_inventario
+from plugins.titulos.titulos import menu_titulos, mostrar_titulos
+from plugins.bendiciones.bendiciones import menu_bendiciones, mostrar_bendiciones
+from plugins.maldiciones.maldiciones import menu_maldiciones, mostrar_maldiciones
 
 # ------------------- MENÚ PRINCIPAL -------------------
 def menu_principal():
@@ -25,7 +22,8 @@ def menu_principal():
         print("2. Guardar Sistema")
         print("3. Gestión del Sistema")
         print("4. Exportar Ficha a PDF")
-        print("5. Salir")
+        print("5. Ver Ficha del Sistema")  # Nueva opción
+        print("6. Salir")
 
         opcion = input("Elige una opción: ")
 
@@ -43,7 +41,12 @@ def menu_principal():
                 exportar_ficha_pdf(estado.sistema_actual)
             else:
                 print("❌ No hay ningún sistema cargado.")
-        elif opcion == "5":
+        elif opcion == "5":  # Nueva opción
+            if estado.sistema_actual:
+                mostrar_ficha(estado.sistema_actual)
+            else:
+                print("❌ No hay ningún sistema cargado.")
+        elif opcion == "6":
             if salir_programa():
                 break
         else:
@@ -57,15 +60,26 @@ def menu_crear_cargar():
         print("1. Crear Nuevo Sistema/Personaje")
         print("2. Cargar Sistema/Personaje")
         print("3. Volver")
-
         opcion = input("Elige una opción: ")
 
         if opcion == "1":
-            estado.sistema_actual = crear_nuevo_sistema()
+            # Plugins disponibles
+            print("\n=== PLUGINS DISPONIBLES ===")
+            plugins_activos = {}
+            for plugin in ["inventario", "habilidades", "bendiciones", "maldiciones", "titulos"]:
+                respuesta = input(f"¿Activar plugin {plugin}? (s/n): ").lower()
+                plugins_activos[plugin] = respuesta == "s"
+
+            # Crear sistema
+            sistema = crear_nuevo_sistema(plugins_activos)
+            sistema["plugins_activos"] = plugins_activos
+            estado.sistema_actual = sistema
             estado.archivo_actual = None
             mostrar_ficha(estado.sistema_actual)
+
             if input("\n¿Deseas guardar este sistema? (s/n): ").lower() == "s":
                 guardar_sistema()
+
         elif opcion == "2":
             archivo = input("Nombre del archivo a cargar: ")
             sistema = cargar_sistema(archivo)
@@ -73,6 +87,7 @@ def menu_crear_cargar():
                 # Normalización de sistemas antiguos
                 for clave in ["inventario", "habilidades", "titulos", "bendiciones", "maldiciones", "linea_temporal", "historia"]:
                     sistema.setdefault(clave, [] if clave != "historia" else {})
+                sistema.setdefault("plugins_activos", {k: True for k in ["inventario", "habilidades", "bendiciones", "maldiciones", "titulos"]})
                 estado.sistema_actual = sistema
                 mostrar_ficha(estado.sistema_actual)
         elif opcion == "3":
@@ -80,19 +95,16 @@ def menu_crear_cargar():
         else:
             print("❌ Opción no válida.")
 
-
 # ------------------- GUARDADO -------------------
 def menu_guardado():
     if not estado.sistema_actual:
         print("❌ No hay ningún sistema cargado.")
         return
-
     while True:
         print("\n=== GUARDAR SISTEMA ===")
         print("1. Guardar")
         print("2. Guardar Como")
         print("3. Volver")
-
         opcion = input("Elige una opción: ")
 
         if opcion == "1":
@@ -104,87 +116,145 @@ def menu_guardado():
         else:
             print("❌ Opción no válida.")
 
-
 # ------------------- GESTIÓN DEL SISTEMA -------------------
 def menu_gestion_sistema():
+    sistema = estado.sistema_actual
+    plugins = sistema.get("plugins_activos", {})
+
     while True:
-        nombre = estado.sistema_actual.get("nombre_sistema") if estado.sistema_actual else "Sin sistema"
+        nombre = sistema.get("nombre_sistema", "Sin sistema")
         print(f"\n=== GESTIÓN DEL SISTEMA ({nombre}) ===")
-        print("1. Inventario")
-        print("2. Stats")
-        print("3. Títulos / Bendiciones / Maldiciones")
-        print("4. Historia / Capítulos")
-        print("5. Cambiar Parámetros (modificar)")
-        print("6. Volver")
+        opciones = []
 
-        opcion = input("Elige una opción: ")
+        if plugins.get("inventario", False):
+            opciones.append("Inventario")
+        opciones.append("Stats")
+        if any([plugins.get("titulos", False), plugins.get("bendiciones", False), plugins.get("maldiciones", False)]):
+            opciones.append("Títulos / Bendiciones / Maldiciones")
+        opciones.append("Historia / Capítulos")
+        opciones.append("Cambiar Parámetros (modificar)")
+        opciones.append("Volver")
 
-        if opcion == "1":
-            mostrar_inventario(estado.sistema_actual)
-        elif opcion == "2":
-            mostrar_stats(estado.sistema_actual)
-        elif opcion == "3":
-            mostrar_titulos(estado.sistema_actual)
-            mostrar_bendiciones(estado.sistema_actual)
-            mostrar_maldiciones(estado.sistema_actual)
-        elif opcion == "4":
-            mostrar_linea_temporal(estado.sistema_actual)
-        elif opcion == "5":
-            menu_modificar_sistema()
-        elif opcion == "6":
-            break
-        else:
+        for i, op in enumerate(opciones, start=1):
+            print(f"{i}. {op}")
+
+        try:
+            opcion_num = int(input("Elige una opción: "))
+        except ValueError:
             print("❌ Opción no válida.")
+            continue
 
+        if opcion_num < 1 or opcion_num > len(opciones):
+            print("❌ Opción no válida.")
+            continue
+
+        seleccion = opciones[opcion_num-1]
+
+        if seleccion == "Inventario":
+            mostrar_inventario(sistema)
+        elif seleccion == "Stats":
+            mostrar_stats_completos(sistema)
+        elif seleccion == "Títulos / Bendiciones / Maldiciones":
+            if plugins.get("titulos", False):
+                mostrar_titulos(sistema)
+            if plugins.get("bendiciones", False):
+                mostrar_bendiciones(sistema)
+            if plugins.get("maldiciones", False):
+                mostrar_maldiciones(sistema)
+        elif seleccion == "Historia / Capítulos":
+            mostrar_linea_temporal(sistema)
+        elif seleccion == "Cambiar Parámetros (modificar)":
+            menu_modificar_sistema()
+        elif seleccion == "Volver":
+            break
 
 # ------------------- MODIFICAR SISTEMA -------------------
 def menu_modificar_sistema():
+    sistema = estado.sistema_actual
+    plugins = sistema.get("plugins_activos", {})
+
     while True:
+        opciones = []
+        if plugins.get("stats", True):
+            opciones.append("Stats")
+        if plugins.get("historia", True):
+            opciones.append("Historia / Capítulos")
+        if plugins.get("inventario", False):
+            opciones.append("Inventario")
+        if plugins.get("maldiciones", False):
+            opciones.append("Maldiciones")
+        if any([plugins.get("titulos", False), plugins.get("bendiciones", False)]):
+            opciones.append("T/B/M")  # Títulos / Bendiciones / Maldiciones
+        opciones.append("Volver")
+
         print("\n=== MODIFICAR SISTEMA ===")
-        print("1. Modificar Inventario")
-        print("2. Modificar Stats")
-        print("3. Modificar Títulos / Bendiciones / Maldiciones")
-        print("4. Modificar Historia / Capítulos")
-        print("5. Volver")
+        for i, op in enumerate(opciones, start=1):
+            print(f"{i}. Modificar {op}")
 
-        opcion = input("Elige una opción: ")
-
-        if opcion == "1":
-            menu_inventario(estado.sistema_actual)
-        elif opcion == "2":
-            menu_stats(estado.sistema_actual)
-        elif opcion == "3":
-            menu_modificar_tbm()
-        elif opcion == "4":
-            menu_historia(estado.sistema_actual)
-        elif opcion == "5":
-            break
-        else:
+        try:
+            opcion_num = int(input("Elige una opción: "))
+        except ValueError:
             print("❌ Opción no válida.")
+            continue
 
+        if opcion_num < 1 or opcion_num > len(opciones):
+            print("❌ Opción no válida.")
+            continue
+
+        seleccion = opciones[opcion_num-1]
+
+        if seleccion == "Stats":
+            menu_stats(sistema)
+        elif seleccion == "Historia / Capítulos":
+            menu_historia(sistema)
+        elif seleccion == "Inventario":
+            menu_inventario(sistema)
+        elif seleccion == "Maldiciones":
+            menu_maldiciones(sistema)
+        elif seleccion == "T/B/M":
+            menu_modificar_tbm()
+        elif seleccion == "Volver":
+            break
 
 # ------------------- MODIFICAR T/B/M -------------------
 def menu_modificar_tbm():
+    sistema = estado.sistema_actual
+    plugins = sistema.get("plugins_activos", {})
+
+    opciones = []
+    if plugins.get("titulos", False):
+        opciones.append("Títulos")
+    if plugins.get("bendiciones", False):
+        opciones.append("Bendiciones")
+    if plugins.get("maldiciones", False):
+        opciones.append("Maldiciones")
+    opciones.append("Volver")
+
     while True:
         print("\n=== MODIFICAR T/B/M ===")
-        print("1. Títulos")
-        print("2. Bendiciones")
-        print("3. Maldiciones")
-        print("4. Volver")
+        for i, op in enumerate(opciones, start=1):
+            print(f"{i}. {op}")
 
-        opcion = input("Elige una opción: ")
-
-        if opcion == "1":
-            menu_titulos(estado.sistema_actual)
-        elif opcion == "2":
-            menu_bendiciones(estado.sistema_actual)
-        elif opcion == "3":
-            menu_maldiciones(estado.sistema_actual)
-        elif opcion == "4":
-            break
-        else:
+        try:
+            opcion_num = int(input("Elige una opción: "))
+        except ValueError:
             print("❌ Opción no válida.")
+            continue
 
+        if opcion_num < 1 or opcion_num > len(opciones):
+            print("❌ Opción no válida.")
+            continue
+
+        seleccion = opciones[opcion_num-1]
+
+        if seleccion == "Títulos":
+            menu_titulos(estado.sistema_actual)
+        elif seleccion == "Bendiciones":
+            menu_bendiciones(estado.sistema_actual)
+        elif seleccion == "Maldiciones":
+            menu_maldiciones(estado.sistema_actual)
+        elif seleccion == "Volver":
+            break
 
 # ------------------- EJECUCIÓN -------------------
 if __name__ == "__main__":

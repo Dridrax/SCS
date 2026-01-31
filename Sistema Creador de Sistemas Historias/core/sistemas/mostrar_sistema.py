@@ -1,103 +1,101 @@
+# core/sistemas/mostrar_sistema.py
+
 def mostrar_stats_completos(sistema):
     """
-    Muestra los stats base, los efectos de títulos, bendiciones y maldiciones, y el total.
+    Muestra los stats base, los efectos de títulos, bendiciones y maldiciones,
+    y el total final, respetando los plugins activos.
     """
-    print("\n📊 STATS COMPLETOS\n")
+    print("\n=== STATS COMPLETOS ===")
 
-    # Efectos combinados
+    base_stats = sistema.get("stats", {})
     efectos_totales = {}
 
+    plugins = sistema.get("plugins_activos", {})
+
     # Sumamos efectos de títulos
-    for t in sistema.get("titulos", []):
-        for stat, valor in t.get("efectos", {}).items():
-            efectos_totales[stat] = efectos_totales.get(stat, 0) + valor
+    if plugins.get("titulos", False):
+        for t in sistema.get("titulos", []):
+            for stat, valor in t.get("efectos", {}).items():
+                efectos_totales[stat] = efectos_totales.get(stat, 0) + valor
 
     # Sumamos efectos de bendiciones
-    for b in sistema.get("bendiciones", []):
-        for stat, valor in b.get("efectos", {}).items():
-            efectos_totales[stat] = efectos_totales.get(stat, 0) + valor
+    if plugins.get("bendiciones", False):
+        for b in sistema.get("bendiciones", []):
+            for stat, valor in b.get("efectos", {}).items():
+                efectos_totales[stat] = efectos_totales.get(stat, 0) + valor
 
     # Sumamos efectos de maldiciones
-    for m in sistema.get("maldiciones", []):
-        for stat, valor in m.get("efectos", {}).items():
-            efectos_totales[stat] = efectos_totales.get(stat, 0) + valor
+    if plugins.get("maldiciones", False):
+        for m in sistema.get("maldiciones", []):
+            for stat, valor in m.get("efectos", {}).items():
+                efectos_totales[stat] = efectos_totales.get(stat, 0) + valor
 
-    # Mostramos stats
-    for stat, base in sistema.get("stats", {}).items():
+    # Mostramos stats con efectos
+    for stat, base in base_stats.items():
         base_valor = int(base)
         efecto = efectos_totales.get(stat, 0)
         total = base_valor + efecto
         if efecto != 0:
-            print(f"- {stat}: {base_valor} + ({efecto}) = {total}")
+            print(f"- {stat}: {base_valor} (base) + {efecto} (efecto) = {total}")
         else:
             print(f"- {stat}: {base_valor}")
 
 
 def mostrar_ficha(sistema):
-    """Muestra toda la ficha del sistema"""
+    """
+    Muestra toda la ficha del sistema incluyendo stats completos y
+    los plugins activos (titulos, bendiciones, maldiciones)
+    """
+    print("\n=== FICHA DEL SISTEMA ===")
+    print(f"Personaje: {sistema['personaje']['nombre']}")
+    print(f"Sistema: {sistema.get('nombre_sistema')}")
 
-    # Aseguramos que las listas existan para evitar errores
-    for clave in ["titulos", "bendiciones", "maldiciones", "inventario", "habilidades", "linea_temporal"]:
-        if clave not in sistema:
-            sistema[clave] = []
-
-    print("\n\n===== FICHA DEL SISTEMA =====\n")
-
-    # Personaje
-    print(f"Personaje: {sistema.get('personaje', {}).get('nombre','Desconocido')}")
-
-    # Nombre del sistema
-    if sistema.get("nombre_sistema"):
-        print(f"Sistema: {sistema['nombre_sistema']}")
-
-    # Stats
-    print("\nSTATS:")
+    # Stats completos
     mostrar_stats_completos(sistema)
 
+    plugins = sistema.get("plugins_activos", {})
+
     # Inventario
-    print("\nINVENTARIO:")
-    if sistema["inventario"]:
-        for obj in sistema["inventario"]:
-            print(f"- {obj.get('nombre','Desconocido')} ({obj.get('categoria','')})")
-    else:
-        print("Vacío.")
+    if plugins.get("inventario", False):
+        print("\nINVENTARIO:")
+        if sistema.get("inventario"):
+            for obj in sistema.get("inventario", []):
+                print(f"- {obj.get('nombre', 'Desconocido')} ({obj.get('categoria','')})")
+        else:
+            print("Vacío.")
 
     # Habilidades
-    print("\nHABILIDADES:")
-    if sistema["habilidades"]:
-        for h in sistema["habilidades"]:
-            print(f"- {h.get('nombre','Desconocido')} ({h.get('tipo','')})")
-    else:
-        print("Vacío.")
+    if plugins.get("habilidades", False):
+        print("\nHABILIDADES:")
+        if sistema.get("habilidades"):
+            for h in sistema.get("habilidades", []):
+                print(f"- {h.get('nombre','Desconocido')} ({h.get('tipo','')})")
+        else:
+            print("Vacío.")
 
     # Títulos
-    print("\nTÍTULOS:")
-    if sistema["titulos"]:
-        for t in sistema["titulos"]:
-            print(f"- {t.get('nombre','Desconocido')}")
-    else:
-        print("Vacío.")
+    if plugins.get("titulos", False):
+        print("\nTÍTULOS:")
+        if sistema.get("titulos"):
+            for t in sistema.get("titulos", []):
+                print(f"- {t.get('nombre','Desconocido')}: {t.get('descripcion','')}")
+        else:
+            print("Vacío.")
 
     # Bendiciones
-    print("\nBENDICIONES:")
-    if sistema["bendiciones"]:
-        for b in sistema["bendiciones"]:
-            print(f"- {b.get('nombre','Desconocido')}")
-    else:
-        print("Vacío.")
+    if plugins.get("bendiciones", False):
+        print("\nBENDICIONES:")
+        if sistema.get("bendiciones"):
+            for b in sistema.get("bendiciones", []):
+                print(f"- {b.get('nombre','Desconocido')}: {b.get('descripcion','')} (Efectos: {b.get('efectos', {})})")
+        else:
+            print("Vacío.")
 
     # Maldiciones
-    print("\nMALDICIONES:")
-    if sistema["maldiciones"]:
-        for m in sistema["maldiciones"]:
-            print(f"- {m.get('nombre','Desconocido')}")
-    else:
-        print("Vacío.")
-
-    # Historia
-    print("\nHISTORIA:")
-    if sistema["linea_temporal"]:
-        for cap in sistema["linea_temporal"]:
-            print(f"- {cap.get('titulo','Desconocido')}: {cap.get('resumen','')}")
-    else:
-        print("Vacío.")
+    if plugins.get("maldiciones", False):
+        print("\nMALDICIONES:")
+        if sistema.get("maldiciones"):
+            for m in sistema.get("maldiciones", []):
+                print(f"- {m.get('nombre','Desconocido')}: {m.get('descripcion','')} (Efectos: {m.get('efectos', {})})")
+        else:
+            print("Vacío.")
