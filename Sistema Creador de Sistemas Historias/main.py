@@ -1,18 +1,19 @@
-from estado_global import estado
 
-from sistemas.crear_sistema import crear_nuevo_sistema
-from sistemas.mostrar_sistema import mostrar_ficha
+from core.estado_global import estado
 
-from inventario.inventario import menu_inventario, mostrar_inventario
-from stats.stats import menu_stats, mostrar_stats
-from historia.linea_temporal import menu_historia, mostrar_linea_temporal
-from titulos.titulos import menu_titulos, mostrar_titulos
-from maldiciones.maldiciones import menu_maldiciones, mostrar_maldiciones
-from bendiciones.bendiciones import menu_bendiciones, mostrar_bendiciones
+from core.sistemas.crear_sistema import crear_nuevo_sistema
+from core.sistemas.mostrar_sistema import mostrar_ficha
 
-from guardado.archivos import guardar_sistema, cargar_sistema, guardar_como
-from utils.salida import salir_programa
-from utils.exportar_pdf import exportar_ficha_pdf
+from core.inventario.inventario import menu_inventario, mostrar_inventario
+from core.stats.stats import menu_stats, mostrar_stats
+from core.historia.linea_temporal import menu_historia, mostrar_linea_temporal
+from core.titulos.titulos import menu_titulos, mostrar_titulos
+from core.maldiciones.maldiciones import menu_maldiciones, mostrar_maldiciones
+from core.bendiciones.bendiciones import menu_bendiciones, mostrar_bendiciones
+
+from core.guardado.archivos import guardar_sistema, cargar_sistema, guardar_como
+from core.utils.salida import salir_programa
+from core.utils.exportar_pdf import exportar_ficha_pdf
 
 
 # ------------------- MENÚ PRINCIPAL -------------------
