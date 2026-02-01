@@ -16,7 +16,7 @@ cambios_no_guardados = False
 # ---------------- CREACION SISTEMAS NUEVOS ----------------
 
 # Función principal para crear un nuevo sistema/personaje
-def crear_nuevo_sistema():
+"""def crear_nuevo_sistema():
     # Diccionario principal donde se guarda TODO
     sistema = {}
 
@@ -146,12 +146,12 @@ def crear_nuevo_sistema():
     # ---------------- LINEA TEMPORAL ----------------
     sistema["linea_temporal"] = []
 
-    return sistema
+    return sistema"""
 
-def mostrar_stats_completos(sistema):
-    """
+"""def mostrar_stats_completos(sistema):
+    
     Muestra los stats base, los efectos de títulos y maldiciones, y el total.
-    """
+    
     print("\n📊 STATS COMPLETOS\n")
 
     # Calculamos los efectos totales de títulos y maldiciones
@@ -175,10 +175,10 @@ def mostrar_stats_completos(sistema):
         if efecto != 0:
             print(f"- {stat}: {base_valor} + ({efecto}) = {total}")
         else:
-            print(f"- {stat}: {base_valor}")
+            print(f"- {stat}: {base_valor}")"""
 
 # Función para mostrar la ficha completa del sistema
-def mostrar_ficha(sistema):
+"""def mostrar_ficha(sistema):
 
     print("\n\n===== FICHA DEL SISTEMA =====\n")
 
@@ -216,7 +216,7 @@ def mostrar_ficha(sistema):
     # Mostramos los datos de la historia
     print("\nHISTORIA:")
     for clave, valor in sistema["historia"].items():
-        print(f"{clave}: {valor}")
+        print(f"{clave}: {valor}")"""
 
 # ---------------- FIN DE CREACION SISTEMAS NUEVOS ----------------
 
@@ -225,7 +225,7 @@ def mostrar_ficha(sistema):
 # ---------------- INVENTARIO EDITABLE ----------------
 
 # Función para mostrar el inventario completo
-def mostrar_inventario(sistema):
+"""def mostrar_inventario(sistema):
     print("\n📦 INVENTARIO\n")
 
     # Si no hay objetos
@@ -238,10 +238,10 @@ def mostrar_inventario(sistema):
         print(f"{i}. {obj['nombre']}")
         print(f"   Clase: {obj['clase']}")
         print(f"   Categoría: {obj['categoria']}")
-        print(f"   Efectos: {obj['efectos']}\n")
+        print(f"   Efectos: {obj['efectos']}\n")"""
 
 # Función para añadir un objeto nuevo al inventario
-def añadir_objeto(sistema):
+"""def añadir_objeto(sistema):
     print("\n➕ AÑADIR OBJETO\n")
 
     # Creamos el objeto como diccionario
@@ -258,10 +258,10 @@ def añadir_objeto(sistema):
     cambios_no_guardados = True
 
 
-    print("✅ Objeto añadido al inventario.")
+    print("✅ Objeto añadido al inventario.")"""
 
 # Función para eliminar un objeto del inventario
-def eliminar_objeto(sistema):
+"""def eliminar_objeto(sistema):
     print("\n❌ ELIMINAR OBJETO\n")
 
     # Si no hay objetos, no hacemos nada
@@ -288,10 +288,10 @@ def eliminar_objeto(sistema):
             print("❌ Número inválido.")
 
     except ValueError:
-        print("❌ Debes introducir un número.")
+        print("❌ Debes introducir un número.")"""
 
 # Menú para gestionar el inventario
-def menu_inventario(sistema):
+"""def menu_inventario(sistema):
     while True:
         print("\n=== MENÚ DE INVENTARIO ===")
         print("1. Ver inventario")
@@ -314,7 +314,7 @@ def menu_inventario(sistema):
             break
 
         else:
-            print("❌ Opción no válida.")
+            print("❌ Opción no válida.")"""
 
 # ---------------- FIN DE INVENTARIO EDITABLE ----------------
 
@@ -323,13 +323,13 @@ def menu_inventario(sistema):
 # ---------------- STATS EDITABLES ----------------
 
 # Mostrar los stats actuales
-def mostrar_stats(sistema):
+"""def mostrar_stats(sistema):
     print("\n📊 STATS ACTUALES\n")
     for stat, valor in sistema["stats"].items():
-        print(f"- {stat}: {valor}")
+        print(f"- {stat}: {valor}")"""
 
 # Modificar un stat existente
-def modificar_stat(sistema):
+"""def modificar_stat(sistema):
     print("\n✏️ MODIFICAR STAT\n")
 
     # Mostramos los stats disponibles
@@ -353,11 +353,10 @@ def modificar_stat(sistema):
     global cambios_no_guardados
     cambios_no_guardados = True
 
-
-    print(f"✅ {stat} modificado correctamente.")
+    print(f"✅ {stat} modificado correctamente.")"""
 
 # Menú para gestionar stats
-def menu_stats(sistema):
+"""def menu_stats(sistema):
     while True:
         print("\n=== MENÚ DE STATS ===")
         print("1. Ver stats")
@@ -377,7 +376,7 @@ def menu_stats(sistema):
 
         else:
             print("❌ Opción no válida.")
-
+"""
 # ---------------- FIN DE STATS EDITABLES ----------------
 
 ####################################################################
@@ -385,7 +384,7 @@ def menu_stats(sistema):
 # ---------------- LÍNEA TEMPORAL ----------------
 
 # Añadir un capítulo a la línea temporal
-def añadir_capitulo(sistema):
+"""def añadir_capitulo(sistema):
 
     # Seguridad: si no existe la línea temporal, la creamos
     if "linea_temporal" not in sistema:
@@ -406,10 +405,10 @@ def añadir_capitulo(sistema):
     cambios_no_guardados = True
 
 
-    print("✅ Capítulo añadido a la línea temporal.")
+    print("✅ Capítulo añadido a la línea temporal.")"""
 
 # Modificar un capítulo
-def modificar_capitulo(sistema):
+"""def modificar_capitulo(sistema):
     if not sistema["linea_temporal"]:
         print("❌ No hay capítulos para modificar.")
         return
@@ -438,10 +437,10 @@ def modificar_capitulo(sistema):
         else:
             print("❌ Número inválido.")
     except ValueError:
-        print("❌ Debes introducir un número válido.")
+        print("❌ Debes introducir un número válido.")"""
 
 # Borrar un capítulo
-def borrar_capitulo(sistema):
+"""def borrar_capitulo(sistema):
     if not sistema["linea_temporal"]:
         print("❌ No hay capítulos para borrar.")
         return
@@ -461,10 +460,10 @@ def borrar_capitulo(sistema):
         else:
             print("❌ Número inválido.")
     except ValueError:
-        print("❌ Debes introducir un número válido.")
+        print("❌ Debes introducir un número válido.")"""
 
 # Mostrar la línea temporal completa
-def mostrar_linea_temporal(sistema):
+"""def mostrar_linea_temporal(sistema):
     print("\n📚 LÍNEA TEMPORAL\n")
 
     if not sistema["linea_temporal"]:
@@ -473,10 +472,10 @@ def mostrar_linea_temporal(sistema):
 
     for i, cap in enumerate(sistema["linea_temporal"], 1):
         print(f"{i}. {cap['titulo']}")
-        print(f"   {cap['resumen']}\n")
+        print(f"   {cap['resumen']}\n")"""
 
 # Menú de historia / capítulos
-def menu_historia(sistema):
+"""def menu_historia(sistema):
     while True:
         print("\n=== MENÚ DE HISTORIA / CAPÍTULOS ===")
         print("1. Añadir capítulo")
@@ -498,7 +497,7 @@ def menu_historia(sistema):
         elif opcion == "5":
             break
         else:
-            print("❌ Opción no válida.")
+            print("❌ Opción no válida.")"""
 
 # ---------------- FIN DE LÍNEA TEMPORAL ----------------
 
@@ -507,7 +506,7 @@ def menu_historia(sistema):
 # ---------------- TIPOS GUARDADOS  ----------------
 
 # Función para guardar el sistema en un archivo
-def guardar_sistema(sistema):
+"""def guardar_sistema(sistema):
     global archivo_actual  # usamos la variable global
 
     if archivo_actual:
@@ -523,10 +522,10 @@ def guardar_sistema(sistema):
         global cambios_no_guardados
         cambios_no_guardados = False
     archivo_actual = nombre_archivo  # actualizamos el puntero
-    print(f"✅ Sistema guardado correctamente en '{nombre_archivo}'")
+    print(f"✅ Sistema guardado correctamente en '{nombre_archivo}'")"""
 
 # Función para cargar un sistema desde un archivo
-def cargar_sistema():
+"""def cargar_sistema():
     global archivo_actual # usamos variable global
     nombre_archivo = input("Nombre del archivo a cargar: ")
 
@@ -540,10 +539,10 @@ def cargar_sistema():
     
     archivo_actual = nombre_archivo # apuntamos al archivo cargado
     print(f"✅ Sistema cargado correctamente desde '{nombre_archivo}'")
-    return sistema
+    return sistema"""
 
 # Función para guardar un sistema nuevo desde otro
-def guardar_como(sistema):
+"""def guardar_como(sistema):
     global archivo_actual
     global cambios_no_guardados
     nombre_archivo = input("Nombre del nuevo archivo para guardar este sistema: ")
@@ -579,7 +578,7 @@ def guardar_como(sistema):
             json.dump(sistema, archivo, indent=4, ensure_ascii=False)
         archivo_actual = nombre_archivo
         print(f"✅ Sistema guardado como '{nombre_archivo}'")
-        cambios_no_guardados = False
+        cambios_no_guardados = False"""
 
 # ---------------- FIN DE TIPOS GUARDADOS  ----------------
 
@@ -587,10 +586,10 @@ def guardar_como(sistema):
 
 # ---------------- HABILIDADES ----------------
 
-def mostrar_habilidades(sistema):
-    """
+"""def mostrar_habilidades(sistema):
+    
     Muestra todas las habilidades del sistema con detalles.
-    """
+    
     print("\n🛡️ HABILIDADES DEL PERSONAJE\n")
 
     # Si no hay habilidades, informamos
@@ -603,12 +602,12 @@ def mostrar_habilidades(sistema):
         print(f"{i}. {h['nombre']}")
         print(f"   Tipo: {h['tipo']}")
         print(f"   Descripción: {h.get('descripcion', '')}")
-        print(f"   Efectos: {h['efectos']}\n")
+        print(f"   Efectos: {h['efectos']}\n")"""
 
-def añadir_habilidad(sistema):
-    """
+"""def añadir_habilidad(sistema):
+    
     Permite añadir una nueva habilidad al personaje.
-    """
+    
     print("\n➕ AÑADIR HABILIDAD\n")
 
     # Creamos un diccionario con los datos de la habilidad
@@ -626,12 +625,12 @@ def añadir_habilidad(sistema):
     global cambios_no_guardados
     cambios_no_guardados = True
 
-    print("✅ Habilidad añadida correctamente.")
+    print("✅ Habilidad añadida correctamente.")"""
 
-def modificar_habilidad(sistema):
-    """
+"""def modificar_habilidad(sistema):
+    
     Permite modificar una habilidad existente.
-    """
+    
     if not sistema["habilidades"]:
         print("❌ No hay habilidades para modificar.")
         return
@@ -672,12 +671,12 @@ def modificar_habilidad(sistema):
         else:
             print("❌ Número inválido.")
     except ValueError:
-        print("❌ Debes introducir un número válido.")
+        print("❌ Debes introducir un número válido.")"""
 
-def eliminar_habilidad(sistema):
-    """
+"""def eliminar_habilidad(sistema):
+    
     Permite eliminar una habilidad existente.
-    """
+    
     if not sistema["habilidades"]:
         print("❌ No hay habilidades para eliminar.")
         return
@@ -700,12 +699,12 @@ def eliminar_habilidad(sistema):
         else:
             print("❌ Número inválido.")
     except ValueError:
-        print("❌ Debes introducir un número válido.")
+        print("❌ Debes introducir un número válido.")"""
 
-def menu_habilidades(sistema):
-    """
+"""def menu_habilidades(sistema):
+    
     Menú interactivo para gestionar las habilidades del sistema.
-    """
+    
     while True:
         print("\n=== MENÚ DE HABILIDADES ===")
         print("1. Ver habilidades")
@@ -727,7 +726,7 @@ def menu_habilidades(sistema):
         elif opcion == "5":
             break
         else:
-            print("❌ Opción no válida.")
+            print("❌ Opción no válida.")"""
 
 # ---------------- FIN DE HABILIDADES ----------------
 
@@ -735,39 +734,10 @@ def menu_habilidades(sistema):
 
 # ---------------- TITULOS ----------------
 
-def mostrar_stats_completos(sistema):
-    """
-    Muestra los stats base, los efectos de títulos y maldiciones, y el total.
-    """
-    print("\n📊 STATS COMPLETOS\n")
-
-    # Calculamos los efectos totales de títulos y maldiciones
-    efectos_totales = {}  # diccionario con los efectos combinados
-
-    # Sumamos efectos de títulos
-    for t in sistema["titulos"]:
-        for stat, valor in t.get("efectos", {}).items():
-            efectos_totales[stat] = efectos_totales.get(stat, 0) + valor
-
-    # Sumamos efectos de maldiciones
-    for m in sistema["maldiciones"]:
-        for stat, valor in m.get("efectos", {}).items():
-            efectos_totales[stat] = efectos_totales.get(stat, 0) + valor
-
-    # Mostramos stats
-    for stat, base in sistema["stats"].items():
-        base_valor = int(base)
-        efecto = efectos_totales.get(stat, 0)
-        total = base_valor + efecto
-        if efecto != 0:
-            print(f"- {stat}: {base_valor} + ({efecto}) = {total}")
-        else:
-            print(f"- {stat}: {base_valor}")
-
-def añadir_titulo(sistema):
-    """
+"""def añadir_titulo(sistema):
+    
     Permite añadir un nuevo título al personaje.
-    """
+    
     print("\n➕ AÑADIR TÍTULO\n")
 
     # Creamos el diccionario con todos los campos
@@ -796,12 +766,12 @@ def añadir_titulo(sistema):
     global cambios_no_guardados
     cambios_no_guardados = True
 
-    print(f"✅ Título '{titulo['nombre']}' añadido correctamente.")
+    print(f"✅ Título '{titulo['nombre']}' añadido correctamente.")"""
 
-def modificar_titulo(sistema):
-    """
+"""def modificar_titulo(sistema):
+    
     Permite modificar un título existente.
-    """
+    
     if not sistema["titulos"]:
         print("❌ No hay títulos para modificar.")
         return
@@ -847,12 +817,12 @@ def modificar_titulo(sistema):
         else:
             print("❌ Número inválido.")
     except ValueError:
-        print("❌ Debes introducir un número válido.")
+        print("❌ Debes introducir un número válido.")"""
 
-def eliminar_titulo(sistema):
-    """
+"""def eliminar_titulo(sistema):
+    
     Permite eliminar un título existente.
-    """
+    
     if not sistema["titulos"]:
         print("❌ No hay títulos para eliminar.")
         return
@@ -872,12 +842,12 @@ def eliminar_titulo(sistema):
         else:
             print("❌ Número inválido.")
     except ValueError:
-        print("❌ Debes introducir un número válido.")
+        print("❌ Debes introducir un número válido.")"""
 
-def menu_titulos(sistema):
-    """
+"""def menu_titulos(sistema):
+    
     Menú interactivo para gestionar los títulos del sistema.
-    """
+    
     while True:
         print("\n=== MENÚ DE TÍTULOS ===")
         print("1. Ver títulos")
@@ -904,7 +874,7 @@ def menu_titulos(sistema):
         elif opcion == "5":
             break
         else:
-            print("❌ Opción no válida.")
+            print("❌ Opción no válida.")"""
 
 # ---------------- FIN DE TITULOS ----------------
 
@@ -912,10 +882,10 @@ def menu_titulos(sistema):
 
 # ---------------- MALDICIONES ----------------
 
-def añadir_maldicion(sistema):
-    """
+"""def añadir_maldicion(sistema):
+    
     Permite añadir una nueva maldición al personaje.
-    """
+    
     print("\n➕ AÑADIR MALDICIÓN\n")
 
     # Creamos el diccionario con todos los campos
@@ -944,12 +914,12 @@ def añadir_maldicion(sistema):
     global cambios_no_guardados
     cambios_no_guardados = True
 
-    print(f"✅ Maldición '{maldicion['nombre']}' añadida correctamente.")
+    print(f"✅ Maldición '{maldicion['nombre']}' añadida correctamente.")"""
 
-def modificar_maldicion(sistema):
-    """
+"""def modificar_maldicion(sistema):
+    
     Permite modificar una maldición existente.
-    """
+    
     if not sistema["maldiciones"]:
         print("❌ No hay maldiciones para modificar.")
         return
@@ -995,12 +965,12 @@ def modificar_maldicion(sistema):
         else:
             print("❌ Número inválido.")
     except ValueError:
-        print("❌ Debes introducir un número válido.")
+        print("❌ Debes introducir un número válido.")"""
 
-def eliminar_maldicion(sistema):
-    """
+"""def eliminar_maldicion(sistema):
+    
     Permite eliminar una maldición existente.
-    """
+    
     if not sistema["maldiciones"]:
         print("❌ No hay maldiciones para eliminar.")
         return
@@ -1020,12 +990,12 @@ def eliminar_maldicion(sistema):
         else:
             print("❌ Número inválido.")
     except ValueError:
-        print("❌ Debes introducir un número válido.")
+        print("❌ Debes introducir un número válido.")"""
 
-def menu_maldiciones(sistema):
-    """
+"""def menu_maldiciones(sistema):
+    
     Menú interactivo para gestionar las maldiciones del sistema.
-    """
+    
     while True:
         print("\n=== MENÚ DE MALDICIONES ===")
         print("1. Ver maldiciones")
@@ -1051,13 +1021,13 @@ def menu_maldiciones(sistema):
         elif opcion == "5":
             break
         else:
-            print("❌ Opción no válida.")
+            print("❌ Opción no válida.")"""
 
 # ---------------- FIN DE MALDICIONES ----------------
 
 ####################################################################
 
-def salir_programa():
+"""def salir_programa():
     
     if cambios_no_guardados:
         print("⚠️ Hay cambios no guardados.")
@@ -1087,14 +1057,14 @@ def salir_programa():
 
     else:
         print("Saliendo del sistema...")
-        return True
+        return True"""
 
 # ---------------- EJECUCIÓN DEL PROGRAMA ----------------
 #     ---------------- MENÚ PRINCIPAL ----------------
 
 # ---------------- MENÚ PRINCIPAL ----------------
 
-while True:
+"""while True:
     print("\n=== SISTEMA DOC ===")
     print("1. Crear Nuevo Sistema/Personaje")
     print("2. Cargar Sistema/Personaje")
@@ -1178,4 +1148,4 @@ while True:
 
     # Opción inválida
     else:
-        print("❌ Opción no válida.")
+        print("❌ Opción no válida.")"""

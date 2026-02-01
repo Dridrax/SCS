@@ -1,0 +1,53 @@
+{
+    "personaje": {
+        "nombre": "Noa"
+    },
+    "nombre_sistema": "Yue",
+    "stats": {
+        "Edad": 1,
+        "Nivel": 1,
+        "Vida": 1,
+        "Ataque": 1
+    },
+    "inventario": [],
+    "habilidades": [],
+    "titulos": [],
+    "bendiciones": [],
+    "maldiciones": [],
+    "linea_temporal": [],
+    "historia": {
+        "tipo": "original",
+        "sinopsis": "",
+        "personajes_principales": ""
+    },
+    "enciclopedias": {
+        "inventario": [
+            {
+                "id": "c1c8c509-56dc-44be-ac1e-21b254b04890",
+                "nombre": "Palo",
+                "clase": "Arma",
+                "categoria": "Blanca",
+                "efectos": "Ataque +5",
+                "activo": false
+            }
+        ],
+        "habilidades": [],
+        "titulos": [],
+        "bendiciones": [],
+        "maldiciones": [],
+        "notas": [],
+        "bestiario": []
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "habilidades": false,
+        "bendiciones": false,
+        "maldiciones": false,
+        "titulos": false,
+        "notas": false,
+        "bestiario": false,
+        "enciclopedias": true
+    },
+    "notas": [],
+    "bestiario": []
+}

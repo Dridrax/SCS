@@ -1,0 +1,42 @@
+{
+    "personaje": {
+        "nombre": "n"
+    },
+    "nombre_sistema": "paola",
+    "stats": {
+        "Edad": 1,
+        "Nivel": 1,
+        "Vida": 1,
+        "Ataque": 1
+    },
+    "inventario": [],
+    "habilidades": null,
+    "titulos": null,
+    "bendiciones": null,
+    "maldiciones": [
+        {
+            "nombre": "Tonto",
+            "descripcion": "tonto",
+            "origen": "o",
+            "tipo": "o",
+            "efectos": {
+                "Vida": -100
+            }
+        }
+    ],
+    "linea_temporal": [],
+    "historia": {
+        "tipo": "o",
+        "fandom": "o",
+        "sinopsis": "o",
+        "personajes": "o",
+        "parejas": "o"
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "habilidades": false,
+        "bendiciones": false,
+        "maldiciones": true,
+        "titulos": false
+    }
+}
