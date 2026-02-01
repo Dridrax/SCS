@@ -9,16 +9,7 @@
         "Vida": 1,
         "Ataque": 1
     },
-    "inventario": [
-        {
-            "id": "c1c8c509-56dc-44be-ac1e-21b254b04890",
-            "nombre": "Palo",
-            "clase": "Arma",
-            "categoria": "Blanca",
-            "efectos": "Ataque +5",
-            "activo": true
-        }
-    ],
+    "inventario": [],
     "habilidades": [],
     "titulos": [],
     "bendiciones": [],
@@ -37,7 +28,7 @@
                 "clase": "Arma",
                 "categoria": "Blanca",
                 "efectos": "Ataque +5",
-                "activo": true
+                "activo": false
             }
         ],
         "habilidades": [],
