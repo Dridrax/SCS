@@ -1,16 +1,37 @@
 from core.estado_global import estado
-from core.guardado.archivos import guardar_sistema
+import uuid
+
+# ---------- UTIL ----------
+
+def generar_id():
+    return f"titulo_{uuid.uuid4().hex[:8]}"
+
+def buscar_titulo(enciclopedia, titulo_id):
+    return next((t for t in enciclopedia if t["id"] == titulo_id), None)
+
+# ---------- MOSTRAR ----------
 
 def mostrar_titulos(sistema):
     print("\n🏆 TÍTULOS DEL PERSONAJE\n")
-    if not sistema.get("titulos"):
+
+    ids = sistema.get("titulos", [])
+    if not ids:
         print("No hay títulos.")
         return
-    for t in sistema["titulos"]:
-        print(f"- {t['nombre']} ({t['tipo']}): {t['descripcion']}, Origen: {t.get('origen','')}, Efectos: {t.get('efectos',{})}")
 
-def añadir_titulo():
-    sistema = estado.sistema_actual
+    enciclopedia = sistema["enciclopedias"]["titulos"]
+
+    for tid in ids:
+        t = buscar_titulo(enciclopedia, tid)
+        if t:
+            print(f"- {t['nombre']} ({t['tipo']}): {t['descripcion']}, "
+                  f"Origen: {t.get('origen','')}, Efectos: {t.get('efectos',{})}")
+
+# ---------- AÑADIR ----------
+
+def añadir_titulo(sistema=None):
+    if sistema is None:
+        sistema = estado.sistema_actual
     if not sistema:
         print("❌ No hay sistema cargado.")
         return
@@ -18,6 +39,7 @@ def añadir_titulo():
     print("\n➕ AÑADIR TÍTULO\n")
 
     titulo = {
+        "id": generar_id(),
         "nombre": input("Nombre del título: "),
         "descripcion": input("Descripción: "),
         "origen": input("Origen del título: "),
@@ -34,82 +56,91 @@ def añadir_titulo():
             except ValueError:
                 print(f"⚠️ Ignorado efecto inválido: {parte}")
 
-    sistema["titulos"].append(titulo)
-    estado.cambios_no_guardados = True
+    # Registrar en enciclopedia
+    enciclopedia = sistema.setdefault("enciclopedias", {}).setdefault("titulos", [])
+    enciclopedia.append(titulo)
 
+    # Activar en sistema (solo ID)
+    sistema.setdefault("titulos", []).append(titulo["id"])
+
+    estado.cambios_no_guardados = True
     print(f"✅ Título '{titulo['nombre']}' añadido correctamente.")
 
+# ---------- MODIFICAR ----------
 
-def modificar_titulo():
-    sistema = estado.sistema_actual
-    if not sistema or not sistema["titulos"]:
+def modificar_titulo(sistema=None):
+    if sistema is None:
+        sistema = estado.sistema_actual
+    if not sistema.get("titulos"):
         print("❌ No hay títulos para modificar.")
         return
 
-    for i, t in enumerate(sistema["titulos"], 1):
+    enciclopedia = sistema["enciclopedias"]["titulos"]
+
+    for i, tid in enumerate(sistema["titulos"], 1):
+        t = buscar_titulo(enciclopedia, tid)
         print(f"{i}. {t['nombre']} ({t['tipo']})")
 
     try:
         indice = int(input("Número del título a modificar: ")) - 1
-        if 0 <= indice < len(sistema["titulos"]):
-            t = sistema["titulos"][indice]
+        tid = sistema["titulos"][indice]
+        t = buscar_titulo(enciclopedia, tid)
 
-            print(f"\nTítulo seleccionado: {t['nombre']}")
-            nuevo_nombre = input("Nuevo nombre (enter para mantener): ")
-            nueva_descripcion = input("Nueva descripción (enter para mantener): ")
-            nuevo_origen = input("Nuevo origen (enter para mantener): ")
-            nuevo_tipo = input("Nuevo tipo (enter para mantener): ")
-            nuevos_efectos = input("Nuevos efectos (ej: Ataque:7,Vida:10, enter para mantener): ")
+        print(f"\nTítulo seleccionado: {t['nombre']}")
 
-            if nuevo_nombre:
-                t["nombre"] = nuevo_nombre
-            if nueva_descripcion:
-                t["descripcion"] = nueva_descripcion
-            if nuevo_origen:
-                t["origen"] = nuevo_origen
-            if nuevo_tipo:
-                t["tipo"] = nuevo_tipo
-            if nuevos_efectos:
-                t["efectos"] = {}
-                for parte in nuevos_efectos.split(","):
-                    if ":" in parte:
-                        stat, valor = parte.split(":")
-                        try:
-                            t["efectos"][stat.strip()] = int(valor.strip())
-                        except ValueError:
-                            print(f"⚠️ Ignorado efecto inválido: {parte}")
+        t["nombre"] = input(f"Nuevo nombre [{t['nombre']}]: ") or t["nombre"]
+        t["descripcion"] = input(f"Nueva descripción [{t['descripcion']}]: ") or t["descripcion"]
+        t["origen"] = input(f"Nuevo origen [{t['origen']}]: ") or t["origen"]
+        t["tipo"] = input(f"Nuevo tipo [{t['tipo']}]: ") or t["tipo"]
 
-            estado.cambios_no_guardados = True
-            print("✅ Título modificado correctamente.")
-        else:
-            print("❌ Número inválido.")
-    except ValueError:
-        print("❌ Debes introducir un número válido.")
+        nuevos_efectos = input("Nuevos efectos (ej: Ataque:7,Vida:10, enter para mantener): ")
+        if nuevos_efectos:
+            t["efectos"] = {}
+            for parte in nuevos_efectos.split(","):
+                if ":" in parte:
+                    stat, valor = parte.split(":")
+                    try:
+                        t["efectos"][stat.strip()] = int(valor.strip())
+                    except ValueError:
+                        print(f"⚠️ Ignorado efecto inválido: {parte}")
 
+        estado.cambios_no_guardados = True
+        print("✅ Título modificado correctamente.")
 
-def eliminar_titulo():
-    sistema = estado.sistema_actual
-    if not sistema or not sistema["titulos"]:
+    except (ValueError, IndexError):
+        print("❌ Selección inválida.")
+
+# ---------- ELIMINAR ----------
+
+def eliminar_titulo(sistema=None):
+    if sistema is None:
+        sistema = estado.sistema_actual
+    if not sistema.get("titulos"):
         print("❌ No hay títulos para eliminar.")
         return
 
-    for i, t in enumerate(sistema["titulos"], 1):
+    enciclopedia = sistema["enciclopedias"]["titulos"]
+
+    for i, tid in enumerate(sistema["titulos"], 1):
+        t = buscar_titulo(enciclopedia, tid)
         print(f"{i}. {t['nombre']} ({t['tipo']})")
 
     try:
         indice = int(input("Número del título a eliminar: ")) - 1
-        if 0 <= indice < len(sistema["titulos"]):
-            t = sistema["titulos"].pop(indice)
-            estado.cambios_no_guardados = True
-            print(f"🗑️ Título eliminado: {t['nombre']}")
-        else:
-            print("❌ Número inválido.")
-    except ValueError:
-        print("❌ Debes introducir un número válido.")
+        tid = sistema["titulos"].pop(indice)
 
+        estado.cambios_no_guardados = True
+        print("🗑️ Título desasignado del personaje.")
 
+    except (ValueError, IndexError):
+        print("❌ Selección inválida.")
 
-def menu_titulos(sistema):
+# ---------- MENÚ ----------
+
+def menu_titulos(sistema=None):
+    if sistema is None:
+        sistema = estado.sistema_actual
+
     while True:
         print("\n=== MENÚ DE TÍTULOS ===")
         print("1. Ver títulos")

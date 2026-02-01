@@ -16,7 +16,7 @@ def guardar_sistema(sistema=None):
     if estado.archivo_actual:
         nombre_archivo = estado.archivo_actual
     else:
-        nombre_archivo = input("Nombre del archivo para guardar (ej: prueba1.json): ")
+        nombre_archivo = input("Nombre del archivo para guardar (ej: Sistema Yue.json): ")
 
     # Asegurarnos de que tenga extensión .json
     if not nombre_archivo.endswith(".json"):

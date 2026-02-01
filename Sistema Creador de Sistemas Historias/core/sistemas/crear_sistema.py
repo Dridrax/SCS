@@ -8,6 +8,7 @@ def pedir_int(prompt):
         except ValueError:
             print("❌ Debes introducir un número entero válido.")
 
+
 def crear_nuevo_sistema(plugins_activos=None):
     if plugins_activos is None:
         plugins_activos = {}
@@ -20,7 +21,7 @@ def crear_nuevo_sistema(plugins_activos=None):
     else:
         nombre_sistema = None
 
-    print("\n--- STATS BASE ---")
+    # --- STATS BASE ---
     stats = {}
     stats["Edad"] = pedir_int("Edad: ")
     stats["Nivel"] = pedir_int("Nivel: ")
@@ -32,96 +33,30 @@ def crear_nuevo_sistema(plugins_activos=None):
         valor = pedir_int("Valor (+ o -): ")
         stats[nombre] = valor
 
-    # Inicialización según plugins
-    inventario = [] if plugins_activos.get("inventario", False) else None
-    habilidades = [] if plugins_activos.get("habilidades", False) else None
-    titulos = [] if plugins_activos.get("titulos", False) else None
-    bendiciones = [] if plugins_activos.get("bendiciones", False) else None
-    maldiciones = [] if plugins_activos.get("maldiciones", False) else None
+    # --- Inicialización según plugins ---
+    # Las claves que usan listas
+    inventario = [] if plugins_activos.get("inventario", False) else []
+    habilidades = [] if plugins_activos.get("habilidades", False) else []
+    titulos = [] if plugins_activos.get("titulos", False) else []
+    bendiciones = [] if plugins_activos.get("bendiciones", False) else []
+    maldiciones = [] if plugins_activos.get("maldiciones", False) else []
     linea_temporal = []
 
-    # Creación de contenido según plugin
-    if inventario is not None:
-        if input("\n¿Tiene objetos en el inventario? (s/n): ").lower() == "s":
-            while True:
-                objeto = {
-                    "nombre": input("Nombre del objeto: "),
-                    "clase": input("Clase: "),
-                    "categoria": input("Categoría: "),
-                    "efectos": input("Efectos (texto): ")
-                }
-                inventario.append(objeto)
-                if input("¿Añadir otro objeto? (s/n): ").lower() != "s":
-                    break
+    # --- Enciclopedias ---
+    # Siempre es diccionario, cada sección lista vacía
+    enciclopedias = {}
+    if plugins_activos.get("inventario"):
+        enciclopedias["inventario"] = []
+    if plugins_activos.get("habilidades"):
+        enciclopedias["habilidades"] = []
+    if plugins_activos.get("titulos"):
+        enciclopedias["titulos"] = []
+    if plugins_activos.get("bendiciones"):
+        enciclopedias["bendiciones"] = []
+    if plugins_activos.get("maldiciones"):
+        enciclopedias["maldiciones"] = []
 
-    if habilidades is not None:
-        if input("\n¿Tiene habilidades? (s/n): ").lower() == "s":
-            while True:
-                habilidad = {
-                    "nombre": input("Nombre de la habilidad: "),
-                    "tipo": input("Tipo: "),
-                    "descripcion": input("Descripción: "),
-                    "efectos": input("Efectos (texto): ")
-                }
-                habilidades.append(habilidad)
-                if input("¿Añadir otra habilidad? (s/n): ").lower() != "s":
-                    break
-
-    if titulos is not None:
-        if input("\n¿Tiene títulos? (s/n): ").lower() == "s":
-            while True:
-                titulo = {
-                    "nombre": input("Nombre del título: "),
-                    "descripcion": input("Descripción: "),
-                    "origen": input("Origen: "),
-                    "tipo": input("Tipo (pasivo/activo/etc): "),
-                    "efectos": {}
-                }
-                while input("¿Añadir efecto al título? (s/n): ").lower() == "s":
-                    stat = input("Stat afectado: ")
-                    valor = pedir_int("Valor (+ o -): ")
-                    titulo["efectos"][stat] = valor
-                titulos.append(titulo)
-                if input("¿Añadir otro título? (s/n): ").lower() != "s":
-                    break
-
-    if bendiciones is not None:
-        if input("\n¿Tiene bendiciones? (s/n): ").lower() == "s":
-            while True:
-                bendicion = {
-                    "nombre": input("Nombre de la bendición: "),
-                    "descripcion": input("Descripción: "),
-                    "origen": input("Origen: "),
-                    "tipo": input("Tipo (pasivo/activo/etc): "),
-                    "efectos": {}
-                }
-                while input("¿Añadir efecto a la bendición? (s/n): ").lower() == "s":
-                    stat = input("Stat afectado: ")
-                    valor = pedir_int("Valor (+ o -): ")
-                    bendicion["efectos"][stat] = valor
-                bendiciones.append(bendicion)
-                if input("¿Añadir otra bendición? (s/n): ").lower() != "s":
-                    break
-
-    if maldiciones is not None:
-        if input("\n¿Tiene maldiciones? (s/n): ").lower() == "s":
-            while True:
-                maldicion = {
-                    "nombre": input("Nombre de la maldición: "),
-                    "descripcion": input("Descripción: "),
-                    "origen": input("Origen: "),
-                    "tipo": input("Tipo: "),
-                    "efectos": {}
-                }
-                while input("¿Añadir efecto a la maldición? (s/n): ").lower() == "s":
-                    stat = input("Stat afectado: ")
-                    valor = pedir_int("Valor (+ o -): ")
-                    maldicion["efectos"][stat] = valor
-                maldiciones.append(maldicion)
-                if input("¿Añadir otra maldición? (s/n): ").lower() != "s":
-                    break
-
-    # Historia
+    # --- HISTORIA ---
     historia = {}
     tipo = input("\n¿Original o Fanfiction?: ").lower()
     historia["tipo"] = tipo
@@ -134,21 +69,34 @@ def crear_nuevo_sistema(plugins_activos=None):
         historia["personajes"] = input("Personajes: ")
         historia["parejas"] = input("Parejas: ")
 
+    # Inicializar enciclopedias aunque el plugin no esté activo
+    enciclopedias = {}
+    for plugin in ["inventario", "habilidades", "titulos", "bendiciones", "maldiciones", "notas", "bestiario"]:
+        enciclopedias[plugin] = []
+
     # Sistema final
     sistema = {
         "personaje": {"nombre": personaje_nombre},
         "nombre_sistema": nombre_sistema,
         "stats": stats,
-        "inventario": inventario,
-        "habilidades": habilidades,
-        "titulos": titulos,
-        "bendiciones": bendiciones,
-        "maldiciones": maldiciones,
-        "linea_temporal": linea_temporal,
-        "historia": historia
+        "inventario": [] ,  
+        "habilidades": [],
+        "titulos": [],
+        "bendiciones": [],
+        "maldiciones": [],
+        "linea_temporal": [],
+        "historia": historia,
+        "enciclopedias": enciclopedias,
+        "plugins_activos": plugins_activos  # <-- Añadir aquí
     }
+
 
     estado.sistema_actual = sistema
     estado.cambios_no_guardados = True
     print(f"\n✅ Sistema '{nombre_sistema}' creado para {personaje_nombre}.\n")
     return sistema
+
+# 💡 COMENTARIOS:
+# - Si agregas nuevas secciones/plugin como tienda, ruleta, minijuegos, etc.:
+#   1. Añadir una lista vacía o diccionario en este bloque según su tipo.
+#   2. Añadir clave correspondiente en 'enciclopedias' si necesita registro de objetos.

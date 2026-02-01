@@ -1,24 +1,35 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
+import uuid
 
-def mostrar_maldiciones(sistema):
+
+# ---------- MOSTRAR ----------
+def mostrar_maldiciones(sistema=None):
+    if sistema is None:
+        sistema = estado.sistema_actual
+
     print("\n💀 MALDICIONES DEL PERSONAJE\n")
     if not sistema.get("maldiciones"):
         print("No hay maldiciones.")
         return
-    for m in sistema["maldiciones"]:
-        print(f"- {m['nombre']} ({m['tipo']}): {m['descripcion']}, Origen: {m.get('origen','')}, Efectos: {m.get('efectos',{})}")
 
+    for m in sistema["maldiciones"]:
+        print(
+            f"- {m['nombre']} ({m['tipo']}): {m['descripcion']} | "
+            f"Origen: {m.get('origen', '')} | "
+            f"Efectos: {m.get('efectos', {})}"
+        )
+
+
+# ---------- AÑADIR ----------
 def añadir_maldicion(sistema=None):
-    """
-    Permite añadir una nueva maldición al personaje.
-    """
     if sistema is None:
         sistema = estado.sistema_actual
 
     print("\n➕ AÑADIR MALDICIÓN\n")
 
     maldicion = {
+        "id": str(uuid.uuid4()),
         "nombre": input("Nombre de la maldición: "),
         "descripcion": input("Descripción: "),
         "origen": input("Origen de la maldición: "),
@@ -26,7 +37,7 @@ def añadir_maldicion(sistema=None):
         "efectos": {}
     }
 
-    efectos_input = input("Efectos sobre stats (ej: Ataque:-3,Vida:-10): ")
+    efectos_input = input("Efectos (ej: Ataque:-3,Vida:-10): ")
     for parte in efectos_input.split(","):
         if ":" in parte:
             stat, valor = parte.split(":")
@@ -35,17 +46,22 @@ def añadir_maldicion(sistema=None):
             except ValueError:
                 print(f"⚠️ Ignorado efecto inválido: {parte}")
 
-    sistema["maldiciones"].append(maldicion)
+    sistema.setdefault("maldiciones", []).append(maldicion)
     estado.cambios_no_guardados = True
+
+    # Enciclopedia
+    enciclopedia = sistema.setdefault("enciclopedias", {}).setdefault("maldiciones", [])
+    enciclopedia.append({**maldicion, "activo": True})
 
     print(f"✅ Maldición '{maldicion['nombre']}' añadida correctamente.")
 
 
+# ---------- MODIFICAR ----------
 def modificar_maldicion(sistema=None):
     if sistema is None:
         sistema = estado.sistema_actual
 
-    if not sistema["maldiciones"]:
+    if not sistema.get("maldiciones"):
         print("❌ No hay maldiciones para modificar.")
         return
 
@@ -53,48 +69,47 @@ def modificar_maldicion(sistema=None):
         print(f"{i}. {m['nombre']} ({m['tipo']})")
 
     try:
-        indice = int(input("Número de la maldición a modificar: ")) - 1
-        if 0 <= indice < len(sistema["maldiciones"]):
-            m = sistema["maldiciones"][indice]
+        indice = int(input("Número a modificar: ")) - 1
+        m = sistema["maldiciones"][indice]
+    except (ValueError, IndexError):
+        print("❌ Selección inválida.")
+        return
 
-            print(f"\nMaldición seleccionada: {m['nombre']}")
-            nuevo_nombre = input("Nuevo nombre (enter para mantener): ")
-            nueva_descripcion = input("Nueva descripción (enter para mantener): ")
-            nuevo_origen = input("Nuevo origen (enter para mantener): ")
-            nuevo_tipo = input("Nuevo tipo (enter para mantener): ")
-            nuevos_efectos = input("Nuevos efectos (ej: Ataque:-3,Vida:-10, enter para mantener): ")
+    print(f"\nMaldición seleccionada: {m['nombre']}")
 
-            if nuevo_nombre:
-                m["nombre"] = nuevo_nombre
-            if nueva_descripcion:
-                m["descripcion"] = nueva_descripcion
-            if nuevo_origen:
-                m["origen"] = nuevo_origen
-            if nuevo_tipo:
-                m["tipo"] = nuevo_tipo
-            if nuevos_efectos:
-                m["efectos"] = {}
-                for parte in nuevos_efectos.split(","):
-                    if ":" in parte:
-                        stat, valor = parte.split(":")
-                        try:
-                            m["efectos"][stat.strip()] = int(valor.strip())
-                        except ValueError:
-                            print(f"⚠️ Ignorado efecto inválido: {parte}")
+    m["nombre"] = input("Nuevo nombre (enter para mantener): ") or m["nombre"]
+    m["descripcion"] = input("Nueva descripción (enter): ") or m["descripcion"]
+    m["origen"] = input("Nuevo origen (enter): ") or m["origen"]
+    m["tipo"] = input("Nuevo tipo (enter): ") or m["tipo"]
 
-            estado.cambios_no_guardados = True
-            print("✅ Maldición modificada correctamente.")
-        else:
-            print("❌ Número inválido.")
-    except ValueError:
-        print("❌ Debes introducir un número válido.")
+    nuevos_efectos = input("Nuevos efectos (enter para mantener): ")
+    if nuevos_efectos:
+        m["efectos"] = {}
+        for parte in nuevos_efectos.split(","):
+            if ":" in parte:
+                stat, valor = parte.split(":")
+                try:
+                    m["efectos"][stat.strip()] = int(valor.strip())
+                except ValueError:
+                    print(f"⚠️ Ignorado efecto inválido: {parte}")
+
+    # Actualizar enciclopedia por ID
+    enciclopedia = sistema.setdefault("enciclopedias", {}).setdefault("maldiciones", [])
+    for e in enciclopedia:
+        if e["id"] == m["id"]:
+            e.update(m)
+            e["activo"] = True
+
+    estado.cambios_no_guardados = True
+    print("✅ Maldición modificada correctamente.")
 
 
+# ---------- ELIMINAR ----------
 def eliminar_maldicion(sistema=None):
     if sistema is None:
         sistema = estado.sistema_actual
 
-    if not sistema["maldiciones"]:
+    if not sistema.get("maldiciones"):
         print("❌ No hay maldiciones para eliminar.")
         return
 
@@ -102,17 +117,23 @@ def eliminar_maldicion(sistema=None):
         print(f"{i}. {m['nombre']} ({m['tipo']})")
 
     try:
-        indice = int(input("Número de la maldición a eliminar: ")) - 1
-        if 0 <= indice < len(sistema["maldiciones"]):
-            m = sistema["maldiciones"].pop(indice)
-            estado.cambios_no_guardados = True
-            print(f"🗑️ Maldición eliminada: {m['nombre']}")
-        else:
-            print("❌ Número inválido.")
-    except ValueError:
-        print("❌ Debes introducir un número válido.")
+        indice = int(input("Número a eliminar: ")) - 1
+        m = sistema["maldiciones"].pop(indice)
+    except (ValueError, IndexError):
+        print("❌ Selección inválida.")
+        return
+
+    # Desactivar en enciclopedia
+    enciclopedia = sistema.setdefault("enciclopedias", {}).setdefault("maldiciones", [])
+    for e in enciclopedia:
+        if e["id"] == m["id"]:
+            e["activo"] = False
+
+    estado.cambios_no_guardados = True
+    print(f"🗑️ Maldición eliminada: {m['nombre']}")
 
 
+# ---------- MENÚ ----------
 def menu_maldiciones(sistema=None):
     if sistema is None:
         sistema = estado.sistema_actual
@@ -128,11 +149,7 @@ def menu_maldiciones(sistema=None):
         opcion = input("Elige una opción: ")
 
         if opcion == "1":
-            if not sistema["maldiciones"]:
-                print("No hay maldiciones.")
-            else:
-                for m in sistema["maldiciones"]:
-                    print(f"- {m['nombre']} ({m['tipo']}): {m['descripcion']}, Origen: {m['origen']}, Efectos: {m.get('efectos',{})}")
+            mostrar_maldiciones(sistema)
         elif opcion == "2":
             añadir_maldicion(sistema)
         elif opcion == "3":

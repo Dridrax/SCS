@@ -1,36 +1,62 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
+from core.historia.filtros import menu_filtros_linea_temporal
 
-# Añadir un capítulo a la línea temporal
+# --------------------------------------------------
+# UTILIDADES
+# --------------------------------------------------
+def normalizar_linea_temporal(sistema=None):
+    """Asegura que todos los capítulos tengan id y arco"""
+    sistema = sistema or estado.sistema_actual
+    sistema.setdefault("linea_temporal", [])
+    for i, cap in enumerate(sistema["linea_temporal"], 1):
+        cap.setdefault("id", i)
+        cap.setdefault("arco", "General")
+    return sistema
+
+def pedir_int(texto, actual=None):
+    valor = input(f"{texto} [{actual}]: ")
+    if valor == "":
+        return actual
+    try:
+        return int(valor)
+    except ValueError:
+        print("⚠️ Valor inválido, se mantiene el anterior.")
+        return actual
+
+def pedir_str(texto, actual=None):
+    valor = input(f"{texto} [{actual}]: ")
+    return actual if valor == "" else valor
+
+# --------------------------------------------------
+# AÑADIR CAPÍTULO
+# --------------------------------------------------
 def añadir_capitulo(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
-
-    if "linea_temporal" not in sistema:
-        sistema["linea_temporal"] = []
+    sistema = normalizar_linea_temporal(sistema)
 
     print("\n📖 NUEVO CAPÍTULO\n")
 
-    titulo = input("Título del capítulo: ")
-    resumen = input("Resumen / qué ocurrió: ")
-
     capitulo = {
-        "titulo": titulo,
-        "resumen": resumen
+        "id": len(sistema["linea_temporal"]) + 1,
+        "titulo": input("Título del capítulo: "),
+        "resumen": input("Resumen / qué ocurrió: "),
+        "arco": input("Arco / Saga (enter = General): ") or "General"
     }
 
     sistema["linea_temporal"].append(capitulo)
     estado.cambios_no_guardados = True
+    print("✅ Capítulo añadido correctamente.")
 
-    print("✅ Capítulo añadido a la línea temporal.")
+    # Opcional: registrar en enciclopedia
+    sistema.setdefault("enciclopedias", {}).setdefault("linea_temporal", []).append({**capitulo, "activo": True})
 
-
-# Modificar un capítulo
+# --------------------------------------------------
+# MODIFICAR CAPÍTULO
+# --------------------------------------------------
 def modificar_capitulo(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+    sistema = normalizar_linea_temporal(sistema)
 
-    if not sistema.get("linea_temporal"):
+    if not sistema["linea_temporal"]:
         print("❌ No hay capítulos para modificar.")
         return
 
@@ -38,32 +64,31 @@ def modificar_capitulo(sistema=None):
 
     try:
         indice = int(input("Número del capítulo a modificar: ")) - 1
-        if 0 <= indice < len(sistema["linea_temporal"]):
-            capitulo = sistema["linea_temporal"][indice]
-
-            print(f"\nCapítulo seleccionado: {capitulo['titulo']}")
-            nuevo_titulo = input("Nuevo título (enter para mantener): ")
-            nuevo_resumen = input("Nuevo resumen (enter para mantener): ")
-
-            if nuevo_titulo:
-                capitulo["titulo"] = nuevo_titulo
-            if nuevo_resumen:
-                capitulo["resumen"] = nuevo_resumen
-
-            estado.cambios_no_guardados = True
-            print("✅ Capítulo modificado correctamente.")
-        else:
-            print("❌ Número inválido.")
     except ValueError:
         print("❌ Debes introducir un número válido.")
+        return
 
+    if not (0 <= indice < len(sistema["linea_temporal"])):
+        print("❌ Número inválido.")
+        return
 
-# Borrar un capítulo
+    cap = sistema["linea_temporal"][indice]
+    print(f"\n✏️ Capítulo seleccionado: {cap['titulo']}")
+
+    cap["titulo"] = pedir_str("Nuevo título", cap["titulo"])
+    cap["resumen"] = pedir_str("Nuevo resumen", cap["resumen"])
+    cap["arco"] = pedir_str("Nuevo arco", cap["arco"])
+
+    estado.cambios_no_guardados = True
+    print("✅ Capítulo modificado.")
+
+# --------------------------------------------------
+# BORRAR CAPÍTULO
+# --------------------------------------------------
 def borrar_capitulo(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+    sistema = normalizar_linea_temporal(sistema)
 
-    if not sistema.get("linea_temporal"):
+    if not sistema["linea_temporal"]:
         print("❌ No hay capítulos para borrar.")
         return
 
@@ -71,36 +96,45 @@ def borrar_capitulo(sistema=None):
 
     try:
         indice = int(input("Número del capítulo a eliminar: ")) - 1
-        if 0 <= indice < len(sistema["linea_temporal"]):
-            capitulo = sistema["linea_temporal"].pop(indice)
-            estado.cambios_no_guardados = True
-            print(f"🗑️ Capítulo eliminado: {capitulo['titulo']}")
-        else:
-            print("❌ Número inválido.")
     except ValueError:
         print("❌ Debes introducir un número válido.")
+        return
 
+    if not (0 <= indice < len(sistema["linea_temporal"])):
+        print("❌ Número inválido.")
+        return
 
-# Mostrar la línea temporal completa
+    cap = sistema["linea_temporal"].pop(indice)
+    estado.cambios_no_guardados = True
+    print(f"🗑️ Capítulo eliminado: {cap['titulo']}")
+
+    # Desactivar en enciclopedia
+    enc = sistema.setdefault("enciclopedias", {}).setdefault("linea_temporal", [])
+    for e in enc:
+        if e["id"] == cap["id"]:
+            e["activo"] = False
+
+# --------------------------------------------------
+# MOSTRAR LÍNEA TEMPORAL
+# --------------------------------------------------
 def mostrar_linea_temporal(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+    sistema = normalizar_linea_temporal(sistema)
 
     print("\n📚 LÍNEA TEMPORAL\n")
 
-    if not sistema.get("linea_temporal"):
+    if not sistema["linea_temporal"]:
         print("No hay capítulos todavía.")
         return
 
-    for i, cap in enumerate(sistema["linea_temporal"], 1):
-        print(f"{i}. {cap['titulo']}")
+    for cap in sistema["linea_temporal"]:
+        print(f"[Cap. {cap['id']}] {cap['titulo']}  ({cap['arco']})")
         print(f"   {cap['resumen']}\n")
 
-
-# Menú de historia / capítulos
+# --------------------------------------------------
+# MENÚ
+# --------------------------------------------------
 def menu_historia(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+    sistema = normalizar_linea_temporal(sistema)
 
     while True:
         print("\n=== MENÚ DE HISTORIA / CAPÍTULOS ===")
@@ -108,7 +142,8 @@ def menu_historia(sistema=None):
         print("2. Modificar capítulo")
         print("3. Borrar capítulo")
         print("4. Ver línea temporal")
-        print("5. Volver")
+        print("5. Filtros")
+        print("6. Volver")
 
         opcion = input("Elige una opción: ")
 
@@ -121,6 +156,8 @@ def menu_historia(sistema=None):
         elif opcion == "4":
             mostrar_linea_temporal(sistema)
         elif opcion == "5":
+            menu_filtros_linea_temporal(sistema)
+        elif opcion == "6":
             guardar_sistema(sistema)
             break
         else:
