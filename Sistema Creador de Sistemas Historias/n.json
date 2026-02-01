@@ -1,0 +1,42 @@
+{
+    "personaje": {
+        "nombre": ""
+    },
+    "nombre_sistema": "n",
+    "stats": {
+        "Edad": 1,
+        "Nivel": 1,
+        "Vida": 1,
+        "Ataque": 1
+    },
+    "inventario": [
+        {
+            "nombre": "palo",
+            "clase": "arma",
+            "categoria": "blanco",
+            "efectos": ""
+        }
+    ],
+    "habilidades": null,
+    "titulos": null,
+    "bendiciones": null,
+    "maldiciones": null,
+    "linea_temporal": [],
+    "historia": {
+        "tipo": "a",
+        "fandom": "a",
+        "sinopsis": "a",
+        "personajes": "a",
+        "parejas": "a"
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "habilidades": false,
+        "bendiciones": false,
+        "maldiciones": false,
+        "titulos": false,
+        "notas": false,
+        "enciclopedias": false,
+        "bestiario": false
+    }
+}
