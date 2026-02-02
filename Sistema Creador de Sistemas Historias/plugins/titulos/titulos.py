@@ -1,45 +1,26 @@
 from core.estado_global import estado
+from core.utils.la_gran_enciclopedia import registrar_objeto, desactivar_objeto
 import uuid
 
-# ---------- UTIL ----------
+# ---------- UTILIDADES ----------
+def asegurarse_lista(sistema=None):
+    sistema = sistema or estado.sistema_actual
+    sistema.setdefault("titulos", [])
+    sistema.setdefault("enciclopedias", {}).setdefault("titulos", [])
+    return sistema
 
-def generar_id():
-    return f"titulo_{uuid.uuid4().hex[:8]}"
+def pedir_str(texto, actual=None):
+    valor = input(f"{texto} [{actual}]: ")
+    return actual if valor == "" else valor
 
-def buscar_titulo(enciclopedia, titulo_id):
-    return next((t for t in enciclopedia if t["id"] == titulo_id), None)
-
-# ---------- MOSTRAR ----------
-
-def mostrar_titulos(sistema):
-    print("\n🏆 TÍTULOS DEL PERSONAJE\n")
-
-    ids = sistema.get("titulos", [])
-    if not ids:
-        print("No hay títulos.")
-        return
-
-    enciclopedia = sistema["enciclopedias"]["titulos"]
-
-    for tid in ids:
-        t = buscar_titulo(enciclopedia, tid)
-        if t:
-            print(f"- {t['nombre']} ({t['tipo']}): {t['descripcion']}, "
-                  f"Origen: {t.get('origen','')}, Efectos: {t.get('efectos',{})}")
-
-# ---------- AÑADIR ----------
-
+# ---------- CREAR ----------
 def añadir_titulo(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
-    if not sistema:
-        print("❌ No hay sistema cargado.")
-        return
+    sistema = asegurarse_lista(sistema)
 
     print("\n➕ AÑADIR TÍTULO\n")
 
     titulo = {
-        "id": generar_id(),
+        "id": f"titulo_{uuid.uuid4().hex[:8]}",
         "nombre": input("Nombre del título: "),
         "descripcion": input("Descripción: "),
         "origen": input("Origen del título: "),
@@ -56,42 +37,47 @@ def añadir_titulo(sistema=None):
             except ValueError:
                 print(f"⚠️ Ignorado efecto inválido: {parte}")
 
-    # Registrar en enciclopedia
-    enciclopedia = sistema.setdefault("enciclopedias", {}).setdefault("titulos", [])
-    enciclopedia.append(titulo)
+    # 1️⃣ Añadir al sistema activo
+    sistema["titulos"].append(titulo)
 
-    # Activar en sistema (solo ID)
-    sistema.setdefault("titulos", []).append(titulo["id"])
+    # 2️⃣ Registrar en enciclopedia
+    registrar_objeto(sistema, "titulos", titulo)
 
     estado.cambios_no_guardados = True
     print(f"✅ Título '{titulo['nombre']}' añadido correctamente.")
 
-# ---------- MODIFICAR ----------
+# ---------- MOSTRAR ----------
+def mostrar_titulos(sistema=None):
+    sistema = asegurarse_lista(sistema)
+    if not sistema["titulos"]:
+        print("📭 No hay títulos.")
+        return
 
+    print("\n🏆 TÍTULOS DEL PERSONAJE\n")
+    for t in sistema["titulos"]:
+        print(f"- {t['nombre']} ({t['tipo']}): {t['descripcion']}, "
+              f"Origen: {t.get('origen','')}, Efectos: {t.get('efectos',{})}")
+
+# ---------- MODIFICAR ----------
 def modificar_titulo(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
-    if not sistema.get("titulos"):
+    sistema = asegurarse_lista(sistema)
+    if not sistema["titulos"]:
         print("❌ No hay títulos para modificar.")
         return
 
-    enciclopedia = sistema["enciclopedias"]["titulos"]
-
-    for i, tid in enumerate(sistema["titulos"], 1):
-        t = buscar_titulo(enciclopedia, tid)
+    for i, t in enumerate(sistema["titulos"], 1):
         print(f"{i}. {t['nombre']} ({t['tipo']})")
 
     try:
         indice = int(input("Número del título a modificar: ")) - 1
-        tid = sistema["titulos"][indice]
-        t = buscar_titulo(enciclopedia, tid)
+        t = sistema["titulos"][indice]
 
         print(f"\nTítulo seleccionado: {t['nombre']}")
 
-        t["nombre"] = input(f"Nuevo nombre [{t['nombre']}]: ") or t["nombre"]
-        t["descripcion"] = input(f"Nueva descripción [{t['descripcion']}]: ") or t["descripcion"]
-        t["origen"] = input(f"Nuevo origen [{t['origen']}]: ") or t["origen"]
-        t["tipo"] = input(f"Nuevo tipo [{t['tipo']}]: ") or t["tipo"]
+        t["nombre"] = pedir_str("Nuevo nombre", t["nombre"])
+        t["descripcion"] = pedir_str("Nueva descripción", t["descripcion"])
+        t["origen"] = pedir_str("Nuevo origen", t["origen"])
+        t["tipo"] = pedir_str("Nuevo tipo", t["tipo"])
 
         nuevos_efectos = input("Nuevos efectos (ej: Ataque:7,Vida:10, enter para mantener): ")
         if nuevos_efectos:
@@ -104,6 +90,9 @@ def modificar_titulo(sistema=None):
                     except ValueError:
                         print(f"⚠️ Ignorado efecto inválido: {parte}")
 
+        # Actualizar enciclopedia
+        registrar_objeto(sistema, "titulos", t, actualizar=True)
+
         estado.cambios_no_guardados = True
         print("✅ Título modificado correctamente.")
 
@@ -111,35 +100,31 @@ def modificar_titulo(sistema=None):
         print("❌ Selección inválida.")
 
 # ---------- ELIMINAR ----------
-
 def eliminar_titulo(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
-    if not sistema.get("titulos"):
+    sistema = asegurarse_lista(sistema)
+    if not sistema["titulos"]:
         print("❌ No hay títulos para eliminar.")
         return
 
-    enciclopedia = sistema["enciclopedias"]["titulos"]
-
-    for i, tid in enumerate(sistema["titulos"], 1):
-        t = buscar_titulo(enciclopedia, tid)
+    for i, t in enumerate(sistema["titulos"], 1):
         print(f"{i}. {t['nombre']} ({t['tipo']})")
 
     try:
         indice = int(input("Número del título a eliminar: ")) - 1
-        tid = sistema["titulos"].pop(indice)
+        t = sistema["titulos"].pop(indice)
+
+        # Desactivar en enciclopedia
+        desactivar_objeto(sistema, "titulos", t["id"])
 
         estado.cambios_no_guardados = True
-        print("🗑️ Título desasignado del personaje.")
+        print(f"🗑️ Título eliminado: {t['nombre']}")
 
     except (ValueError, IndexError):
         print("❌ Selección inválida.")
 
 # ---------- MENÚ ----------
-
 def menu_titulos(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+    sistema = asegurarse_lista(sistema)
 
     while True:
         print("\n=== MENÚ DE TÍTULOS ===")

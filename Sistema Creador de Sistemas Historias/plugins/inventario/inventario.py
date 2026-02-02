@@ -68,7 +68,7 @@ def añadir_objeto(sistema=None):
     print("\n➕ AÑADIR OBJETO\n")
 
     # 🔹 Crear objeto con ID único
-    objeto = {
+    inventario = {
         "id": str(uuid.uuid4()),
         "nombre": input("Nombre del objeto: "),
         "clase": input("Clase: "),
@@ -77,10 +77,10 @@ def añadir_objeto(sistema=None):
     }
 
     # 🔹 Añadir al inventario
-    sistema.setdefault("inventario", []).append(objeto)
+    sistema.setdefault("inventario", []).append(inventario)
 
     # 🔹 Registrar en LA GRAN ENCICLOPEDIA
-    registrar_objeto(sistema, "inventario", objeto)
+    registrar_objeto(sistema, "inventario", inventario)
 
     estado.cambios_no_guardados = True
     print("✅ Objeto añadido al inventario y registrado en la enciclopedia.")
@@ -143,7 +143,6 @@ def eliminar_objeto(sistema):
         return
 
     # Desactivar en enciclopedia usando ID
-    from core.utils.la_gran_enciclopedia import desactivar_objeto
     desactivar_objeto(sistema, "inventario", obj["id"])
 
     # También lo quitamos del inventario

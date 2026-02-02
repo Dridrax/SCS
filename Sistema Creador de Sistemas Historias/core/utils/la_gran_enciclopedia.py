@@ -1,70 +1,93 @@
-import uuid
-# core/utils/la_gran_enciclopedia.py
 from core.estado_global import estado
-from core.guardado.archivos import guardar_sistema
 
-# ---------- REGISTRAR OBJETO ----------
+# ─────────────────────────────────────────────
+# CONFIGURACIÓN CENTRAL
+# ─────────────────────────────────────────────
 
-def registrar_objeto(sistema, tipo, objeto):
-    """
-    Registra un objeto en la enciclopedia.
-    Crea un ID único si no existe.
-    """
-    if "enciclopedias" not in sistema:
-        sistema["enciclopedias"] = {}
-    if tipo not in sistema["enciclopedias"]:
-        sistema["enciclopedias"][tipo] = []
+MAPEO_SISTEMAS = {
+    "inventario": "inventario",
+    "habilidades": "habilidades",
+    "titulos": "titulos",
+    "bendiciones": "bendiciones",
+    "maldiciones": "maldiciones",
+    "notas": "notas",
+    "bestiario": "bestiario",
+}
 
-    # Asignar ID único si no existe
-    if "id" not in objeto:
-        objeto["id"] = str(uuid.uuid4())
+# ─────────────────────────────────────────────
+# FUNCIONES BASE
+# ─────────────────────────────────────────────
 
-    objeto["activo"] = True  # siempre activo al registrar
-    sistema["enciclopedias"][tipo].append(objeto)
+def listar_enciclopedia(sistema):
+    if not sistema:
+        print("❌ No hay ningún sistema cargado.")
+        return
+
+    plugins = sistema.get("plugins_activos", {})
+    enciclopedias = sistema.get("enciclopedias", {})
+
+    tipos_disponibles = [
+        tipo for tipo, activo in plugins.items()
+        if activo and tipo in enciclopedias
+    ]
+
+    if not tipos_disponibles:
+        print("⚠️ No hay enciclopedias activas.")
+        return
+
+    while True:
+        print("\n=== LA GRAN ENCICLOPEDIA ===")
+        for i, tipo in enumerate(tipos_disponibles, 1):
+            print(f"{i}. {tipo.capitalize()}")
+        print(f"{len(tipos_disponibles)+1}. Volver")
+
+        try:
+            opcion = int(input("Elige una sección: "))
+        except ValueError:
+            print("❌ Opción inválida.")
+            continue
+
+        if opcion == len(tipos_disponibles) + 1:
+            break
+
+        if 1 <= opcion <= len(tipos_disponibles):
+            gestionar_enciclopedia_tipo(tipos_disponibles[opcion - 1])
 
 
-# ---------- DESACTIVAR OBJETO ----------
-def desactivar_objeto(sistema, tipo, id_objeto):
-    """
-    Desactiva un objeto en la enciclopedia según su tipo y id.
-    """
-    for obj in sistema.get("enciclopedias", {}).get(tipo, []):
-        if obj.get("id") == id_objeto:
-            obj["activo"] = False
-            return True
-    return False
-
-
-# ---------- REACTIVAR OBJETO ----------
-
-def reactivar_objeto(sistema, tipo, id_objeto):
-    """
-    Reactiva un objeto en la enciclopedia según su tipo y id.
-    """
-    for obj in sistema.get("enciclopedias", {}).get(tipo, []):
-        if obj.get("id") == id_objeto:
-            obj["activo"] = True
-            return True
-    return False
-
-
-# ---------- LISTAR ENCICLOPEDIA ----------
+# ─────────────────────────────────────────────
+# GESTIÓN POR TIPO
+# ─────────────────────────────────────────────
 
 def gestionar_enciclopedia_tipo(tipo):
     sistema = estado.sistema_actual
     enciclopedia = sistema.get("enciclopedias", {}).get(tipo, [])
+
+    if not enciclopedia:
+        print("⚠️ No hay registros en esta enciclopedia.")
+        return
 
     while True:
         print(f"\n=== ENCICLOPEDIA: {tipo.upper()} ===")
 
         for i, obj in enumerate(enciclopedia, 1):
             estado_str = "Activo ✅" if obj.get("activo", True) else "Inactivo ❌"
-            print(
-                f"{i}. {obj['nombre']} "
-                f"({obj.get('clase', '')} | {obj.get('categoria', '')}) - {estado_str}"
+            clase = obj.get("clase", "")
+            categoria = obj.get("categoria", "")
+            extra = f" ({clase} | {categoria})" if clase or categoria else ""
+            # Nombre visible según el tipo
+            nombre_visible = (
+                obj.get("nombre")
+                or obj.get("titulo")
+                or obj.get("id", "Sin nombre")
             )
 
-        print(f"{len(enciclopedia) + 1}. Volver")
+            print(f"{i}. {nombre_visible}{extra} - {estado_str}")
+            if tipo == "notas":
+                extra = f" | {obj.get('contenido', '')[:30]}..."
+
+
+
+        print(f"{len(enciclopedia)+1}. Volver")
 
         try:
             opcion = int(input("Selecciona un objeto para activar/desactivar: "))
@@ -75,83 +98,74 @@ def gestionar_enciclopedia_tipo(tipo):
         if opcion == len(enciclopedia) + 1:
             break
 
-        if not (1 <= opcion <= len(enciclopedia)):
-            print("❌ Opción inválida.")
-            continue
+        if 1 <= opcion <= len(enciclopedia):
+            obj = enciclopedia[opcion - 1]
 
-        obj = enciclopedia[opcion - 1]
+            if obj.get("activo", True):
+                desactivar_objeto(sistema, tipo, obj["id"])
+                print(f"❌ '{obj['nombre']}' desactivado.")
+            else:
+                reactivar_objeto(sistema, tipo, obj["id"])
+                print(f"✅ '{obj['nombre']}' reactivado.")
 
-        # ======================================================
-        # DESACTIVAR OBJETO
-        # ======================================================
-        if obj.get("activo", True):
-            desactivar_objeto(sistema, tipo, obj["id"])
+            estado.cambios_no_guardados = True
 
-            # ⚠️ AQUÍ va la lógica específica del sistema
-            # Si el tipo tiene una lista activa (inventario, habilidades, etc.)
-            # se elimina por ID (NUNCA por pop directo)
-            if tipo == "inventario":
-                sistema["inventario"] = [
-                    i for i in sistema.get("inventario", [])
-                    if i.get("id") != obj["id"]
+
+# ─────────────────────────────────────────────
+# ACTIVAR / DESACTIVAR
+# ─────────────────────────────────────────────
+
+def desactivar_objeto(sistema, tipo, id_objeto):
+    enciclopedia = sistema["enciclopedias"].get(tipo, [])
+    lista_activa_nombre = MAPEO_SISTEMAS.get(tipo)
+
+    for obj in enciclopedia:
+        if obj["id"] == id_objeto:
+            obj["activo"] = False
+
+            if lista_activa_nombre:
+                sistema[lista_activa_nombre] = [
+                    x for x in sistema.get(lista_activa_nombre, [])
+                    if x["id"] != id_objeto
                 ]
-
-            # 🔹 EJEMPLOS FUTUROS (NO IMPLEMENTADOS)
-            # if tipo == "habilidades":
-            #     sistema["habilidades"] = [...]
-            #
-            # if tipo == "tienda":
-            #     sistema["tienda_activa"] = [...]
-
-            estado.cambios_no_guardados = True
-            print(f"❌ '{obj['nombre']}' desactivado.")
-
-        # ======================================================
-        # REACTIVAR OBJETO
-        # ======================================================
-        else:
-            reactivar_objeto(sistema, tipo, obj["id"])
-
-            # Volver a añadir al sistema activo si aplica
-            if tipo == "inventario":
-                sistema.setdefault("inventario", []).append(obj)
-
-            # 🔹 EJEMPLOS FUTUROS
-            # if tipo == "habilidades":
-            #     sistema.setdefault("habilidades", []).append(obj)
-
-            estado.cambios_no_guardados = True
-            print(f"✅ '{obj['nombre']}' reactivado.")
+            return
 
 
+def reactivar_objeto(sistema, tipo, id_objeto):
+    enciclopedia = sistema["enciclopedias"].get(tipo, [])
+    lista_activa_nombre = MAPEO_SISTEMAS.get(tipo)
 
-def listar_enciclopedia(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+    for obj in enciclopedia:
+        if obj["id"] == id_objeto:
+            obj["activo"] = True
 
-    # Asegurarse que enciclopedias es un diccionario
-    enciclopedias = sistema.get("enciclopedias")
-    if not isinstance(enciclopedias, dict):
-        print("❌ ERROR: La clave 'enciclopedias' no está correctamente inicializada.")
-        sistema["enciclopedias"] = {}
-        enciclopedias = sistema["enciclopedias"]
+            if lista_activa_nombre:
+                sistema.setdefault(lista_activa_nombre, []).append(obj)
+            return
+        
+# ─────────────────────────────────────────────
+# REGISTRAR OBJETO
+# ─────────────────────────────────────────────
 
-    while True:
-        print("\n=== LA GRAN ENCICLOPEDIA ===")
-        tipos = list(enciclopedias.keys())
-        for i, t in enumerate(tipos, 1):
-            print(f"{i}. {t.capitalize()}")
-        print(f"{len(tipos)+1}. Volver")
+def registrar_objeto(sistema, tipo, objeto):
+    """
+    Registra un objeto en la enciclopedia correspondiente.
+    Si ya existe (por ID), no lo duplica.
+    """
 
-        try:
-            opcion = int(input("Elige una sección: "))
-        except ValueError:
-            print("❌ Opción inválida.")
-            continue
+    sistema.setdefault("enciclopedias", {})
+    sistema.setdefault("plugins_activos", {})
 
-        if opcion == len(tipos)+1:
-            break
-        elif 1 <= opcion <= len(tipos):
-            gestionar_enciclopedia_tipo(tipos[opcion-1])
-        else:
-            print("❌ Opción inválida.")
+    # Inicializar enciclopedia si no existe
+    sistema["enciclopedias"].setdefault(tipo, [])
+
+    enciclopedia = sistema["enciclopedias"][tipo]
+
+    # Evitar duplicados por ID
+    if any(o["id"] == objeto["id"] for o in enciclopedia):
+        return
+
+    # Todo objeto registrado empieza activo
+    objeto["activo"] = True
+
+    enciclopedia.append(objeto)

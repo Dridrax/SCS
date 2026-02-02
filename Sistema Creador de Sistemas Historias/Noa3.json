@@ -1,0 +1,158 @@
+{
+    "personaje": {
+        "nombre": "Noa"
+    },
+    "nombre_sistema": "Mama",
+    "stats": {
+        "Edad": 1,
+        "Nivel": 1,
+        "Vida": 1,
+        "Ataque": 1
+    },
+    "inventario": [],
+    "habilidades": [],
+    "titulos": [
+        {
+            "id": "titulo_7199c081",
+            "nombre": "aa",
+            "descripcion": "aa",
+            "origen": "aa",
+            "tipo": "aa",
+            "efectos": {
+                "Vida": 111
+            },
+            "activo": true
+        }
+    ],
+    "bendiciones": [],
+    "maldiciones": [],
+    "linea_temporal": [
+        {
+            "id": 1,
+            "titulo": "1",
+            "resumen": "3535",
+            "arco": "General"
+        }
+    ],
+    "historia": {
+        "tipo": "oo",
+        "fandom": "o",
+        "sinopsis": "o",
+        "personajes": "o",
+        "parejas": "o"
+    },
+    "enciclopedias": {
+        "inventario": [],
+        "habilidades": [],
+        "titulos": [
+            {
+                "id": "titulo_7199c081",
+                "nombre": "aa",
+                "descripcion": "aa",
+                "origen": "aa",
+                "tipo": "aa",
+                "efectos": {
+                    "Vida": 111
+                },
+                "activo": true
+            }
+        ],
+        "bendiciones": [],
+        "maldiciones": [],
+        "notas": [
+            {
+                "id": "nota_1bb9a3fd",
+                "titulo": "l",
+                "contenido": "l",
+                "archivada": false,
+                "activo": true
+            }
+        ],
+        "bestiario": [
+            {
+                "id": "72321e7c-5861-4505-b5c2-6c69fef45288",
+                "nombre": "i",
+                "tipo": "ii",
+                "raza": "k",
+                "sexo": "k",
+                "clase": "ii",
+                "nivel": 1,
+                "xp": 1,
+                "stats_base": {
+                    "vida": 1,
+                    "fuerza": 1,
+                    "defensa": 1,
+                    "agilidad": 1,
+                    "magia": 1
+                },
+                "descripcion": "1ii",
+                "origen": "ji",
+                "lugar_origen": "",
+                "nacimiento": "u",
+                "metodo_invocacion": "uu",
+                "rango_aparicion": "uu",
+                "rareza": "uuu",
+                "domesticable": false,
+                "drops": [],
+                "activo": true
+            }
+        ],
+        "linea_temporal": [
+            {
+                "id": 1,
+                "titulo": "1",
+                "resumen": "3535",
+                "arco": "General",
+                "activo": true
+            }
+        ]
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "habilidades": false,
+        "bendiciones": false,
+        "maldiciones": false,
+        "titulos": false,
+        "notas": false,
+        "bestiario": false,
+        "enciclopedias": false
+    },
+    "notas": [
+        {
+            "id": "nota_1bb9a3fd",
+            "titulo": "l",
+            "contenido": "l",
+            "archivada": false,
+            "activo": true
+        }
+    ],
+    "bestiario": [
+        {
+            "id": "72321e7c-5861-4505-b5c2-6c69fef45288",
+            "nombre": "i",
+            "tipo": "ii",
+            "raza": "k",
+            "sexo": "k",
+            "clase": "ii",
+            "nivel": 1,
+            "xp": 1,
+            "stats_base": {
+                "vida": 1,
+                "fuerza": 1,
+                "defensa": 1,
+                "agilidad": 1,
+                "magia": 1
+            },
+            "descripcion": "1ii",
+            "origen": "ji",
+            "lugar_origen": "",
+            "nacimiento": "u",
+            "metodo_invocacion": "uu",
+            "rango_aparicion": "uu",
+            "rareza": "uuu",
+            "domesticable": false,
+            "drops": [],
+            "activo": true
+        }
+    ]
+}

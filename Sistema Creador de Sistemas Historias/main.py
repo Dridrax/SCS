@@ -14,6 +14,8 @@ from plugins.habilidades.habilidades import menu_habilidades, mostrar_habilidade
 from plugins.titulos.titulos import menu_titulos, mostrar_titulos
 from plugins.bendiciones.bendiciones import menu_bendiciones, mostrar_bendiciones
 from plugins.maldiciones.maldiciones import menu_maldiciones, mostrar_maldiciones
+from plugins.notas.gestor_notas import menu_notas
+from plugins.bestiario.gestor_bestiario import menu_bestiario
 
 
 # ------------------- MENÚ PRINCIPAL -------------------
@@ -134,6 +136,20 @@ def menu_crear_cargar():
             archivo = input("Nombre del archivo a cargar: ")
             sistema = cargar_sistema(archivo)
 
+            # --- NORMALIZAR TITULOS ---
+            titulos_norm = []
+            for t in sistema.get("titulos", []):
+                if isinstance(t, dict):
+                    titulos_norm.append(t)
+                elif isinstance(t, str):
+                    # buscar en enciclopedia
+                    for et in sistema.get("enciclopedias", {}).get("titulos", []):
+                        if et.get("id") == t:
+                            titulos_norm.append(et)
+                            break
+            sistema["titulos"] = titulos_norm
+
+
             if sistema:
                 # --- NORMALIZAR CLAVES ---
                 # Diccionarios
@@ -209,9 +225,10 @@ def menu_gestion_sistema():
     sistema = estado.sistema_actual
     plugins = sistema.get("plugins_activos", {})
     if not isinstance(plugins, dict):
-        # Fallback si plugins_activos no es diccionario
-        plugins = {k: True for k in ["inventario", "habilidades", "bendiciones", "maldiciones",
-                                     "titulos", "notas", "bestiario", "enciclopedias"]}
+        plugins = {k: True for k in [
+            "inventario", "habilidades", "bendiciones",
+            "maldiciones", "titulos", "notas", "bestiario"
+        ]}
 
     while True:
         print(f"\n=== GESTIÓN ({sistema.get('nombre_sistema', '')}) ===")
@@ -223,7 +240,21 @@ def menu_gestion_sistema():
             opciones.append("Habilidades")
 
         opciones.append("Stats")
-        opciones.append("Historia / Capítulos")
+
+        # ---------- HISTORIA / NOTAS / BESTIARIO (DINÁMICO) ----------
+        label_historia = "Historia / Capítulos"
+
+        extras = []
+        if plugins.get("notas"):
+            extras.append("Notas")
+        if plugins.get("bestiario"):
+            extras.append("Bestiario")
+
+        if extras:
+            label_historia += " / " + " / ".join(extras)
+
+        opciones.append(label_historia)
+        # ------------------------------------------------------------
 
         if any([plugins.get("titulos"), plugins.get("bendiciones"), plugins.get("maldiciones")]):
             opciones.append("Títulos / Bendiciones / Maldiciones")
@@ -246,8 +277,11 @@ def menu_gestion_sistema():
             mostrar_habilidades(sistema)
         elif seleccion == "Stats":
             mostrar_stats_completos(sistema)
-        elif seleccion == "Historia / Capítulos":
+
+        # 🔑 IMPORTANTE: startswith
+        elif seleccion.startswith("Historia / Capítulos"):
             mostrar_linea_temporal(sistema)
+
         elif seleccion == "Títulos / Bendiciones / Maldiciones":
             if plugins.get("titulos"):
                 mostrar_titulos(sistema)
@@ -255,10 +289,12 @@ def menu_gestion_sistema():
                 mostrar_bendiciones(sistema)
             if plugins.get("maldiciones"):
                 mostrar_maldiciones(sistema)
+
         elif seleccion == "Modificar Sistema":
             menu_modificar_sistema()
         elif seleccion == "Volver":
             break
+
 
 # 💡 Comentarios:
 # - Aquí se agregan futuros plugins al menú principal de Gestión
@@ -277,7 +313,23 @@ def menu_modificar_sistema():
 
     while True:
         print("\n=== MODIFICAR SISTEMA ===")
-        opciones = ["Stats", "Historia / Capítulos"]
+        opciones = ["Stats"]
+
+        plugins = sistema.get("plugins_activos", {})
+
+        label_historia = "Historia / Capítulos"
+
+        extras = []
+        if plugins.get("notas"):
+            extras.append("Notas")
+        if plugins.get("bestiario"):
+            extras.append("Bestiario")
+
+        if extras:
+            label_historia += " / " + " / ".join(extras)
+
+        opciones.append(label_historia)
+
 
         if plugins.get("inventario"):
             opciones.append("Inventario")
@@ -299,8 +351,8 @@ def menu_modificar_sistema():
 
         if seleccion == "Stats":
             menu_stats(sistema)
-        elif seleccion == "Historia / Capítulos":
-            menu_historia(sistema)
+        elif seleccion.startswith("Historia / Capítulos"):
+            menu_modificar_historia_notas_bestiario()
         elif seleccion == "Inventario":
             menu_inventario(sistema)
         elif seleccion == "Habilidades":
@@ -313,7 +365,6 @@ def menu_modificar_sistema():
 # 💡 Comentarios:
 # - Aquí se agregan futuros plugins al menú de modificación de sistema
 # - Si agregas, por ejemplo, 'tienda', se haría: if plugins.get("tienda"): opciones.append("Tienda")
-
 
 
 # ======================================================
@@ -354,7 +405,47 @@ def menu_modificar_tbm():
         elif seleccion == "Volver":
             break
 
+# ======================================================
+# SUBMENÚ: THISTORIA/CAPITULOS/NOTAS/BESTIARIO
+# ======================================================
 
+
+def menu_modificar_historia_notas_bestiario():
+    sistema = estado.sistema_actual
+    plugins = sistema.get("plugins_activos", {})
+
+    while True:
+        print("\n=== MODIFICAR HISTORIA / NOTAS / BESTIARIO ===")
+        opciones = []
+
+        # Historia SIEMPRE existe (core)
+        opciones.append("Historia / Capítulos")
+
+        if plugins.get("notas"):
+            opciones.append("Notas")
+
+        if plugins.get("bestiario"):
+            opciones.append("Bestiario")
+
+        opciones.append("Volver")
+
+        for i, op in enumerate(opciones, 1):
+            print(f"{i}. {op}")
+
+        try:
+            seleccion = opciones[int(input("> ")) - 1]
+        except (ValueError, IndexError):
+            print("❌ Opción inválida.")
+            continue
+
+        if seleccion == "Historia / Capítulos":
+            menu_historia(sistema)
+        elif seleccion == "Notas":
+            menu_notas(sistema)
+        elif seleccion == "Bestiario":
+            menu_bestiario(sistema)
+        elif seleccion == "Volver":
+            break
 
 # ------------------- EJECUCIÓN -------------------
 if __name__ == "__main__":

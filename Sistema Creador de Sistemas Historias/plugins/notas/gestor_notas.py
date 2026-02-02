@@ -1,55 +1,44 @@
 from core.estado_global import estado
+from core.utils.la_gran_enciclopedia import registrar_objeto, desactivar_objeto
 import uuid
 
-# ---------- UTIL ----------
+# ---------- UTILIDADES ----------
+def asegurarse_lista(sistema=None):
+    sistema = sistema or estado.sistema_actual
+    sistema.setdefault("notas", [])
+    sistema.setdefault("enciclopedias", {}).setdefault("notas", [])
+    return sistema
 
-def generar_id():
-    return f"nota_{uuid.uuid4().hex[:8]}"
-
-def obtener_enciclopedia(sistema):
-    return sistema.setdefault("enciclopedias", {}).setdefault("notas", [])
-
-def buscar_nota(enciclopedia, nota_id):
-    return next((n for n in enciclopedia if n["id"] == nota_id), None)
+def pedir_str(texto, actual=None):
+    valor = input(f"{texto} [{actual}]: ")
+    return actual if valor == "" else valor
 
 # ---------- CREAR ----------
-
 def crear_nota(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+    sistema = asegurarse_lista(sistema)
 
     print("\n📝 NUEVA NOTA\n")
 
     nota = {
-        "id": generar_id(),
+        "id": f"nota_{uuid.uuid4().hex[:8]}",
         "titulo": input("Título de la nota: "),
         "contenido": input("Contenido: "),
         "archivada": False
     }
 
-    enciclopedia = obtener_enciclopedia(sistema)
-    enciclopedia.append(nota)
+    # 1️⃣ Añadir al sistema activo
+    sistema["notas"].append(nota)
 
-    sistema.setdefault("notas", []).append(nota["id"])
+    # 2️⃣ Registrar en enciclopedia
+    registrar_objeto(sistema, "notas", nota)
 
     estado.cambios_no_guardados = True
     print("✅ Nota creada correctamente.")
 
 # ---------- MOSTRAR ----------
-
 def mostrar_notas(sistema=None, archivadas=False):
-    if sistema is None:
-        sistema = estado.sistema_actual
-
-    ids = sistema.get("notas", [])
-    enciclopedia = obtener_enciclopedia(sistema)
-
-    notas = [
-        buscar_nota(enciclopedia, nid)
-        for nid in ids
-        if buscar_nota(enciclopedia, nid)
-        and buscar_nota(enciclopedia, nid)["archivada"] == archivadas
-    ]
+    sistema = asegurarse_lista(sistema)
+    notas = [n for n in sistema["notas"] if n["archivada"] == archivadas]
 
     if not notas:
         print("📭 No hay notas para mostrar.")
@@ -61,37 +50,32 @@ def mostrar_notas(sistema=None, archivadas=False):
         print(n["contenido"])
 
 # ---------- EDITAR ----------
-
 def editar_nota(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
-
+    sistema = asegurarse_lista(sistema)
     mostrar_notas(sistema, archivadas=False)
 
     nota_id = input("\nID de la nota a editar: ").strip()
-    enciclopedia = obtener_enciclopedia(sistema)
-    nota = buscar_nota(enciclopedia, nota_id)
+    nota = next((n for n in sistema["notas"] if n["id"] == nota_id), None)
 
     if not nota:
         print("❌ Nota no encontrada.")
         return
 
-    nota["titulo"] = input(f"Nuevo título [{nota['titulo']}]: ") or nota["titulo"]
-    nota["contenido"] = input("Nuevo contenido (enter para mantener): ") or nota["contenido"]
+    nota["titulo"] = pedir_str("Nuevo título", nota["titulo"])
+    nota["contenido"] = pedir_str("Nuevo contenido", nota["contenido"])
 
+    # Actualizar enciclopedia
+    registrar_objeto(sistema, "notas", nota, actualizar=True)
     estado.cambios_no_guardados = True
     print("✅ Nota editada.")
 
 # ---------- ARCHIVAR ----------
-
 def archivar_nota(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
-
+    sistema = asegurarse_lista(sistema)
     mostrar_notas(sistema, archivadas=False)
 
     nota_id = input("\nID de la nota a archivar: ").strip()
-    nota = buscar_nota(obtener_enciclopedia(sistema), nota_id)
+    nota = next((n for n in sistema["notas"] if n["id"] == nota_id), None)
 
     if not nota:
         print("❌ Nota no encontrada.")
@@ -101,33 +85,30 @@ def archivar_nota(sistema=None):
     estado.cambios_no_guardados = True
     print("📦 Nota archivada.")
 
-# ---------- BORRAR ----------
-
+# ---------- ELIMINAR ----------
 def borrar_nota(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
-
+    sistema = asegurarse_lista(sistema)
     mostrar_notas(sistema, archivadas=True)
 
     nota_id = input("\nID de la nota a borrar definitivamente: ").strip()
-    enciclopedia = obtener_enciclopedia(sistema)
-    nota = buscar_nota(enciclopedia, nota_id)
+    nota = next((n for n in sistema["notas"] if n["id"] == nota_id), None)
 
     if not nota or not nota["archivada"]:
         print("❌ Solo se pueden borrar notas archivadas.")
         return
 
-    enciclopedia.remove(nota)
-    sistema["notas"].remove(nota_id)
+    # 1️⃣ Desactivar en enciclopedia
+    desactivar_objeto(sistema, "notas", nota["id"])
+
+    # 2️⃣ Eliminar del sistema activo
+    sistema["notas"].remove(nota)
 
     estado.cambios_no_guardados = True
-    print("🗑️ Nota eliminada definitivamente.")
+    print(f"🗑️ Nota eliminada definitivamente: {nota['titulo']}")
 
 # ---------- MENÚ ----------
-
 def menu_notas(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+    sistema = asegurarse_lista(sistema)
 
     while True:
         print("\n=== MENÚ DE NOTAS ===")

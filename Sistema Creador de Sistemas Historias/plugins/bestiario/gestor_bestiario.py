@@ -1,6 +1,8 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from plugins.bestiario.modelos import crear_monstruo_base
+from core.utils.la_gran_enciclopedia import registrar_objeto, desactivar_objeto, reactivar_objeto
+
 import uuid
 
 # --------------------------------------------------
@@ -62,11 +64,15 @@ def añadir_monstruo(sistema=None):
     monstruo["rareza"] = input("Rareza: ")
     monstruo["domesticable"] = input("¿Domesticable? (s/n): ").lower() == "s"
 
-    sistema["bestiario"].append(monstruo)
-    sistema["enciclopedias"]["bestiario"].append({**monstruo, "activo": True})
+    # 1️⃣ Añadir al sistema activo
+    sistema.setdefault("bestiario", []).append(monstruo)
+
+    # 2️⃣ Registrar en la Gran Enciclopedia (UNA sola línea)
+    registrar_objeto(sistema, "bestiario", monstruo)
 
     estado.cambios_no_guardados = True
     print(f"✅ Monstruo '{monstruo['nombre']}' añadido.")
+
 
 # --------------------------------------------------
 # MOSTRAR
@@ -128,10 +134,8 @@ def modificar_monstruo(sistema=None):
     monstruo["domesticable"] = pedir_bool("¿Domesticable?", monstruo["domesticable"])
 
     # ---------- SINCRONIZAR ENCICLOPEDIA ----------
-    for e in sistema["enciclopedias"]["bestiario"]:
-        if e["id"] == monstruo["id"]:
-            e.update(monstruo)
-            e["activo"] = True
+    registrar_objeto(sistema, "bestiario", monstruo, actualizar=True)
+
 
     estado.cambios_no_guardados = True
     print("✅ Monstruo actualizado.")
@@ -152,9 +156,8 @@ def eliminar_monstruo(sistema=None):
         print("❌ Selección inválida.")
         return
 
-    for e in sistema["enciclopedias"]["bestiario"]:
-        if e["id"] == monstruo["id"]:
-            e["activo"] = False
+    desactivar_objeto(sistema, "bestiario", monstruo["id"])
+
 
     estado.cambios_no_guardados = True
     print(f"🗑️ Monstruo '{monstruo['nombre']}' eliminado.")

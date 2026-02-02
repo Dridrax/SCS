@@ -1,4 +1,6 @@
 from core.estado_global import estado
+from core.utils.la_gran_enciclopedia import registrar_objeto, desactivar_objeto, reactivar_objeto
+import uuid
 
 # --------------------------------------------------
 # UTILIDADES
@@ -51,6 +53,7 @@ def añadir_bendicion(sistema=None):
     print("\n➕ AÑADIR BENDICIÓN\n")
 
     bendicion = {
+        "id": str(uuid.uuid4()),
         "nombre": input("Nombre de la bendición: "),
         "descripcion": input("Descripción: "),
         "origen": input("Origen de la bendición: "),
@@ -67,18 +70,12 @@ def añadir_bendicion(sistema=None):
             except ValueError:
                 print(f"⚠️ Ignorado efecto inválido: {parte}")
 
-    sistema["bendiciones"].append(bendicion)
+    sistema.setdefault["bendiciones"].append(bendicion)
+    registrar_objeto(sistema, "bendiciones", bendicion)
     estado.cambios_no_guardados = True
 
     print(f"✅ Bendición '{bendicion['nombre']}' añadida correctamente.")
 
-    # -------- REGISTRO EN ENCICLOPEDIA --------
-    enciclopedia = sistema["enciclopedias"]["bendiciones"]
-    if not any(
-        e["nombre"] == bendicion["nombre"] and e["tipo"] == bendicion["tipo"]
-        for e in enciclopedia
-    ):
-        enciclopedia.append({**bendicion, "activo": True})
 
 # --------------------------------------------------
 # MODIFICAR BENDICIÓN
@@ -122,6 +119,7 @@ def modificar_bendicion(sistema=None):
                 except ValueError:
                     print(f"⚠️ Ignorado efecto inválido: {parte}")
 
+    registrar_objeto(sistema, "bendicion", nuevos_efectos, actualizar=True)
     estado.cambios_no_guardados = True
     print("✅ Bendición modificada correctamente.")
 
@@ -135,6 +133,7 @@ def eliminar_bendicion(sistema=None):
         print("❌ No hay bendiciones para eliminar.")
         return
 
+    # Mostrar bendiciones
     for i, b in enumerate(sistema["bendiciones"], 1):
         print(f"{i}. {b['nombre']} ({b['tipo']})")
 
@@ -148,16 +147,19 @@ def eliminar_bendicion(sistema=None):
         print("❌ Número inválido.")
         return
 
-    b = sistema["bendiciones"].pop(indice)
+    # 1️⃣ Desactivar en la enciclopedia usando su ID
+    b = sistema["bendiciones"][indice]
+    desactivar_objeto(sistema, "bendiciones", b["id"])
+
+    # 2️⃣ Eliminar del sistema activo
+    sistema["bendiciones"].pop(indice)
+
+    # 3️⃣ Marcar cambios
     estado.cambios_no_guardados = True
 
     print(f"🗑️ Bendición eliminada: {b['nombre']}")
 
-    # -------- DESACTIVAR EN ENCICLOPEDIA --------
-    enciclopedia = sistema["enciclopedias"]["bendiciones"]
-    for e in enciclopedia:
-        if e["nombre"] == b["nombre"] and e["tipo"] == b["tipo"]:
-            e["activo"] = False
+
 
 # --------------------------------------------------
 # MENÚ
