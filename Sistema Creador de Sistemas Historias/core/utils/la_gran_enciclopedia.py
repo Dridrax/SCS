@@ -169,3 +169,139 @@ def registrar_objeto(sistema, tipo, objeto):
     objeto["activo"] = True
 
     enciclopedia.append(objeto)
+
+
+"""📘 DOCUMENTACIÓN — LA GRAN ENCICLOPEDIA
+===============================================================================
+
+¿QUÉ ES LA GRAN ENCICLOPEDIA?
+-----------------------------
+LA GRAN ENCICLOPEDIA es el registro global de todos los objetos del sistema.
+No gestiona lógica de juego ni efectos: solo EXISTENCIA, ESTADO y METADATOS.
+
+Es una base de datos viva, centralizada y desacoplada del sistema activo.
+
+La Enciclopedia permite:
+- Registrar objetos creados por plugins
+- Activarlos y desactivarlos
+- Mantener historial y referencias seguras
+- Evitar duplicados y bugs estructurales
+
+
+PRINCIPIOS FUNDAMENTALES (REGLAS DE ORO)
+----------------------------------------
+
+1️⃣ LA ENCICLOPEDIA NO CREA OBJETOS
+- Los objetos se crean SIEMPRE en sus plugins (inventario, notas, bestiario…)
+- La Enciclopedia SOLO registra objetos ya creados
+
+2️⃣ TODO OBJETO TIENE UN ID ÚNICO E INMUTABLE
+- Campo obligatorio: "id"
+- El ID jamás cambia
+- El ID es la única referencia válida entre sistemas
+
+3️⃣ EL SISTEMA ACTIVO SOLO GUARDA IDS
+✔ Correcto:
+    sistema["titulos"] = ["titulo_a1b2c3"]
+
+❌ Incorrecto:
+    sistema["titulos"] = [{objeto_completo}]
+
+4️⃣ LA ENCICLOPEDIA GUARDA EL OBJETO COMPLETO
+Ejemplo:
+{
+    "id": "nota_1bb9a3fd",
+    "titulo": "Carta antigua",
+    "contenido": "...",
+    "activo": True
+}
+
+5️⃣ ACTIVAR / DESACTIVAR ≠ CREAR / BORRAR
+- Crear: registrar + añadir ID al sistema
+- Desactivar: activo = False
+- Reactivar: activo = True
+- Borrar definitivo: normalmente NO se hace
+
+
+ESTRUCTURA DEL SISTEMA
+---------------------
+El sistema debe contener:
+
+sistema["enciclopedias"] = {
+    "titulos": [],
+    "habilidades": [],
+    "notas": [],
+    "bestiario": [],
+    ...
+}
+
+Cada clave contiene una LISTA DE OBJETOS COMPLETOS.
+
+
+CONTRATO MÍNIMO DE UN OBJETO ENCICLOPÉDICO
+-----------------------------------------
+TODO objeto registrado debe tener:
+
+{
+    "id": str,        # obligatorio
+    "activo": bool    # obligatorio
+}
+
+Además, debe tener AL MENOS un campo visible:
+- "nombre" (preferido)
+- o "titulo" (ej. notas)
+
+Nunca se debe asumir que existe "nombre".
+
+
+REGLA DE PRESENTACIÓN (MUY IMPORTANTE)
+-------------------------------------
+La Enciclopedia NO debe asumir campos específicos.
+
+Siempre usar una función segura para mostrar nombres:
+
+def obtener_nombre(obj):
+    return (
+        obj.get("nombre")
+        or obj.get("titulo")
+        or f"[{obj['id']}]"
+    )
+
+
+FUNCIONES PRINCIPALES DE LA ENCICLOPEDIA
+----------------------------------------
+- registrar_objeto
+- desactivar_objeto
+- reactivar_objeto
+- listar_enciclopedia
+
+Funciones planeadas:
+- referencias cruzadas
+- modo debug
+- búsqueda global (futuro)
+
+
+QUÉ NO DEBE HACER NUNCA LA ENCICLOPEDIA
+--------------------------------------
+🚫 No aplicar efectos
+🚫 No modificar stats
+🚫 No ejecutar lógica de juego
+🚫 No crear objetos
+🚫 No borrar referencias del sistema activo
+
+La Enciclopedia OBSERVA y REGISTRA, no ejecuta.
+
+
+OBJETIVO DEL DISEÑO
+-------------------
+- Separación total entre datos y lógica
+- Evitar duplicaciones
+- Permitir rollback e historial
+- Escalabilidad sin miedo
+- Plugins independientes y seguros
+
+Este archivo es el NÚCLEO DOCUMENTAL del sistema.
+Si algo rompe aquí, TODO el sistema lo notará.
+
+===============================================================================
+"""
