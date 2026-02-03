@@ -1,0 +1,43 @@
+{
+    "personaje": {
+        "nombre": "Noa"
+    },
+    "nombre_sistema": "Yue",
+    "stats": {
+        "Edad": 1,
+        "Nivel": 1,
+        "Vida": 1,
+        "Ataque": 1
+    },
+    "inventario": [],
+    "habilidades": [],
+    "titulos": [],
+    "bendiciones": [],
+    "maldiciones": [],
+    "linea_temporal": [],
+    "historia": {
+        "tipo": "origianl",
+        "fandom": "Aaa",
+        "sinopsis": "aa",
+        "personajes": "aa",
+        "parejas": "aa"
+    },
+    "enciclopedias": {
+        "inventario": [],
+        "habilidades": [],
+        "titulos": [],
+        "bendiciones": [],
+        "maldiciones": [],
+        "notas": [],
+        "bestiario": []
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "habilidades": true,
+        "bendiciones": false,
+        "maldiciones": false,
+        "titulos": false,
+        "notas": true,
+        "bestiario": true
+    }
+}

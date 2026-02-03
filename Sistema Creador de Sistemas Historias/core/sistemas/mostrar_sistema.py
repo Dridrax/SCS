@@ -1,10 +1,64 @@
-# core/sistemas/mostrar_sistema.py
+from core.estado_global import estado
+from core.stats.stats import mostrar_stats, mostrar_progress_stats_bar
 
-def mostrar_stats_completos(sistema):
+def mostrar_ficha(sistema):
     """
+    Muestra la ficha completa de un sistema.
+    Incluye:
+    - Personaje
+    - Nombre del sistema
+    - Historia
+    """
+
+    if not sistema:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    print("\n=== FICHA DEL SISTEMA ===")
+
+    # --- PERSONAJE Y NOMBRE DEL SISTEMA ---
+    personaje = sistema.get("personaje", {})
+    nombre_personaje = personaje.get("nombre", "Sin nombre")
+    nombre_sistema = sistema.get("nombre_sistema", "Sin nombre")
+
+    print(f"Personaje: {nombre_personaje}")
+    print(f"Sistema: {nombre_sistema}")
+
+    """# --- STATS SIMPLES ---
+    mostrar_stats(sistema)  # muestra stats simples y de progreso juntos
+
+    # --- PROGRESS STATS (opcional si quieres usar función modular) ---
+    # mostrar_progress_stats(sistema.get("progress_stats", {}))
+    mostrar_progress_stats_bar(sistema.get("progress_stats", {}))"""
+
+
+    # --- HISTORIA ---
+    historia = sistema.get("historia", {})
+    if historia:
+        print("\n--- TIPO DE HISTORIA ---")
+        tipo = historia.get("tipo")
+        if tipo == "original":  # original
+            print(f"Tipo: Original")
+            print(f"Sinopsis: {historia.get('sinopsis', 'Sin sinopsis')}")
+            print(f"Personajes principales: {historia.get('personajes_principales', 'N/A')}")
+            print(f"Parejas: {historia.get('parejas', 'N/A')}")
+        elif tipo == "fanfiction":  # fanfiction
+            print(f"Tipo: Fanfiction")
+            print(f"Fandom: {historia.get('fandom', 'N/A')}")
+            print(f"Sinopsis: {historia.get('sinopsis', 'Sin sinopsis')}")
+            print(f"Personajes: {historia.get('personajes', 'N/A')}")
+            print(f"Parejas: {historia.get('parejas', 'N/A')}")
+        else:
+            print("Tipo de historia no definido")
+    else:
+        print("\nNo hay historia registrada para este sistema.")
+
+
+"""def mostrar_stats_completos(sistema):
+ 
     Muestra los stats base, los efectos de títulos, bendiciones y maldiciones,
     y el total final, respetando los plugins activos.
-    """
+   
     print("\n=== STATS COMPLETOS ===")
 
     base_stats = sistema.get("stats", {})
@@ -38,14 +92,14 @@ def mostrar_stats_completos(sistema):
         if efecto != 0:
             print(f"- {stat}: {base_valor} (base) + {efecto} (efecto) = {total}")
         else:
-            print(f"- {stat}: {base_valor}")
+            print(f"- {stat}: {base_valor}")"""
 
 
-def mostrar_ficha(sistema):
-    """
+"""def mostrar_ficha(sistema):
+
     Muestra toda la ficha del sistema incluyendo stats completos y
     los plugins activos (titulos, bendiciones, maldiciones)
-    """
+    
     print("\n=== FICHA DEL SISTEMA ===")
     print(f"Personaje: {sistema['personaje']['nombre']}")
     print(f"Sistema: {sistema.get('nombre_sistema')}")
@@ -98,4 +152,4 @@ def mostrar_ficha(sistema):
             for m in sistema.get("maldiciones", []):
                 print(f"- {m.get('nombre','Desconocido')}: {m.get('descripcion','')} (Efectos: {m.get('efectos', {})})")
         else:
-            print("Vacío.")
+            print("Vacío.")"""

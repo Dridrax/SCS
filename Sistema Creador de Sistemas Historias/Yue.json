@@ -1,0 +1,15 @@
+{
+    "personaje": {
+        "nombre": "Noa"
+    },
+    "nombre_sistema": "Yue",
+    "stats": {
+        "Edad": 1
+    },
+    "historia": {
+        "tipo": "o",
+        "sinopsis": "a",
+        "personajes_principales": "a",
+        "parejas": "a"
+    }
+}

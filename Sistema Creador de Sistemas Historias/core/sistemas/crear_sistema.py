@@ -1,102 +1,204 @@
 from core.estado_global import estado
+from core.utils.funciones_utiles import pedir_int, pedir_si_no
 
-def pedir_int(prompt):
-    while True:
-        valor = input(prompt)
-        try:
-            return int(valor)
-        except ValueError:
-            print("❌ Debes introducir un número entero válido.")
 
 
 def crear_nuevo_sistema(plugins_activos=None):
-    if plugins_activos is None:
-        plugins_activos = {}
 
     print("\n=== CREAR NUEVO SISTEMA / PERSONAJE ===\n")
-    personaje_nombre = input("Nombre del personaje: ")
 
+    # --- PERSONAJE ---
+    personaje_nombre = input("Nombre del personaje: ")
+    edad = pedir_int("Edad: ")
+
+    # --- NOMBRE DEL SISTEMA ---
     if input("¿Tiene nombre el sistema? (s/n): ").lower() == "s":
         nombre_sistema = input("Nombre del sistema: ")
     else:
         nombre_sistema = None
 
-    # --- STATS BASE ---
+
+    # --- STATS ---
     stats = {}
-    stats["Edad"] = pedir_int("Edad: ")
-    stats["Nivel"] = pedir_int("Nivel: ")
-    stats["Vida"] = pedir_int("Vida: ")
-    stats["Ataque"] = pedir_int("Ataque: ")
+    progress_stats = {}
+    
+    # Stats simples (valor único)
+    if pedir_si_no("¿El sistema tiene stats simples? (s/n): "):
+        print("\n— Stats simples (enter para terminar) —")
+        while True:
+            nombre = input("Nombre del stat: ").strip()
+            if nombre == "":
+                break
+            valor = pedir_int("Valor (+ o -): ")
+            stats[nombre] = valor
+    
+    # Stats de progreso (valor actual / valor máximo)
+    if pedir_si_no("¿El sistema tiene stats de progreso? (s/n): "):
+        print("\n— Stats de progreso (enter para terminar) —")
+        while True:
+            nombre = input("Nombre del stat (ej: Cabeza, Pecho): ").strip()
+            if nombre == "":
+                break
+            
+            actual = pedir_int("Puntos actuales: ")
+            maximo = pedir_int("Puntos para subir de nivel: ")
+            nivel = pedir_int("Nivel Base: ")
+    
+            # Preguntar factor de escalado (opcional, por defecto 1.2)
+            factor = input("Factor de escalado (por defecto 1.2): ").strip()
+            try:
+                factor = float(factor) if factor else 1.2
+                if factor <= 0:
+                    print("❌ El factor debe ser mayor que 0. Se usará 1.2 por defecto.")
+                    factor = 1.2
+            except ValueError:
+                print("❌ Valor inválido. Se usará 1.2 por defecto.")
+                factor = 1.2
+    
+            progress_stats[nombre] = {
+                "actual": actual,
+                "max": maximo,
+                "nivel": nivel,
+                "factor_escalado": factor
+            }
 
-    while input("¿Hay más stats? (s/n): ").lower() == "s":
-        nombre = input("Nombre del stat: ")
-        valor = pedir_int("Valor (+ o -): ")
-        stats[nombre] = valor
-
-    # --- Inicialización según plugins ---
-    # Las claves que usan listas
-    inventario = [] if plugins_activos.get("inventario", False) else []
-    habilidades = [] if plugins_activos.get("habilidades", False) else []
-    titulos = [] if plugins_activos.get("titulos", False) else []
-    bendiciones = [] if plugins_activos.get("bendiciones", False) else []
-    maldiciones = [] if plugins_activos.get("maldiciones", False) else []
-    linea_temporal = []
-
-    # --- Enciclopedias ---
-    # Siempre es diccionario, cada sección lista vacía
-    enciclopedias = {}
-    if plugins_activos.get("inventario"):
-        enciclopedias["inventario"] = []
-    if plugins_activos.get("habilidades"):
-        enciclopedias["habilidades"] = []
-    if plugins_activos.get("titulos"):
-        enciclopedias["titulos"] = []
-    if plugins_activos.get("bendiciones"):
-        enciclopedias["bendiciones"] = []
-    if plugins_activos.get("maldiciones"):
-        enciclopedias["maldiciones"] = []
+    
 
     # --- HISTORIA ---
     historia = {}
-    tipo = input("\n¿Original o Fanfiction?: ").lower()
-    historia["tipo"] = tipo
-    if tipo == "original":
+
+    while True:
+        tipo = input("\n¿Original o Fanfiction?\nO/F: ").lower()
+        if tipo in ("o", "f"):
+            break
+        print("❌ Tipo inválido. Usa O o F.")
+
+    if tipo == "o":
+        historia["tipo"] = "original"
         historia["sinopsis"] = input("Sinopsis: ")
         historia["personajes_principales"] = input("Personajes principales: ")
+        historia["parejas"] = input("Parejas: ")
+
     else:
+        historia["tipo"] = "fanfiction"
         historia["fandom"] = input("Fandom: ")
         historia["sinopsis"] = input("Sinopsis: ")
         historia["personajes"] = input("Personajes: ")
         historia["parejas"] = input("Parejas: ")
 
-    # Inicializar enciclopedias aunque el plugin no esté activo
-    enciclopedias = {}
-    for plugin in ["inventario", "habilidades", "titulos", "bendiciones", "maldiciones", "notas", "bestiario"]:
-        enciclopedias[plugin] = []
+        
+        """======================== SCS - SISTEMA DE STATS ========================
+        
 
-    # Sistema final
+        ========================
+        SCS - SISTEMA DE STATS
+        ========================
+
+        SCS separa los stats por tipos para evitar mezclar lógicas distintas
+        y permitir una expansión sencilla mediante core o plugins.
+
+        --------------------------------------------------
+        1) Stats simples
+        --------------------------------------------------
+
+        Estructura:
+            "stats": {
+                "Fuerza": 10,
+                "Magia": 5
+            }
+
+        Características:
+        - Valor único
+        - Se modifican directamente
+        - No tienen progreso ni niveles
+
+        Ejemplo de uso:
+            sistema["stats"]["Fuerza"] += 1
+
+        --------------------------------------------------
+        2) Stats de progreso
+        --------------------------------------------------
+
+        Estructura:
+            "progress_stats": {
+                "Cabeza": {
+                    "actual": 100,
+                    "max": 640,
+                    "nivel": 1
+                }
+            }
+
+        Características:
+        - Representan progreso hacia un siguiente nivel
+        - Suben de nivel al alcanzar 'max'
+        - Pueden subir varios niveles de golpe
+        - El valor sobrante se conserva
+
+        --------------------------------------------------
+        Función core: sumar_progreso
+        --------------------------------------------------
+
+        Uso:
+            sumar_progreso(progress_stat, puntos)
+
+        Ejemplo:
+            sumar_progreso(sistema["progress_stats"]["Cabeza"], 120)
+
+        Comportamiento:
+        - Suma puntos al campo 'actual'
+        - Mientras actual >= max:
+            - resta max
+            - incrementa nivel
+            - recalcula el nuevo max
+
+        El escalado de 'max' puede ajustarse según el sistema
+        (porcentaje, fórmula fija, tablas, etc.).
+
+        --------------------------------------------------
+        DISEÑO FUTURO (stat_types)
+        --------------------------------------------------
+
+        Para escalar SCS, todos los tipos de stats pueden unificarse bajo:
+
+            "stat_types": {
+                "simple": {...},
+                "progress": {...},
+                "temporal": {...},
+                "porcentaje": {...}
+            }
+
+        Cada tipo:
+        - Tiene su propia estructura
+        - Tiene su propia lógica
+        - Puede vivir en core o en plugins
+
+        --------------------------------------------------
+        REGLA DE ORO
+        --------------------------------------------------
+        Nunca mezclar distintos tipos de stats en el mismo diccionario.
+        Cada tipo tiene sus helpers y reglas propias.
+
+        Esto mantiene SCS limpio, mantenible y escalable.
+        """
+
+
+    # --- SISTEMA FINAL ---
     sistema = {
-        "personaje": {"nombre": personaje_nombre},
+        "personaje": {
+            "nombre": personaje_nombre,
+            "edad": edad,
+        },
         "nombre_sistema": nombre_sistema,
         "stats": stats,
-        "inventario": [] ,  
-        "habilidades": [],
-        "titulos": [],
-        "bendiciones": [],
-        "maldiciones": [],
-        "linea_temporal": [],
+        "progress_stats": progress_stats,
         "historia": historia,
-        "enciclopedias": enciclopedias,
-        "plugins_activos": plugins_activos  # <-- Añadir aquí
+        "plugins_activos": plugins_activos or {},
     }
-
 
     estado.sistema_actual = sistema
     estado.cambios_no_guardados = True
-    print(f"\n✅ Sistema '{nombre_sistema}' creado para {personaje_nombre}.\n")
-    return sistema
 
-# 💡 COMENTARIOS:
-# - Si agregas nuevas secciones/plugin como tienda, ruleta, minijuegos, etc.:
-#   1. Añadir una lista vacía o diccionario en este bloque según su tipo.
-#   2. Añadir clave correspondiente en 'enciclopedias' si necesita registro de objetos.
+    nombre_mostrar = nombre_sistema if nombre_sistema else "Sin nombre"
+    print(f"\n✅ Sistema '{nombre_mostrar}' creado para '{personaje_nombre}'.\n")
+
+    return sistema

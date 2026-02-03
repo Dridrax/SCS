@@ -62,7 +62,7 @@ def cargar_sistema(nombre_archivo=None):
         estado.sistema_actual = sistema
         estado.archivo_actual = nombre_archivo
         estado.cambios_no_guardados = False
-        print(f"✅ Sistema cargado correctamente desde '{nombre_archivo}'")
+        print(f"\n✅ Sistema cargado correctamente desde '{nombre_archivo}'")
         return sistema
 
     except FileNotFoundError:

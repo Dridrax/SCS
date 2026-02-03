@@ -1,0 +1,37 @@
+{
+    "personaje": {
+        "nombre": "Izuku",
+        "edad": 14
+    },
+    "nombre_sistema": "CUVI",
+    "stats": {
+        "Dinero": 1892,
+        "Cabezon": 10
+    },
+    "progress_stats": {
+        "Cabeza": {
+            "actual": 100,
+            "max": 640,
+            "nivel": 1
+        },
+        "Pecho": {
+            "actual": 100,
+            "max": 1280,
+            "nivel": 7
+        }
+    },
+    "historia": {
+        "tipo": "fanfiction",
+        "fandom": "Bnha",
+        "sinopsis": "",
+        "personajes": "",
+        "parejas": ""
+    },
+    "plugins_activos": {},
+    "inventario": [],
+    "habilidades": [],
+    "titulos": [],
+    "bendiciones": [],
+    "maldiciones": [],
+    "linea_temporal": []
+}
