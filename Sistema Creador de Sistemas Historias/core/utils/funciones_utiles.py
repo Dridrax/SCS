@@ -33,13 +33,12 @@ def modificar_progreso(stat, cambio):
     Modifica un progress stat sumando/restando puntos.
     Permite subir o bajar niveles y utiliza un factor de escalado editable.
     """
-    if "nivel" not in stat or "actual" not in stat or "max" not in stat:
+    if not all(k in stat for k in ("nivel", "actual", "max")):
         print("❌ Stat mal definido")
         return
 
     stat["actual"] += cambio
-
-    factor = stat.get("factor_escalado", 1.2)  # Usa factor dinámico si existe
+    factor = stat.get("factor_escalado", 1.2)
 
     # Subir niveles
     while stat["actual"] >= stat["max"]:
@@ -50,26 +49,26 @@ def modificar_progreso(stat, cambio):
     # Bajar niveles
     while stat["actual"] < 0 and stat["nivel"] > 1:
         stat["nivel"] -= 1
-        stat["max"] = int(stat["max"] / factor)
+        stat["max"] = max(1, int(stat["max"] / factor))
         stat["actual"] += stat["max"]
 
-    # Evitar valores negativos en nivel 1
     if stat["nivel"] == 1 and stat["actual"] < 0:
         stat["actual"] = 0
 
-"""def modificar_factor_escalado(stat):
-    
+
+def modificar_factor_escalado(stat):
+    """
     Permite al autor cambiar el factor de escalado de un progress stat.
     El cambio aplica a niveles futuros.
-    
+    """
     if "factor_escalado" not in stat:
         stat["factor_escalado"] = 1.2
 
     print(f"Factor actual: {stat['factor_escalado']}")
-    nuevo_factor = float(input("Nuevo factor de escalado (ej: 1.2): "))
+    nuevo_factor = float(input("\nNuevo factor de escalado (ej: 1.2): "))
     if nuevo_factor <= 0:
         print("❌ El factor debe ser mayor que 0.")
         return
 
     stat["factor_escalado"] = nuevo_factor
-    print(f"✅ Factor de escalado actualizado a {nuevo_factor}")"""
+    print(f"\n✅ Factor de escalado actualizado a {nuevo_factor}")

@@ -7,7 +7,8 @@ from core.utils.salida import salir_programa
 from core.utils.funciones_utiles import pedir_int, pedir_si_no
 
 #menus
-from core.menus.menus import menu_crear_cargar, menu_guardado, menu_mostrar, menu_modificar
+from core.menus.menus import (menu_crear_cargar, menu_mostrar,
+                              menu_modificar)
 
 
 # ------------------- MENÚ PRINCIPAL -------------------
@@ -35,7 +36,7 @@ def menu_principal():
             print("1. Guardar")
             print("2. Salir")
 
-            opcion_2 = pedir_int("Elije una opcíon: ")
+            opcion_2 = pedir_int("\nElije una opcíon: ")
             if opcion_2 == 1:
                 guardar_sistema()
             elif opcion_2 == 2:

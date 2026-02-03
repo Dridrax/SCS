@@ -195,9 +195,11 @@ def modificar_stat_simples(sistema=None):
 # =========================
 def modificar_stat_progress(sistema=None):
     """
-    Modifica un stat de progreso, sumando o restando puntos.
-    Usa la función 'modificar_progreso' para actualizar correctamente actual/nivel/max.
-    Cada progress stat puede tener su factor de escalado editable.
+    Permite modificar completamente un progress stat:
+    - Progreso actual
+    - Nivel
+    - Valor máximo
+    - Factor de escalado
     """
     if sistema is None:
         sistema = estado.sistema_actual
@@ -212,26 +214,56 @@ def modificar_stat_progress(sistema=None):
     mostrar_progress_stats_bar(progress_stats)
 
     stat_nombre = input("\nNombre del stat a modificar: ").strip()
-
     if stat_nombre not in progress_stats:
         print("❌ Ese stat no existe.")
         return
 
-    # Asegurar que exista factor de escalado
-    if "factor_escalado" not in progress_stats[stat_nombre]:
-        progress_stats[stat_nombre]["factor_escalado"] = 1.2
+    stat = progress_stats[stat_nombre]
 
-    try:
-        cambio = int(input("Cantidad a sumar/restar (ej: -10 o 50): "))
-    except ValueError:
-        print("❌ Debes introducir un número.")
-        return
+    # Asegurar campos base
+    stat.setdefault("factor_escalado", 1.2)
 
-    # Modifica actual/nivel/max usando factor dinámico
-    modificar_progreso(progress_stats[stat_nombre], cambio)
+    print(f"\nEditando '{stat_nombre}' (ENTER para mantener valor actual)\n")
+
+    # --- MODIFICAR PROGRESO ---
+    cambio_txt = input("\nSumar/restar progreso (ej: -10 o 50): ").strip()
+    if cambio_txt:
+        try:
+            modificar_progreso(stat, int(cambio_txt))
+        except ValueError:
+            print("❌ Progreso inválido.")
+
+    # --- MODIFICAR NIVEL ---
+    nivel_txt = input(f"\nNivel actual ({stat['nivel']}): ").strip()
+    if nivel_txt:
+        try:
+            stat["nivel"] = max(1, int(nivel_txt))
+        except ValueError:
+            print("❌ Nivel inválido.")
+
+    # --- MODIFICAR MAX ---
+    max_txt = input(f"\nValor máximo actual ({stat['max']}): ").strip()
+    if max_txt:
+        try:
+            stat["max"] = max(1, int(max_txt))
+        except ValueError:
+            print("❌ Valor máximo inválido.")
+
+    # --- MODIFICAR FACTOR ---
+    factor_txt = input(f"\nFactor de escalado actual ({stat['factor_escalado']}): ").strip()
+    if factor_txt:
+        try:
+            factor = float(factor_txt)
+            if factor > 0:
+                stat["factor_escalado"] = factor
+            else:
+                print("❌ El factor debe ser mayor que 0.")
+        except ValueError:
+            print("❌ Factor inválido.")
 
     estado.cambios_no_guardados = True
-    print(f"✅ {stat_nombre} modificado correctamente.")
+    print(f"\n✅ '{stat_nombre}' modificado correctamente.")
+
 
 
 
