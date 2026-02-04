@@ -1,9 +1,39 @@
 from core.estado_global import estado
 from core.utils.funciones_utiles import pedir_int, pedir_si_no
+from core.guardado.archivos import guardar_sistema
 
 
 
 def crear_nuevo_sistema(plugins_activos=None):
+
+
+    # --- SELECCIÓN DE PLUGINS ---
+    print("\n=== SELECCIÓN DE PLUGINS ===")
+    print("Activa o desactiva los plugins que usará este sistema.\n")
+    
+    from core.menus.menus import menu_plugins
+    
+    PLUGINS_DISPONIBLES = ["inventario"]
+    
+    # 1️⃣ Guardamos el sistema actual real (si existe)
+    sistema_anterior = estado.sistema_actual
+    
+    # 2️⃣ Creamos un sistema TEMPORAL solo para plugins
+    estado.sistema_actual = {
+        "plugins_activos": {plugin: False for plugin in PLUGINS_DISPONIBLES}
+    }
+    
+    # 3️⃣ Abrimos el menú
+    menu_plugins(autoguardar=False)
+    
+    # 4️⃣ Guardamos el resultado
+    plugins_activos = estado.sistema_actual["plugins_activos"]
+    
+    # 5️⃣ Restauramos el sistema real
+    estado.sistema_actual = sistema_anterior
+
+
+
 
     print("\n=== CREAR NUEVO SISTEMA / PERSONAJE ===\n")
 
@@ -195,7 +225,21 @@ def crear_nuevo_sistema(plugins_activos=None):
         "plugins_activos": plugins_activos or {},
     }
 
+    # Si el plugin inventario está activo, inicializamos el inventario como diccionario vacío
+    if sistema["plugins_activos"].get("inventario"):
+        sistema["inventario"] = {}
+
     estado.sistema_actual = sistema
+
+    # Inicializar plugin_cache para este sistema
+    estado.plugin_cache = {
+        "plugins": {},
+        "stats": sistema.get("stats", {}),
+        "progress_stats": sistema.get("progress_stats", {})
+    }
+
+    
+
     estado.cambios_no_guardados = True
 
     nombre_mostrar = nombre_sistema if nombre_sistema else "Sin nombre"

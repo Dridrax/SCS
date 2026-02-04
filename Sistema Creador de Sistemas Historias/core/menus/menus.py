@@ -2,8 +2,13 @@ from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema, cargar_sistema, guardar_como
 
 from core.sistemas.crear_sistema import crear_nuevo_sistema
-from core.utils.funciones_utiles import pedir_int
+from core.utils.funciones_utiles import pedir_int, pedir_si_no
 from core.sistemas.mostrar_sistema import mostrar_ficha
+from core.plugins.registry import PLUGINS
+#plugins
+
+from plugins.inventario.menus_inv import (menu_agregar_item, mostrar_items,
+                                          menu_modificar_item, menu_eliminar_item)
 
 #Stats
 from core.stats.stats import (mostrar_stats, mostrar_progress_stats_bar, 
@@ -127,9 +132,6 @@ Recomendación final
 - Cualquier cambio futuro en stats (ej: nuevos tipos de stats) solo requerirá actualizar las funciones de stats y llamar desde aquí.
 """
 
-
-
-
 # ------------------- CREAR / CARGAR -------------------
 def menu_crear_cargar():
     while True:
@@ -205,7 +207,7 @@ def menu_mostrar(sistema):
             mostrar_ficha(estado.sistema_actual)
 
         elif opcion == 3:
-            print("\nImplementar mañana")
+            mostrar_items()
         elif opcion == 4:
             break
 
@@ -223,18 +225,20 @@ def menu_modificar(sistema):
 
         opcion = pedir_int("\nElige una opción: ")
         if opcion == 1:
-            modificar_stats(sistema)
+            menu_modificar_stats(sistema)
         elif opcion == 2:
-            print("\nImplementar mañana")
+            menu_modificar_items(sistema)
         else:
             estado.cambios_no_guardados = True
             break
 
 # ------------------- MODIFICAR STATS MENUS Y SUBMENUS -------------------
-def modificar_stats(sistema):
+def menu_modificar_stats(sistema):
+    
     if not estado.sistema_actual:
         print("\n❌ No hay sistema cargado.")
         return
+    
     
     while True:
         print(f"\n=== MODIFICAR STATS (Sistema actual: {sistema.get("nombre_sistema")}) ===")
@@ -299,3 +303,179 @@ def modificar_stats(sistema):
         else:
             guardar_sistema()
             break
+
+# ------------------- MODIFICAR ITEMS MENUS Y SUBMENUS -------------------
+def menu_modificar_items(sistema):
+    if not estado.sistema_actual:
+        print("\n❌ No hay sistema cargado.")
+        return
+    
+    
+    while True:
+        print(f"\n=== MODIFICAR ITEMS (Sistema actual: {sistema.get("nombre_sistema")}) ===")
+
+        print("1. Agregar Items.")
+        print("2. Modificar Item.")
+        print("3. Eliminar Items.")
+        print("4. Mostrar Items.")
+        print("5. Volver.")
+
+        opcion = pedir_int("\nElige una opción: ")
+        
+        #Modificar Items
+        if opcion == 1:
+            menu_agregar_item()
+        
+        #Agregar Items
+        elif opcion == 2:
+            menu_modificar_item()
+
+        #Eliminar Items
+        elif opcion == 3:
+            menu_eliminar_item()
+
+        elif opcion == 4:
+            mostrar_items()
+
+        else:
+            guardar_sistema()
+            break
+
+#------------------- ADMINISTRAR PLUGINS/MENU PLUGINS -------------------
+
+# Diccionario con todos los plugins disponibles y sus funciones on_enable (opcional)
+"""PLUGINS = {
+    "inventario": {
+        "on_enable": lambda sistema: sistema.setdefault("inventario", {})
+    },
+    # "habilidades": {...}, "bendiciones": {...} etc.
+}"""
+
+def menu_plugins(autoguardar=True):
+    sistema = estado.sistema_actual
+
+    if not sistema:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    plugins = sistema.get("plugins_activos", {})
+    if not plugins:
+        print("\n❌ No hay plugins definidos para este sistema.")
+        return
+
+    while True:
+        print(f"\n=== ADMINISTRAR PLUGINS (Sistema actual: {sistema.get('nombre_sistema')}) ===")
+        for i, plugin in enumerate(plugins, 1):
+            estado_str = "✅ Activo" if plugins[plugin] else "❌ Inactivo"
+            print(f"{i}. {plugin.capitalize()}: {estado_str}")
+        print(f"{len(plugins)+1}. Continuar/Volver")
+
+        try:
+            opcion = int(input("\nElige un plugin para activar/desactivar: "))
+        except ValueError:
+            print("❌ Opción no válida.")
+            continue
+
+        if opcion == len(plugins)+1:
+            if autoguardar and estado.cambios_no_guardados:
+                guardar_sistema()
+            break
+        elif 1 <= opcion <= len(plugins):
+            key = list(plugins.keys())[opcion - 1]
+            nuevo_estado = not plugins[key]
+
+            plugin_obj = PLUGINS.get(key)
+            if nuevo_estado:  # Activar plugin
+                plugins[key] = True
+
+                # Restaurar datos desde plugin_cache si existen
+                if key in estado.plugin_cache.get("plugins", {}):
+                    sistema[key] = estado.plugin_cache["plugins"][key]
+                elif plugin_obj and "on_enable" in plugin_obj:
+                    plugin_obj["on_enable"](sistema)
+
+                
+                print(f"🔄 {key.capitalize()} ahora Activo")
+
+            else:  # Desactivar plugin
+                if key in sistema:
+                    conservar = input(f"¿Conservar los datos del plugin '{key}' para poder restaurarlos después? (s/n): ").lower() == "s"
+                    if conservar:
+                        # Guardar en plugin_cache
+                        if "plugins" not in estado.plugin_cache:
+                            estado.plugin_cache["plugins"] = {}
+                        estado.plugin_cache["plugins"][key] = sistema[key]
+                    else:
+                        # Eliminar del cache
+                        estado.plugin_cache.get("plugins", {}).pop(key, None)
+
+                    # Eliminar datos del sistema mientras está desactivado
+                    sistema.pop(key, None)
+
+                plugins[key] = False
+                
+                print(f"🔄 {key.capitalize()} ahora Inactivo")
+
+            estado.cambios_no_guardados = True
+        else:
+            print("❌ Opción no válida.")
+
+
+
+
+
+"""def menu_plugins():
+    sistema = estado.sistema_actual
+
+    if not sistema:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    plugins = sistema.setdefault("plugins_activos", {})
+
+    while True:
+        print(f"\n=== ADMINISTRAR PLUGINS (Sistema actual: {sistema.get('nombre_sistema', 'Sin nombre')}) ===")
+        for i, plugin in enumerate(plugins, 1):
+            estado_str = "✅ Activo" if plugins[plugin] else "❌ Inactivo"
+            print(f"{i}. {plugin.capitalize()}: {estado_str}")
+        print(f"{len(plugins)+1}. Continuar/Volver")
+
+        try:
+            opcion = int(input("\nElige un plugin para activar/desactivar: "))
+        except ValueError:
+            print("❌ Opción no válida.")
+            continue
+
+        if opcion == len(plugins) + 1:
+            break
+        elif 1 <= opcion <= len(plugins):
+            key = list(plugins.keys())[opcion - 1]
+            nuevo_estado = not plugins[key]
+
+            plugin_obj = PLUGINS.get(key) if "PLUGINS" in globals() else None
+            if "plugin_cache" not in estado.__dict__:
+                estado.plugin_cache = {}
+
+            if nuevo_estado:  # Activar
+                plugins[key] = True
+                # Restaurar datos si estaban en cache
+                if key in estado.plugin_cache:
+                    sistema[key] = estado.plugin_cache[key]
+                elif plugin_obj and hasattr(plugin_obj, "on_enable"):
+                    plugin_obj["on_enable"](sistema)
+
+            else:  # Desactivar
+                if key in sistema:
+                    conservar = input("¿Conservar los datos del plugin? (s/n): ").lower() == "s"
+                    if conservar:
+                        estado.plugin_cache[key] = sistema[key]
+                    else:
+                        estado.plugin_cache.pop(key, None)
+                    # Eliminar datos del sistema mientras está desactivado
+                    sistema.pop(key, None)
+                plugins[key] = False
+
+            estado.cambios_no_guardados = True
+            print(f"🔄 {key.capitalize()} ahora {'Activo' if plugins[key] else 'Inactivo'}")
+        else:
+            print("❌ Opción no válida.")"""

@@ -8,7 +8,7 @@ from core.utils.funciones_utiles import pedir_int, pedir_si_no
 
 #menus
 from core.menus.menus import (menu_crear_cargar, menu_mostrar,
-                              menu_modificar)
+                              menu_modificar, menu_plugins)
 
 
 # ------------------- MENÚ PRINCIPAL -------------------
@@ -19,8 +19,7 @@ def menu_principal():
         print("1. Crear/Cargar Sistema")
         print("2. Mostrar Sistema")
         print("3. Modificar Sistema")
-        #print("Activar/Desactivar Plugins.)
-        print("4. Salir/Guardar\n")
+        print("4. Plugins/Guardar/Salir\n")
 
         opcion = pedir_int("Elige una opción: ")
         if opcion == 1:
@@ -34,20 +33,17 @@ def menu_principal():
         elif opcion == 4:
             print(f"\n=== SALIR/GUARDAR (Sistema actual: {nombre_sistema}) ===")
             print("1. Guardar")
-            print("2. Salir")
+            print("2. Plugins")
+            print("3. Salir")
 
             opcion_2 = pedir_int("\nElije una opcíon: ")
             if opcion_2 == 1:
                 guardar_sistema()
             elif opcion_2 == 2:
+                menu_plugins()
+            elif opcion_2 == 3:
                 salir_programa()
                 break
-
-
-
-
-
-
 
 # ------------------- EJECUCIÓN -------------------
 if __name__ == "__main__":
@@ -56,31 +52,3 @@ if __name__ == "__main__":
 
 
 
-
-"""------------------- ADMINISTRAR PLUGINS -------------------
-def menu_plugins():
-    sistema = estado.sistema_actual
-    plugins = sistema.get("plugins_activos", {})
-
-    while True:
-        print("\n=== ADMINISTRAR PLUGINS ===")
-        for i, plugin in enumerate(plugins, 1):
-            estado_str = "✅ Activo" if plugins[plugin] else "❌ Inactivo"
-            print(f"{i}. {plugin.capitalize()}: {estado_str}")
-        print(f"{len(plugins)+1}. Volver")
-
-        try:
-            opcion = int(input("Elige un plugin para activar/desactivar: "))
-        except ValueError:
-            print("❌ Opción no válida.")
-            continue
-
-        if opcion == len(plugins)+1:
-            break
-        elif 1 <= opcion <= len(plugins):
-            key = list(plugins.keys())[opcion-1]
-            plugins[key] = not plugins[key]
-            estado.cambios_no_guardados = True
-            print(f"🔄 {key.capitalize()} ahora {'Activo' if plugins[key] else 'Inactivo'}")
-        else:
-            print("❌ Opción no válida.")"""

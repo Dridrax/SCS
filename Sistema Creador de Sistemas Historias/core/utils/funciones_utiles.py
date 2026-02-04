@@ -7,6 +7,22 @@ def pedir_int(prompt):
         except ValueError:
             print("❌ Debes introducir un número entero válido.")
 
+
+"""Mejorado def pedir_int(texto, minimo=None, maximo=None):
+    while True:
+        try:
+            valor = int(input(texto))
+            if minimo is not None and valor < minimo:
+                print(f"❌ Debe ser ≥ {minimo}")
+                continue
+            if maximo is not None and valor > maximo:
+                print(f"❌ Debe ser ≤ {maximo}")
+                continue
+            return valor
+        except ValueError:
+            print("❌ Introduce un número válido.")
+"""
+
 def pedir_si_no(texto):
     while True:
         respuesta = input(texto).strip().lower()

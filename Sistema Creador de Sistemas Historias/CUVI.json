@@ -1,12 +1,12 @@
 {
     "personaje": {
-        "nombre": "Izuku",
-        "edad": 14
+        "nombre": "Izuku Midoriya",
+        "edad": 15
     },
     "nombre_sistema": "CUVI",
     "stats": {
-        "Dinero": 1781,
-        "Puntos": 36
+        "Puntos": 36,
+        "Dolares": 1781
     },
     "progress_stats": {
         "Cabeza": {
@@ -22,24 +22,97 @@
             "factor_escalado": 2.0
         },
         "Partes": {
-            "actual": 26,
-            "max": 320,
+            "actual": 36,
+            "max": 360,
             "nivel": 6,
             "factor_escalado": 2.0
         }
     },
     "historia": {
         "tipo": "fanfiction",
-        "fandom": "Bnha",
-        "sinopsis": "",
-        "personajes": "",
-        "parejas": ""
+        "fandom": "Boku No Hero Academia",
+        "sinopsis": "Izuk, ese adolescente sin don, el paria del que todos se burlaban, el que sufria bajo la mano de su ex amigo de la infancia, el que algunas veces se habia intentado quitar la vida por lo miserable de lamisma, ahora tenia la oportunidad de no solo cumplir lo que todos le dijeron que era imposible si no que tambien de demostrar que Katsuki era un gilipollas asi que obviamente iba a darlo todo para lograrlo.",
+        "personajes": "Izuku Midoriya",
+        "parejas": "Izuku/Toga, Izuku/Yuu"
     },
-    "plugins_activos": {},
-    "inventario": [],
-    "habilidades": [],
-    "titulos": [],
-    "bendiciones": [],
-    "maldiciones": [],
-    "linea_temporal": []
+    "plugins_activos": {
+        "inventario": true
+    },
+    "inventario": {
+        "8f0f6f6f-8d7d-4a0c-b568-125887f884a7": {
+            "id": "8f0f6f6f-8d7d-4a0c-b568-125887f884a7",
+            "nombre": "Fragmentos de llama",
+            "rareza": "Blanco",
+            "tipo": "Objeto",
+            "descripcion": "Un Fragmento de una llama",
+            "cantidad": 28,
+            "efectos": {
+                "PT": 3
+            }
+        },
+        "00cce105-0ae8-43ac-b304-3b212b7c97f4": {
+            "id": "00cce105-0ae8-43ac-b304-3b212b7c97f4",
+            "nombre": "Colmillos Ardientes",
+            "rareza": "Blanco",
+            "tipo": "Objeto",
+            "descripcion": "Unos colmillos llameantes",
+            "cantidad": 24,
+            "efectos": {
+                "PT": 7
+            }
+        },
+        "b9d159a7-19d7-4dab-8d2a-27762d594009": {
+            "id": "b9d159a7-19d7-4dab-8d2a-27762d594009",
+            "nombre": "Glandulas Igneas",
+            "rareza": "Blanco",
+            "tipo": "Objeto",
+            "descripcion": "Unas glandulas de fuego",
+            "cantidad": 8,
+            "efectos": {
+                "PT": 12
+            }
+        },
+        "0c010cc9-620d-4e5d-b367-9c7d0819b836": {
+            "id": "0c010cc9-620d-4e5d-b367-9c7d0819b836",
+            "nombre": "Espada Calcinada",
+            "rareza": "Blanco",
+            "tipo": "Arma",
+            "descripcion": "Una espada de llamas capaz de producir daño de fuego",
+            "cantidad": 1,
+            "efectos": {
+                "+ Daño de Fuego": 15
+            }
+        },
+        "ef375734-7cf8-4639-8c4a-5c9da5486d5a": {
+            "id": "ef375734-7cf8-4639-8c4a-5c9da5486d5a",
+            "nombre": "Pluma de Fenix",
+            "rareza": "Blanco",
+            "tipo": "Objeto",
+            "descripcion": "Unas plumas de un fenix, aun tienen calor en ellas.",
+            "cantidad": 4,
+            "efectos": {
+                "PT": 100
+            }
+        },
+        "b4be5a7a-200d-47e6-a62f-5eade2a11ec2": {
+            "id": "b4be5a7a-200d-47e6-a62f-5eade2a11ec2",
+            "nombre": "Nucleos de Bronce",
+            "rareza": "Blanco",
+            "tipo": "Objeto",
+            "descripcion": "Unos nucleos de bronce dropeados de monstruos basicos",
+            "cantidad": 5,
+            "efectos": {
+                "PT": 20
+            }
+        },
+        "905a180c-6463-4054-9671-a2712b7a0709": {
+            "id": "905a180c-6463-4054-9671-a2712b7a0709",
+            "nombre": "Boleto bronce",
+            "rareza": "No tiene",
+            "tipo": "Canjeable",
+            "descripcion": "Un boleto que te permite una tirada en la ruleta de bronce para consegir hasta 10 puntos de estadistica o un premio en metalico de hasta 10 millones de dolares",
+            "cantidad": 6,
+            "efectos": {}
+        }
+    }
 }
