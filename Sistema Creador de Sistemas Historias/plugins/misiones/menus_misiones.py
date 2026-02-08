@@ -1,8 +1,46 @@
 from core.estado_global import estado
 from core.utils.funciones_utiles import pedir_int
+from core.guardado.archivos import guardar_sistema
 from plugins.misiones.helpers import (crear_mision, modificar_mision, eliminar_mision, 
                                       completar_mision, fallar_mision, menu_crear_mision,
-                                      imprimir_resultados)
+                                      imprimir_resultados, sync_misiones_plugin_cache)
+
+
+def seleccionar_mision(sistema, accion="modificar"):
+    """
+    Función para seleccionar una misión de forma interactiva.
+    Retorna la misión seleccionada (dict) o None si se cancela/no encuentra.
+    """
+    misiones = sistema.get("misiones", {}).get("activas", {})
+    if not misiones:
+        print(f"❌ No hay misiones para {accion}.")
+        return None
+
+    lista = list(misiones.values())
+    print(f"\n=== MISIÓN A {accion.upper()} ===")
+    for i, m in enumerate(lista, 1):
+        print(f"{i}. {m.get('nombre', 'Sin nombre')}")
+
+    seleccion = input("Elige misión por número o nombre (Enter para cancelar): ").strip()
+    if not seleccion:
+        return None
+
+    mision = None
+    if seleccion.isdigit():
+        idx = int(seleccion) - 1
+        if 0 <= idx < len(lista):
+            mision = lista[idx]
+    else:
+        for m in lista:
+            if m.get("nombre", "").lower() == seleccion.lower():
+                mision = m
+                break
+
+    if not mision:
+        print("❌ Misión no encontrada.")
+        return None
+
+    return mision
 
 
 def menu_administrar_misiones(sistema=None):
@@ -22,50 +60,22 @@ def menu_administrar_misiones(sistema=None):
 
         opcion = pedir_int("Elige una opción: ", default=4)
 
-        # ─────────────────────────────
-        # CREAR NUEVA MISIÓN
-        # ─────────────────────────────
         if opcion == 1:
-            menu_crear_mision(estado.sistema_actual)
+            menu_crear_mision(sistema)
 
         elif opcion == 2:
-            misiones = sistema.get("misiones", {})
-            if not misiones:
-                print("❌ No hay misiones para modificar.")
-                continue
-            
-            print("\n=== MISIÓN A MODIFICAR ===")
-            lista = list(misiones.values())
-            for i, m in enumerate(lista, 1):
-                print(f"{i}. {m['nombre']}")
-        
-            seleccion = input("Elige misión por número o nombre (Enter para cancelar): ").strip()
-            if not seleccion:
-                continue
-            
-            mision = None
-            if seleccion.isdigit():
-                idx = int(seleccion) - 1
-                if 0 <= idx < len(lista):
-                    mision = lista[idx]
-            else:
-                for m in lista:
-                    if m["nombre"].lower() == seleccion.lower():
-                        mision = m
-                        break
-                    
-            if not mision:
-                print("❌ Misión no encontrada.")
-                continue
-            
-            modificar_mision(sistema, mision["id"])
-
+            mision = seleccionar_mision(sistema, accion="modificar")
+            if mision:
+                modificar_mision(sistema, mision["id"])
 
         elif opcion == 3:
-            eliminar_mision(sistema, mision["id"])
+            mision = seleccionar_mision(sistema, accion="eliminar")
+            if mision:
+                eliminar_mision(sistema, mision["id"])
 
         else:
             break
+
 
 
 
@@ -78,12 +88,15 @@ def mostrar_misiones(sistema=None):
         print("❌ No hay sistema cargado.")
         return
 
-    misiones = sistema.get("misiones", {})
-    if not misiones:
-        print("❌ No hay misiones.")
+    # Obtener solo misiones activas
+    activas = sistema.get("misiones", {}).get("activas", {})
+    
+    # Convertir a lista y filtrar solo misiones válidas
+    misiones_list = [m for m in activas.values() if isinstance(m, dict) and "id" in m and "nombre" in m]
+    
+    if not misiones_list:
+        print("❌ No hay misiones activas.")
         return
-
-    misiones_list = list(misiones.values())
 
     while True:
         print("\n=== MISIONES ===")
@@ -110,7 +123,7 @@ def mostrar_misiones(sistema=None):
             print("❌ No se encontró esa misión.")
             continue
 
-        # Entrar directamente a los detalles
+        # Entrar a los detalles de la misión
         while True:
             print("\n--- DETALLES DE LA MISIÓN ---")
             print(f"ID: {mision['id']}")
@@ -124,19 +137,31 @@ def mostrar_misiones(sistema=None):
             penalizaciones = mision.get("penalizaciones", {})
             imprimir_resultados("Penalizaciones", penalizaciones)
 
-            print("\n[C] Completar misión   [F]Fallar Mision   [D] Eliminar misión   [Enter] Volver")
+            print("\n[C] Completar misión   [F] Fallar Misión   [D] Eliminar misión   [Enter] Volver")
             accion = input("> ").strip().lower()
 
             if accion == "c":
                 completar_mision(sistema, mision["id"])
+                # Eliminar del sistema y de la lista temporal
+                sistema["misiones"]["activas"].pop(mision["id"], None)
                 misiones_list.remove(mision)
+                # Guardar y sincronizar plugin cache
+                estado.cambios_no_guardados = True
+                guardar_sistema()
+                sync_misiones_plugin_cache(sistema)
                 print("\n✅ Misión completada y recompensas entregadas.")
                 imprimir_resultados("Recompensas", recompensas)
                 break
 
             elif accion == "f":
                 fallar_mision(sistema, mision["id"])
+                # Eliminar del sistema y de la lista temporal
+                sistema["misiones"]["activas"].pop(mision["id"], None)
                 misiones_list.remove(mision)
+                # Guardar y sincronizar plugin cache
+                estado.cambios_no_guardados = True
+                guardar_sistema()
+                sync_misiones_plugin_cache(sistema)
                 print("\n❌ Misión fallada y penalizaciones aplicadas.")
                 imprimir_resultados("Penalizaciones", penalizaciones)
                 break
@@ -145,10 +170,14 @@ def mostrar_misiones(sistema=None):
                 confirmar = input("¿Seguro que quieres eliminar esta misión? (s/n): ").lower()
                 if confirmar == "s":
                     eliminar_mision(sistema, mision["id"])
+                    # Eliminar del sistema y de la lista temporal
+                    sistema["misiones"]["activas"].pop(mision["id"], None)
                     misiones_list.remove(mision)
-                    print("\n✅ Misión eliminada.")
+                    # Guardar y sincronizar plugin cache
+                    sync_misiones_plugin_cache(sistema)
+                    
                     break
             else:
-                break  # Enter → volver a lista de misiones
-        # Aquí ya no volvemos al principio si la misión fue encontrada; solo volvemos si el usuario quiere otra misión
+                break
+
 

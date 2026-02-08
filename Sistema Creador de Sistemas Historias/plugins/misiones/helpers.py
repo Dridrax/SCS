@@ -14,13 +14,25 @@ from plugins.misiones.helpers_recompensas import (
     agregar_recompensa_tirada
 )
 from core.utils.funciones_utiles import pedir_int
+
+def sync_misiones_plugin_cache(sistema):
+    if "plugins" not in estado.plugin_cache:
+        estado.plugin_cache["plugins"] = {}
+
+    estado.plugin_cache["plugins"]["misiones"] = {
+        "activas": sistema.get("misiones", {}).get("activas", {})
+    }
+
+
+
+
 # --------------------------------------------------
 # Inicialización
 # --------------------------------------------------
 
 def inicializar_misiones(sistema):
     sistema.setdefault("misiones", {})
-
+    sync_misiones_plugin_cache(sistema)
 
 # --------------------------------------------------
 # Crear misión
@@ -38,10 +50,13 @@ def crear_mision(
 ):
     inicializar_misiones(sistema)
 
-    if id in sistema["misiones"]:
+    # Asegurar contenedor de activas
+    sistema["misiones"].setdefault("activas", {})
+
+    if id in sistema["misiones"]["activas"]:
         return False  # ya existe
 
-    sistema["misiones"][id] = crear_modelo_mision(
+    sistema["misiones"]["activas"][id] = crear_modelo_mision(
         id=id,
         nombre=nombre,
         descripcion=descripcion,
@@ -51,9 +66,9 @@ def crear_mision(
     )
 
     estado.cambios_no_guardados = True
+    sync_misiones_plugin_cache(sistema)
     guardar_sistema()
     return True
-
 
 
 def menu_crear_mision(sistema):
@@ -82,7 +97,11 @@ def menu_crear_mision(sistema):
 
     print("✅ Misión creada.")
 
-    mision = sistema["misiones"][mision_id]
+    mision = sistema["misiones"]["activas"].get(mision_id)
+    if not mision:
+        print("❌ Error: la misión no se encontró en misiones activas.")
+        return
+
 
     while True:
         print("\n--- AÑADIR RECOMPENSAS / PENALIZACIONES ---")
@@ -115,9 +134,6 @@ def menu_crear_mision(sistema):
 
         else:
             print("❌ Opción inválida.")
-
-
-
 
 # --------------------------------------------------
 # Modificar misión
@@ -155,11 +171,10 @@ def modificar_mision(sistema, mision_id):
         else:
             break
 
+    sync_misiones_plugin_cache(sistema)
     estado.cambios_no_guardados = True
     guardar_sistema()
     return True
-
-
 
 def editar_datos_basicos_mision(mision):
     print("\n--- DATOS BÁSICOS ---")
@@ -175,7 +190,6 @@ def editar_datos_basicos_mision(mision):
         mision["objetivo"] = objetivo
 
     print("✅ Datos básicos actualizados.")
-
 
 def menu_editar_recompensas(sistema, mision, clave="recompensas"):
     bloque = mision.setdefault(clave, {})
@@ -249,7 +263,6 @@ def añadir_recompensa(sistema, bloque):
 
     print("✅ Añadido correctamente.")
 
-
 def editar_recompensa_existente(bloque):
     if not bloque:
         print("No hay recompensas.")
@@ -291,8 +304,6 @@ def editar_recompensa_existente(bloque):
 
     print("✅ Recompensa editada.")
 
-
-
 def eliminar_recompensa(bloque):
     if not bloque:
         print("Nada que eliminar.")
@@ -325,25 +336,34 @@ def elegir_destino():
         else:
             print("❌ Opción no válida.")
 
-
 # --------------------------------------------------
 # Eliminar misión
 # --------------------------------------------------
 
 def eliminar_mision(sistema, id):
-    inicializar_misiones(sistema)
-    if id not in sistema["misiones"]:
+    # Aseguramos que exista la estructura correcta
+    if "misiones" not in sistema or "activas" not in sistema["misiones"]:
+        print("❌ No hay misiones activas en el sistema.")
+        return False
+
+    misiones_activas = sistema["misiones"]["activas"]
+
+    if id not in misiones_activas:
         print("❌ No existe esa misión.")
         return False
 
-    confirmar = input(f"¿Seguro que quieres eliminar la misión '{sistema['misiones'][id]['nombre']}'? (s/n): ").strip().lower()
+    confirmar = input(f"¿Seguro que quieres eliminar la misión '{misiones_activas[id].get('nombre', id)}'? (s/n): ").strip().lower()
     if confirmar != "s":
         print("❌ Eliminación cancelada.")
         return False
 
-    del sistema["misiones"][id]
+    del misiones_activas[id]
+
+    # Si tienes función de sincronizar plugin cache
+    sync_misiones_plugin_cache(sistema)
     estado.cambios_no_guardados = True
     guardar_sistema()
+
     print("✅ Misión eliminada.")
     return True
 
@@ -351,7 +371,6 @@ def eliminar_mision(sistema, id):
 # --------------------------------------------------
 # Completar misión
 # --------------------------------------------------
-
 
 def completar_mision(sistema, mision_id):
     """
@@ -370,6 +389,9 @@ def completar_mision(sistema, mision_id):
     if recompensas:
         aplicar_recompensas(sistema, recompensas)
 
+    
+    del misiones[mision_id]
+    sync_misiones_plugin_cache(sistema)
     estado.cambios_no_guardados = True
     return True
 
@@ -393,13 +415,9 @@ def fallar_mision(sistema, mision_id):
 
     # Eliminar misión tras completarla
     del misiones[mision_id]
-
+    sync_misiones_plugin_cache(sistema)
     estado.cambios_no_guardados = True
     return True
-
-
-
-
 
 def imprimir_resultados(titulo, datos):
     print(f"{titulo}:")
@@ -436,6 +454,3 @@ def imprimir_resultados(titulo, datos):
 
     if "tiradas" in datos:
         print(f"  Tiradas: {datos['tiradas']}")
-
-
-

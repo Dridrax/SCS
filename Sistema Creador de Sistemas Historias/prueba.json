@@ -1,0 +1,27 @@
+{
+    "personaje": {
+        "nombre": "fwf",
+        "edad": 1
+    },
+    "nombre_sistema": "prueba",
+    "stats": {
+        "w": 1,
+        "n": 13
+    },
+    "progress_stats": {},
+    "historia": {
+        "tipo": "original",
+        "sinopsis": "",
+        "personajes_principales": "",
+        "parejas": ""
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "niveles": true,
+        "misiones": true
+    },
+    "inventario": {},
+    "misiones": {
+        "activas": {}
+    }
+}
