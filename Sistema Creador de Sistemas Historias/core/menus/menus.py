@@ -1,14 +1,22 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema, cargar_sistema, guardar_como
 
+from core.administrar_puntos.menu_admin_puntos import menu_distribuir_puntos
+
 from core.sistemas.crear_sistema import crear_nuevo_sistema
 from core.utils.funciones_utiles import pedir_int, pedir_si_no
 from core.sistemas.mostrar_sistema import mostrar_ficha
 from core.plugins.registry import PLUGINS
+
 #plugins
+from plugins.misiones.menus_misiones import mostrar_misiones, menu_administrar_misiones
+#from plugins.misiones.menu_rachas import mostrar_rachas
+
+from plugins.niveles.menu_niveles import menu_configurar_niveles
 
 from plugins.inventario.menus_inv import (menu_agregar_item, mostrar_items,
                                           menu_modificar_item, menu_eliminar_item)
+
 
 #Stats
 from core.stats.stats import (mostrar_stats, mostrar_progress_stats_bar, 
@@ -17,6 +25,410 @@ from core.stats.stats import (mostrar_stats, mostrar_progress_stats_bar,
                               eliminar_stat_simple, eliminar_progress_stat)
 
 
+
+
+
+
+
+
+
+# ------------------- CREAR / CARGAR -------------------
+def menu_crear_cargar():
+    while True:
+        print("\n=== CREAR / CARGAR ===")
+        print("1. Crear Nuevo Sistema/Personaje")
+        print("2. Cargar Sistema/Personaje")
+        print("3. Volver")
+        opcion = pedir_int("\nElige una opción: ")
+
+        if opcion == 1:
+            crear_nuevo_sistema()
+            if input("\n¿Deseas guardar este sistema? (s/n): ").lower() == "s":
+                guardar_sistema()
+
+        elif opcion == 2:
+            archivo = input("\nNombre del archivo a cargar: ")
+            sistema = cargar_sistema(archivo)
+            estado.sistema_actual = sistema
+            estado.archivo_actual = archivo
+
+        elif opcion == 3:
+            break
+        else:
+            print("❌ Opción no válida.")
+
+# ------------------- GUARDAR -------------------
+def menu_guardado():
+    if not estado.sistema_actual:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    while True:
+        print("\n=== GUARDADO ===")
+        print("1. Guardar")
+        print("2. Guardar como")
+        print("3. Volver")
+
+        opcion = input("\nElige una opción: ")
+
+        if opcion == "1":
+            guardar_sistema()
+        elif opcion == "2":
+            guardar_como()
+        elif opcion == "3":
+            break
+        else:
+            print("❌ Opción no válida.")
+
+# ------------------- MOSTRAR DATOS DEL SISTEMA CARGADO -------------------
+def menu_mostrar(sistema):
+    """
+    Menú para mostrar información del sistema.
+    Las opciones dependen de los plugins activos.
+    """
+
+    # Verificamos que haya un sistema cargado
+    if not estado.sistema_actual:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    # Accedemos al diccionario de plugins activos
+    plugins = sistema.get("plugins_activos", {})
+
+    while True:
+        print(f"\n=== SISTEMA DOC (Sistema actual: {sistema.get('nombre_sistema')}) ===")
+
+        # Lista dinámica de opciones (nombre, función)
+        opciones = []
+
+        # Opción 1: Mostrar Stats (no depende de plugins)
+        opciones.append(("Mostrar Stats", lambda: (
+            mostrar_stats(sistema),
+            mostrar_progress_stats_bar(sistema.get("progress_stats", {}))
+        )))
+
+        # Opción 2: Mostrar Ficha (base del sistema)
+        opciones.append(("Mostrar Ficha", lambda: mostrar_ficha(sistema)))
+
+        # Opción 3: Inventario SOLO si el plugin está activo
+        if plugins.get("inventario", False):
+            opciones.append(("Mostrar Inventario", mostrar_items))
+
+        # Opción: Misiones activas SOLO si el plugin está activo
+        if plugins.get("misiones", False):
+            opciones.append(("Mostrar Misiones Activas", lambda: mostrar_misiones(sistema)))
+        #    opciones.append(("Mostrar Rachas Activas", lambda: mostrar_rachas(sistema)))
+
+        # Mostrar las opciones numeradas
+        for i, (nombre, _) in enumerate(opciones, start=1):
+            print(f"{i}. {nombre}")
+
+        # Opción para salir
+        print(f"{len(opciones) + 1}. Volver")
+
+        # Pedimos la opción elegida
+        opcion = pedir_int("\nElige una opción: ", default=len(opciones) + 1)
+
+        # Si elige una opción válida, ejecutamos su función
+        if 1 <= opcion <= len(opciones):
+            _, funcion = opciones[opcion - 1]
+            funcion()
+        else:
+            break
+
+# ------------------- MODIFICAR DATOS DEL SISTEMA CARGADO -------------------
+def menu_modificar(sistema):
+    """
+    Menú para modificar elementos del sistema.
+    Las opciones dependen de los plugins activos.
+    """
+
+    # Verificamos que haya un sistema cargado
+    if not estado.sistema_actual:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    # Accedemos a los plugins activos del sistema
+    plugins = sistema.get("plugins_activos", {})
+
+    while True:
+        print(f"\n=== SISTEMA DOC (Sistema actual: {sistema.get('nombre_sistema')}) ===")
+
+        # Lista dinámica de opciones (texto, función)
+        opciones = []
+
+        # --- Stats ---
+        # Stats es parte base del sistema, no depende de plugins
+        opciones.append(("Modificar Stats", lambda: menu_modificar_stats(sistema)))
+
+        # --- Inventario ---
+        # Solo aparece si el plugin está activo
+        if plugins.get("inventario", False):
+            opciones.append(("Modificar Inventario", lambda: menu_modificar_items(sistema)))
+
+
+        if plugins.get("misiones", False):
+            opciones.append(("Administrar Misiones", lambda: menu_administrar_misiones(sistema)))
+            #opciones.append(("Mostrar Rachas Activas", lambda: menu_administrar_rachas(sistema)))
+
+
+        # Mostramos el menú numerado
+        for i, (nombre, _) in enumerate(opciones, start=1):
+            print(f"{i}. {nombre}")
+
+        # Opción para volver
+        print(f"{len(opciones) + 1}. Volver")
+
+        # Pedimos la opción elegida
+        opcion = pedir_int("\nElige una opción: ", default=len(opciones) + 1)
+
+        # Ejecutamos la opción seleccionada si es válida
+        if 1 <= opcion <= len(opciones):
+            _, funcion = opciones[opcion - 1]
+            funcion()
+            estado.cambios_no_guardados = True
+        else:
+            break
+
+
+# ------------------- CONFIGURACION DEL SISTEMA -------------------
+def configuracion(sistema):
+    # Seguridad: no permitir entrar sin sistema cargado
+    if not estado.sistema_actual:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    while True:
+        plugins = sistema.get("plugins_activos", {})
+
+        print(f"\n=== SALIR/GUARDAR (Sistema actual: {sistema.get('nombre_sistema')}) ===")
+
+        opciones = []
+
+        # 1️⃣ Guardar → siempre disponible
+        opciones.append(("Guardar", guardar_sistema))
+
+        # 2️⃣ Plugins → siempre disponible
+        opciones.append(("Plugins", menu_plugins))
+
+        # 3️⃣ Niveles → SOLO si el plugin está activo
+        if plugins.get("niveles", False):
+            opciones.append(("Niveles", lambda: menu_configurar_niveles(sistema)))
+
+        # Mostrar menú dinámico
+        for i, (texto, _) in enumerate(opciones, start=1):
+            print(f"{i}. {texto}")
+
+        print(f"{len(opciones) + 1}. Salir\n")
+
+        opcion = pedir_int("Elige una opción: ", default=len(opciones) + 1)
+
+        if 1 <= opcion <= len(opciones):
+            _, funcion = opciones[opcion - 1]
+            funcion()
+        else:
+            break
+
+
+
+# ------------------- MODIFICAR STATS MENUS Y SUBMENUS -------------------
+def menu_modificar_stats(sistema):
+    
+    if not estado.sistema_actual:
+        print("\n❌ No hay sistema cargado.")
+        return
+    
+    
+    while True:
+        print(f"\n=== MODIFICAR STATS (Sistema actual: {sistema.get("nombre_sistema")}) ===")
+
+        print("1. Modificar Stats.")
+        print("2. Agregar Stats.")
+        print("3. Eliminar Stats.")
+        print("4. Distribuir Puntos de Stats.")
+        print("5. Volver.")
+
+        opcion = pedir_int("\nElige una opción: ")
+        
+        #Modificar Stats
+        if opcion == 1:
+            
+            print("1. Modificar Stats Simples.")
+            print("2. Modificar Stats Progress.")
+            print("3. Volver.")
+
+            opcion_2 = pedir_int("\nElige una opcíon: ")
+
+            if opcion_2 == 1:
+                modificar_stat_simples(sistema)
+            elif opcion_2 == 2:
+                modificar_stat_progress(sistema)
+            else:
+                estado.cambios_no_guardados = True
+                break
+        
+        #Agregar Stats
+        elif opcion == 2:
+
+            print("1. Agregar Stats Simples.")
+            print("2. Agregar Stats Progress.")
+            print("3. Volver.")
+
+            opcion_3 = pedir_int("\nElige una opcíon: ")
+
+            if opcion_3 == 1:
+                agregar_stat_simple(sistema)
+            elif opcion_3 == 2:
+                agregar_progress_stat(sistema)
+            else:
+                estado.cambios_no_guardados = True
+                break
+
+        #Eliminar Stats
+        elif opcion == 3:
+            print("1. Eliminar Stats Simples.")
+            print("2. Eliminar Stats Progress.")
+            print("3. Volver.")
+
+            opcion_4 = pedir_int("\nElige una opcíon: ")
+
+            if opcion_4 == 1:
+                eliminar_stat_simple(sistema)
+            elif opcion_4 == 2:
+                eliminar_progress_stat(sistema)
+            else:
+                estado.cambios_no_guardados = True
+                break
+
+        elif opcion == 4:
+            menu_distribuir_puntos(sistema)
+
+        else:
+            guardar_sistema()
+            break
+
+# ------------------- MODIFICAR ITEMS MENUS Y SUBMENUS -------------------
+def menu_modificar_items(sistema):
+    if not estado.sistema_actual:
+        print("\n❌ No hay sistema cargado.")
+        return
+    
+    
+    while True:
+        print(f"\n=== MODIFICAR ITEMS (Sistema actual: {sistema.get("nombre_sistema")}) ===")
+
+        print("1. Agregar Items.")
+        print("2. Modificar Item.")
+        print("3. Eliminar Items.")
+        print("4. Mostrar Items.")
+        print("5. Volver.")
+
+        opcion = pedir_int("\nElige una opción: ")
+        
+        #Modificar Items
+        if opcion == 1:
+            menu_agregar_item()
+        
+        #Agregar Items
+        elif opcion == 2:
+            menu_modificar_item()
+
+        #Eliminar Items
+        elif opcion == 3:
+            menu_eliminar_item()
+
+        elif opcion == 4:
+            mostrar_items()
+
+        else:
+            guardar_sistema()
+            break
+
+#------------------- ADMINISTRAR PLUGINS/MENU PLUGINS -------------------
+
+# Diccionario con todos los plugins disponibles y sus funciones on_enable (opcional)
+"""PLUGINS = {
+    "inventario": {
+        "on_enable": lambda sistema: sistema.setdefault("inventario", {})
+    },
+    # "habilidades": {...}, "bendiciones": {...} etc.
+}"""
+
+def menu_plugins(autoguardar=True):
+    sistema = estado.sistema_actual
+
+    if not sistema:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    # Inicializar plugins activos en el sistema si no existen
+    if "plugins_activos" not in sistema:
+        sistema["plugins_activos"] = {}
+
+    # Asegurarse de que todos los plugins de PLUGINS estén en plugins_activos
+    for key in PLUGINS:
+        if key not in sistema["plugins_activos"]:
+            sistema["plugins_activos"][key] = False
+
+    plugins = sistema["plugins_activos"]
+
+    while True:
+        print(f"\n=== ADMINISTRAR PLUGINS (Sistema actual: {sistema.get('nombre_sistema')}) ===")
+        for i, key in enumerate(PLUGINS.keys(), 1):
+            activo = plugins.get(key, False)
+            estado_str = "✅ Activo" if activo else "❌ Inactivo"
+            print(f"{i}. {PLUGINS[key]['nombre']}: {estado_str}")
+        print(f"{len(PLUGINS)+1}. Continuar/Volver")
+
+        try:
+            opcion = int(input("\nElige un plugin para activar/desactivar: "))
+        except ValueError:
+            print("❌ Opción no válida.")
+            continue
+
+        if opcion == len(PLUGINS)+1:
+            if autoguardar and estado.cambios_no_guardados:
+                guardar_sistema()
+            break
+        elif 1 <= opcion <= len(PLUGINS):
+            key = list(PLUGINS.keys())[opcion - 1]
+            nuevo_estado = not plugins[key]
+
+            plugin_obj = PLUGINS.get(key)
+            if nuevo_estado:  # Activar plugin
+                plugins[key] = True
+
+                # Restaurar datos desde plugin_cache si existen
+                if key in estado.plugin_cache.get("plugins", {}):
+                    sistema[key] = estado.plugin_cache["plugins"][key]
+                elif plugin_obj and plugin_obj.get("on_enable"):
+                    plugin_obj["on_enable"](sistema)
+
+                print(f"🔄 {plugin_obj['nombre']} ahora Activo")
+
+            else:  # Desactivar plugin
+                if key in sistema:
+                    conservar = input(f"¿Conservar los datos del plugin '{plugin_obj['nombre']}' para poder restaurarlos después? (s/n): ").lower() == "s"
+                    if conservar:
+                        # Guardar en plugin_cache
+                        if "plugins" not in estado.plugin_cache:
+                            estado.plugin_cache["plugins"] = {}
+                        estado.plugin_cache["plugins"][key] = sistema[key]
+                    else:
+                        # Eliminar del cache
+                        estado.plugin_cache.get("plugins", {}).pop(key, None)
+
+                    # Eliminar datos del sistema mientras está desactivado
+                    sistema.pop(key, None)
+
+                plugins[key] = False
+                print(f"🔄 {plugin_obj['nombre']} ahora Inactivo")
+
+            estado.cambios_no_guardados = True
+        else:
+            print("❌ Opción no válida.")
+        
+    
 """MENUS.PY - Documentación y guía de uso
 
 Este archivo contiene los menús principales y submenús del programa SCS.
@@ -131,351 +543,3 @@ Recomendación final
 - Funciones de stats, creación de sistema, guardado y utils se mantienen en sus respectivos archivos.
 - Cualquier cambio futuro en stats (ej: nuevos tipos de stats) solo requerirá actualizar las funciones de stats y llamar desde aquí.
 """
-
-# ------------------- CREAR / CARGAR -------------------
-def menu_crear_cargar():
-    while True:
-        print("\n=== CREAR / CARGAR ===")
-        print("1. Crear Nuevo Sistema/Personaje")
-        print("2. Cargar Sistema/Personaje")
-        print("3. Volver")
-        opcion = pedir_int("\nElige una opción: ")
-
-        if opcion == 1:
-            crear_nuevo_sistema()
-            if input("\n¿Deseas guardar este sistema? (s/n): ").lower() == "s":
-                guardar_sistema()
-
-        elif opcion == 2:
-            archivo = input("\nNombre del archivo a cargar: ")
-            sistema = cargar_sistema(archivo)
-            estado.sistema_actual = sistema
-            estado.archivo_actual = archivo
-
-        elif opcion == 3:
-            break
-        else:
-            print("❌ Opción no válida.")
-
-# ------------------- GUARDAR -------------------
-def menu_guardado():
-    if not estado.sistema_actual:
-        print("\n❌ No hay sistema cargado.")
-        return
-
-    while True:
-        print("\n=== GUARDADO ===")
-        print("1. Guardar")
-        print("2. Guardar como")
-        print("3. Volver")
-
-        opcion = input("\nElige una opción: ")
-
-        if opcion == "1":
-            guardar_sistema()
-        elif opcion == "2":
-            guardar_como()
-        elif opcion == "3":
-            break
-        else:
-            print("❌ Opción no válida.")
-
-# ------------------- MOSTRAR DATOS DEL SISTEMA CARGADO -------------------
-def menu_mostrar(sistema):
-    
-    if not estado.sistema_actual:
-        print("\n❌ No hay sistema cargado.")
-        return
-    
-    while True:
-        print(f"\n=== SISTEMA DOC (Sistema actual: {sistema.get("nombre_sistema")}) ===")
-        print("1. Mostrar Stats")
-        print("2. Mostrar Ficha")
-        print("3. Mostrar Inventario")
-        print("4. Volver")
-        opcion = pedir_int("\nElige una opción: ")
-
-        if opcion == 1:
-            # --- STATS SIMPLES ---
-            mostrar_stats(sistema)  # muestra stats simples y de progreso juntos
-
-            # --- PROGRESS STATS (opcional si quieres usar función modular) ---
-            # mostrar_progress_stats(sistema.get("progress_stats", {}))
-            mostrar_progress_stats_bar(sistema.get("progress_stats", {}))
-
-        elif opcion == 2:
-            mostrar_ficha(estado.sistema_actual)
-
-        elif opcion == 3:
-            mostrar_items()
-        elif opcion == 4:
-            break
-
-# ------------------- MODIFICAR DATOS DEL SISTEMA CARGADO -------------------
-def menu_modificar(sistema):
-    if not estado.sistema_actual:
-        print("\n❌ No hay sistema cargado.")
-        return
-    
-    while True:
-        print(f"\n=== SISTEMA DOC (Sistema actual: {sistema.get("nombre_sistema")}) ===")
-        print("1. Modificar Stats.")
-        print("2. Modificar Inventario.")
-        print("3. Volver.")
-
-        opcion = pedir_int("\nElige una opción: ")
-        if opcion == 1:
-            menu_modificar_stats(sistema)
-        elif opcion == 2:
-            menu_modificar_items(sistema)
-        else:
-            estado.cambios_no_guardados = True
-            break
-
-# ------------------- MODIFICAR STATS MENUS Y SUBMENUS -------------------
-def menu_modificar_stats(sistema):
-    
-    if not estado.sistema_actual:
-        print("\n❌ No hay sistema cargado.")
-        return
-    
-    
-    while True:
-        print(f"\n=== MODIFICAR STATS (Sistema actual: {sistema.get("nombre_sistema")}) ===")
-
-        print("1. Modificar Stats.")
-        print("2. Agregar Stats.")
-        print("3. Eliminar Stats.")
-        print("4. Volver.")
-
-        opcion = pedir_int("\nElige una opción: ")
-        
-        #Modificar Stats
-        if opcion == 1:
-            
-            print("1. Modificar Stats Simples.")
-            print("2. Modificar Stats Progress.")
-            print("3. Volver.")
-
-            opcion_2 = pedir_int("\nElige una opcíon: ")
-
-            if opcion_2 == 1:
-                modificar_stat_simples(sistema)
-            elif opcion_2 == 2:
-                modificar_stat_progress(sistema)
-            else:
-                estado.cambios_no_guardados = True
-                break
-        
-        #Agregar Stats
-        elif opcion == 2:
-
-            print("1. Agregar Stats Simples.")
-            print("2. Agregar Stats Progress.")
-            print("3. Volver.")
-
-            opcion_3 = pedir_int("\nElige una opcíon: ")
-
-            if opcion_3 == 1:
-                agregar_stat_simple(sistema)
-            elif opcion_3 == 2:
-                agregar_progress_stat(sistema)
-            else:
-                estado.cambios_no_guardados = True
-                break
-
-        #Eliminar Stats
-        elif opcion == 3:
-            print("1. Eliminar Stats Simples.")
-            print("2. Eliminar Stats Progress.")
-            print("3. Volver.")
-
-            opcion_4 = pedir_int("\nElige una opcíon: ")
-
-            if opcion_4 == 1:
-                eliminar_stat_simple(sistema)
-            elif opcion_4 == 2:
-                eliminar_progress_stat(sistema)
-            else:
-                estado.cambios_no_guardados = True
-                break
-
-        else:
-            guardar_sistema()
-            break
-
-# ------------------- MODIFICAR ITEMS MENUS Y SUBMENUS -------------------
-def menu_modificar_items(sistema):
-    if not estado.sistema_actual:
-        print("\n❌ No hay sistema cargado.")
-        return
-    
-    
-    while True:
-        print(f"\n=== MODIFICAR ITEMS (Sistema actual: {sistema.get("nombre_sistema")}) ===")
-
-        print("1. Agregar Items.")
-        print("2. Modificar Item.")
-        print("3. Eliminar Items.")
-        print("4. Mostrar Items.")
-        print("5. Volver.")
-
-        opcion = pedir_int("\nElige una opción: ")
-        
-        #Modificar Items
-        if opcion == 1:
-            menu_agregar_item()
-        
-        #Agregar Items
-        elif opcion == 2:
-            menu_modificar_item()
-
-        #Eliminar Items
-        elif opcion == 3:
-            menu_eliminar_item()
-
-        elif opcion == 4:
-            mostrar_items()
-
-        else:
-            guardar_sistema()
-            break
-
-#------------------- ADMINISTRAR PLUGINS/MENU PLUGINS -------------------
-
-# Diccionario con todos los plugins disponibles y sus funciones on_enable (opcional)
-"""PLUGINS = {
-    "inventario": {
-        "on_enable": lambda sistema: sistema.setdefault("inventario", {})
-    },
-    # "habilidades": {...}, "bendiciones": {...} etc.
-}"""
-
-def menu_plugins(autoguardar=True):
-    sistema = estado.sistema_actual
-
-    if not sistema:
-        print("\n❌ No hay sistema cargado.")
-        return
-
-    plugins = sistema.get("plugins_activos", {})
-    if not plugins:
-        print("\n❌ No hay plugins definidos para este sistema.")
-        return
-
-    while True:
-        print(f"\n=== ADMINISTRAR PLUGINS (Sistema actual: {sistema.get('nombre_sistema')}) ===")
-        for i, plugin in enumerate(plugins, 1):
-            estado_str = "✅ Activo" if plugins[plugin] else "❌ Inactivo"
-            print(f"{i}. {plugin.capitalize()}: {estado_str}")
-        print(f"{len(plugins)+1}. Continuar/Volver")
-
-        try:
-            opcion = int(input("\nElige un plugin para activar/desactivar: "))
-        except ValueError:
-            print("❌ Opción no válida.")
-            continue
-
-        if opcion == len(plugins)+1:
-            if autoguardar and estado.cambios_no_guardados:
-                guardar_sistema()
-            break
-        elif 1 <= opcion <= len(plugins):
-            key = list(plugins.keys())[opcion - 1]
-            nuevo_estado = not plugins[key]
-
-            plugin_obj = PLUGINS.get(key)
-            if nuevo_estado:  # Activar plugin
-                plugins[key] = True
-
-                # Restaurar datos desde plugin_cache si existen
-                if key in estado.plugin_cache.get("plugins", {}):
-                    sistema[key] = estado.plugin_cache["plugins"][key]
-                elif plugin_obj and "on_enable" in plugin_obj:
-                    plugin_obj["on_enable"](sistema)
-
-                
-                print(f"🔄 {key.capitalize()} ahora Activo")
-
-            else:  # Desactivar plugin
-                if key in sistema:
-                    conservar = input(f"¿Conservar los datos del plugin '{key}' para poder restaurarlos después? (s/n): ").lower() == "s"
-                    if conservar:
-                        # Guardar en plugin_cache
-                        if "plugins" not in estado.plugin_cache:
-                            estado.plugin_cache["plugins"] = {}
-                        estado.plugin_cache["plugins"][key] = sistema[key]
-                    else:
-                        # Eliminar del cache
-                        estado.plugin_cache.get("plugins", {}).pop(key, None)
-
-                    # Eliminar datos del sistema mientras está desactivado
-                    sistema.pop(key, None)
-
-                plugins[key] = False
-                
-                print(f"🔄 {key.capitalize()} ahora Inactivo")
-
-            estado.cambios_no_guardados = True
-        else:
-            print("❌ Opción no válida.")
-
-
-
-
-
-"""def menu_plugins():
-    sistema = estado.sistema_actual
-
-    if not sistema:
-        print("\n❌ No hay sistema cargado.")
-        return
-
-    plugins = sistema.setdefault("plugins_activos", {})
-
-    while True:
-        print(f"\n=== ADMINISTRAR PLUGINS (Sistema actual: {sistema.get('nombre_sistema', 'Sin nombre')}) ===")
-        for i, plugin in enumerate(plugins, 1):
-            estado_str = "✅ Activo" if plugins[plugin] else "❌ Inactivo"
-            print(f"{i}. {plugin.capitalize()}: {estado_str}")
-        print(f"{len(plugins)+1}. Continuar/Volver")
-
-        try:
-            opcion = int(input("\nElige un plugin para activar/desactivar: "))
-        except ValueError:
-            print("❌ Opción no válida.")
-            continue
-
-        if opcion == len(plugins) + 1:
-            break
-        elif 1 <= opcion <= len(plugins):
-            key = list(plugins.keys())[opcion - 1]
-            nuevo_estado = not plugins[key]
-
-            plugin_obj = PLUGINS.get(key) if "PLUGINS" in globals() else None
-            if "plugin_cache" not in estado.__dict__:
-                estado.plugin_cache = {}
-
-            if nuevo_estado:  # Activar
-                plugins[key] = True
-                # Restaurar datos si estaban en cache
-                if key in estado.plugin_cache:
-                    sistema[key] = estado.plugin_cache[key]
-                elif plugin_obj and hasattr(plugin_obj, "on_enable"):
-                    plugin_obj["on_enable"](sistema)
-
-            else:  # Desactivar
-                if key in sistema:
-                    conservar = input("¿Conservar los datos del plugin? (s/n): ").lower() == "s"
-                    if conservar:
-                        estado.plugin_cache[key] = sistema[key]
-                    else:
-                        estado.plugin_cache.pop(key, None)
-                    # Eliminar datos del sistema mientras está desactivado
-                    sistema.pop(key, None)
-                plugins[key] = False
-
-            estado.cambios_no_guardados = True
-            print(f"🔄 {key.capitalize()} ahora {'Activo' if plugins[key] else 'Inactivo'}")
-        else:
-            print("❌ Opción no válida.")"""

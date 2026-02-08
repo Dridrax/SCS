@@ -34,10 +34,13 @@
     "plugins_activos": {
         "inventario": true,
         "habilidades": true,
-        "bendiciones": false,
-        "maldiciones": false,
-        "titulos": false,
+        "bendiciones": true,
+        "maldiciones": true,
+        "titulos": true,
         "notas": true,
-        "bestiario": true
-    }
+        "bestiario": true,
+        "enciclopedias": true
+    },
+    "notas": [],
+    "bestiario": []
 }

@@ -8,7 +8,7 @@ from core.utils.funciones_utiles import pedir_int, pedir_si_no
 
 #menus
 from core.menus.menus import (menu_crear_cargar, menu_mostrar,
-                              menu_modificar, menu_plugins)
+                              menu_modificar, configuracion)
 
 
 # ------------------- MENÚ PRINCIPAL -------------------
@@ -19,31 +19,30 @@ def menu_principal():
         print("1. Crear/Cargar Sistema")
         print("2. Mostrar Sistema")
         print("3. Modificar Sistema")
-        print("4. Plugins/Guardar/Salir\n")
+        print("4. Configuracion")
+        print("5. Salir\n")
 
         opcion = pedir_int("Elige una opción: ")
+        #Crear/Cargar Sistema
         if opcion == 1:
             menu_crear_cargar()
+    
+        #Mostrar Sistema
         elif opcion == 2:
             menu_mostrar(estado.sistema_actual)
 
+        #Modificar Sistema
         elif opcion == 3:
             menu_modificar(estado.sistema_actual)
 
+        #Configuracion
         elif opcion == 4:
-            print(f"\n=== SALIR/GUARDAR (Sistema actual: {nombre_sistema}) ===")
-            print("1. Guardar")
-            print("2. Plugins")
-            print("3. Salir")
+            configuracion(estado.sistema_actual)              
 
-            opcion_2 = pedir_int("\nElije una opcíon: ")
-            if opcion_2 == 1:
-                guardar_sistema()
-            elif opcion_2 == 2:
-                menu_plugins()
-            elif opcion_2 == 3:
-                salir_programa()
-                break
+        #Salir
+        elif opcion == 5:
+            salir_programa()
+            break
 
 # ------------------- EJECUCIÓN -------------------
 if __name__ == "__main__":

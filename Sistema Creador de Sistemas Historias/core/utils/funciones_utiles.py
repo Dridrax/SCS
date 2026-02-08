@@ -1,11 +1,18 @@
 
-def pedir_int(prompt):
+def pedir_int(mensaje, default=None):
+    """
+    Pide un número entero al usuario.
+    Si se presiona ENTER y se pasa default, devuelve default.
+    """
     while True:
-        valor = input(prompt)
+        entrada = input(mensaje)
+        if entrada == "" and default is not None:
+            return default
         try:
-            return int(valor)
+            return int(entrada)
         except ValueError:
-            print("❌ Debes introducir un número entero válido.")
+            print("❌ Debes introducir un número válido.")
+
 
 
 """Mejorado def pedir_int(texto, minimo=None, maximo=None):

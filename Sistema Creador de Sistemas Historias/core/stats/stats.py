@@ -105,17 +105,6 @@ def mostrar_stats(sistema):
     else:
         print("\n-- Stats Simples --\nNo hay stats simples")
 
-    """# Stats de progreso
-    progress_stats = sistema.get("progress_stats", {})
-    if progress_stats:
-        print("\n-- Stats de Progreso --")
-        for nombre, datos in progress_stats.items():
-            actual = datos.get("actual", 0)
-            maximo = datos.get("max", 0)
-            nivel = datos.get("nivel", 1)
-            print(f"{nombre}: {actual}/{maximo}  (Nivel {nivel})")
-    else:
-        print("\n-- Stats de Progreso --\nNo hay stats de progreso")"""
 
 def mostrar_progress_stats_bar(progress_stats, ancho_barra=20):
     """

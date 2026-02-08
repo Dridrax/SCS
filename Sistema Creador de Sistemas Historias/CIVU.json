@@ -1,0 +1,50 @@
+{
+    "personaje": {
+        "nombre": "Izuku",
+        "edad": 15
+    },
+    "nombre_sistema": "CIVU",
+    "stats": {
+        "nonono": 2,
+        "pggrjgjrj": 454
+    },
+    "progress_stats": {},
+    "historia": {
+        "tipo": "fanfiction",
+        "fandom": "fefe",
+        "sinopsis": "fefe",
+        "personajes": "fefe",
+        "parejas": "fefe"
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "niveles": true,
+        "misiones": true
+    },
+    "inventario": {
+        "f4827034-77ba-4e29-95ef-d74f3a9fb0fb": {
+            "id": "f4827034-77ba-4e29-95ef-d74f3a9fb0fb",
+            "nombre": "none",
+            "cantidad": 13,
+            "rareza": "fefe",
+            "tipo": "aaa",
+            "descripcion": "gggg",
+            "efectos": {}
+        },
+        "a26335de-9cae-40e6-b5c1-b1b9a8e03d29": {
+            "id": "a26335de-9cae-40e6-b5c1-b1b9a8e03d29",
+            "nombre": "pyyopyo",
+            "cantidad": 533,
+            "rareza": "hnonho",
+            "tipo": "eeree",
+            "descripcion": "bhbbbb",
+            "efectos": {}
+        }
+    },
+    "misiones": {},
+    "puntos_stats": 552,
+    "dinero": {
+        "Oro": 3415,
+        "cobre": 31
+    }
+}
