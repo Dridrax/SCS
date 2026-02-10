@@ -1,6 +1,8 @@
 # core/plugins/registry.py
 from plugins.niveles import PLUGIN as PLUGIN_NIVELES
 from plugins.misiones.config import inicializar_misiones
+from plugins.misiones.rachas.helpers_rachas import inicializar_rachas
+
 """
 Registro central de plugins para SCS.
 Cada plugin se define con:
@@ -9,32 +11,30 @@ Cada plugin se define con:
 - "on_disable": Función opcional que se ejecuta al desactivar.
 """
 
-  # Función para inicializar inventario
-
 PLUGINS = {
     "inventario": {
         "nombre": "Inventario",
-        # Función que se ejecuta al activar el plugin
         "on_enable": lambda sistema: sistema.setdefault("inventario", {}),
-        # Función que se ejecuta al desactivar el plugin (opcional)
         "on_disable": None
     },
 
     "niveles": PLUGIN_NIVELES,
-    
+
     "misiones": {
-    "nombre": "Misiones",
-    "on_enable": lambda sistema: inicializar_misiones(sistema),
-    "on_disable": None
+        "nombre": "Misiones",
+        "on_enable": lambda sistema: inicializar_misiones(sistema),
+        "on_disable": None
+    },
+
+    "rachas": {
+        "nombre": "Rachas",
+        "on_enable": lambda sistema: inicializar_rachas(sistema),
+        "on_disable": None
     }
 
-    # Aquí puedes añadir más plugins en el futuro
-    # "habilidades": {
-    #     "nombre": "Habilidades",
-    #     "on_enable": lambda sistema: sistema.setdefault("habilidades", {}),
-    #     "on_disable": None
-    # },
+    # Aquí se pueden añadir más plugins en el futuro
 }
+
 
 """    "puntos": {
         "nombre": "Puntos Distribuibles",

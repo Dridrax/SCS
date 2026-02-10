@@ -10,7 +10,7 @@ from core.plugins.registry import PLUGINS
 
 #plugins
 from plugins.misiones.menus_misiones import mostrar_misiones, menu_administrar_misiones
-#from plugins.misiones.menu_rachas import mostrar_rachas
+from plugins.misiones.rachas.menus_rachas import mostrar_rachas, menu_administrar_rachas
 
 from plugins.niveles.menu_niveles import menu_configurar_niveles
 
@@ -80,111 +80,100 @@ def menu_guardado():
         else:
             print("❌ Opción no válida.")
 
-# ------------------- MOSTRAR DATOS DEL SISTEMA CARGADO -------------------
+# ------------------- MENÚS DE SISTEMA: MOSTRAR -------------------
 def menu_mostrar(sistema):
     """
     Menú para mostrar información del sistema.
     Las opciones dependen de los plugins activos.
     """
 
-    # Verificamos que haya un sistema cargado
     if not estado.sistema_actual:
         print("\n❌ No hay sistema cargado.")
         return
 
-    # Accedemos al diccionario de plugins activos
     plugins = sistema.get("plugins_activos", {})
 
     while True:
         print(f"\n=== SISTEMA DOC (Sistema actual: {sistema.get('nombre_sistema')}) ===")
 
-        # Lista dinámica de opciones (nombre, función)
         opciones = []
 
-        # Opción 1: Mostrar Stats (no depende de plugins)
+        # Stats y ficha base
         opciones.append(("Mostrar Stats", lambda: (
             mostrar_stats(sistema),
             mostrar_progress_stats_bar(sistema.get("progress_stats", {}))
         )))
-
-        # Opción 2: Mostrar Ficha (base del sistema)
         opciones.append(("Mostrar Ficha", lambda: mostrar_ficha(sistema)))
 
-        # Opción 3: Inventario SOLO si el plugin está activo
+        # Inventario
         if plugins.get("inventario", False):
-            opciones.append(("Mostrar Inventario", mostrar_items))
+            opciones.append(("Mostrar Inventario", lambda: mostrar_items(sistema)))
 
-        # Opción: Misiones activas SOLO si el plugin está activo
+        # Misiones activas
         if plugins.get("misiones", False):
             opciones.append(("Mostrar Misiones Activas", lambda: mostrar_misiones(sistema)))
-        #    opciones.append(("Mostrar Rachas Activas", lambda: mostrar_rachas(sistema)))
 
-        # Mostrar las opciones numeradas
+        # Rachas
+        if plugins.get("rachas", False):
+            opciones.append(("Mostrar Rachas", lambda: mostrar_rachas(sistema)))
+
+        # Menú numerado
         for i, (nombre, _) in enumerate(opciones, start=1):
             print(f"{i}. {nombre}")
 
-        # Opción para salir
-        print(f"{len(opciones) + 1}. Volver")
+        print(f"{len(opciones)+1}. Volver")
 
-        # Pedimos la opción elegida
-        opcion = pedir_int("\nElige una opción: ", default=len(opciones) + 1)
+        opcion = pedir_int("\nElige una opción: ", default=len(opciones)+1)
 
-        # Si elige una opción válida, ejecutamos su función
         if 1 <= opcion <= len(opciones):
-            _, funcion = opciones[opcion - 1]
+            _, funcion = opciones[opcion-1]
             funcion()
         else:
             break
 
-# ------------------- MODIFICAR DATOS DEL SISTEMA CARGADO -------------------
+# ------------------- MENÚS DE SISTEMA: MODIFICAR -------------------
 def menu_modificar(sistema):
     """
     Menú para modificar elementos del sistema.
     Las opciones dependen de los plugins activos.
     """
 
-    # Verificamos que haya un sistema cargado
     if not estado.sistema_actual:
         print("\n❌ No hay sistema cargado.")
         return
 
-    # Accedemos a los plugins activos del sistema
     plugins = sistema.get("plugins_activos", {})
 
     while True:
         print(f"\n=== SISTEMA DOC (Sistema actual: {sistema.get('nombre_sistema')}) ===")
 
-        # Lista dinámica de opciones (texto, función)
         opciones = []
 
-        # --- Stats ---
-        # Stats es parte base del sistema, no depende de plugins
+        # Stats base
         opciones.append(("Modificar Stats", lambda: menu_modificar_stats(sistema)))
 
-        # --- Inventario ---
-        # Solo aparece si el plugin está activo
+        # Inventario
         if plugins.get("inventario", False):
             opciones.append(("Modificar Inventario", lambda: menu_modificar_items(sistema)))
 
-
+        # Misiones
         if plugins.get("misiones", False):
             opciones.append(("Administrar Misiones", lambda: menu_administrar_misiones(sistema)))
-            #opciones.append(("Mostrar Rachas Activas", lambda: menu_administrar_rachas(sistema)))
 
+        # Rachas
+        if plugins.get("rachas", False):
+            opciones.append(("Modificar Rachas", lambda: menu_administrar_rachas(sistema)))
 
-        # Mostramos el menú numerado
+        # Menú numerado
         for i, (nombre, _) in enumerate(opciones, start=1):
             print(f"{i}. {nombre}")
 
-        # Opción para volver
-        print(f"{len(opciones) + 1}. Volver")
+        print(f"{len(opciones)+1}. Volver")
 
-        # Pedimos la opción elegida
-        opcion = pedir_int("\nElige una opción: ", default=len(opciones) + 1)
+        opcion = pedir_int("\nElige una opción: ", default=len(opciones)+1)
 
-        # Ejecutamos la opción seleccionada si es válida
         if 1 <= opcion <= len(opciones):
-            _, funcion = opciones[opcion - 1]
+            _, funcion = opciones[opcion-1]
             funcion()
             estado.cambios_no_guardados = True
         else:
@@ -203,6 +192,7 @@ def configuracion(sistema):
 
         print(f"\n=== SALIR/GUARDAR (Sistema actual: {sistema.get('nombre_sistema')}) ===")
 
+        # Opciones del menú dinámico
         opciones = []
 
         # 1️⃣ Guardar → siempre disponible

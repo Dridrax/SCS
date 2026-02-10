@@ -1,9 +1,9 @@
 
-def pedir_int(mensaje, default=None):
-    """
+"""def pedir_int(mensaje, default=None):
+    
     Pide un número entero al usuario.
     Si se presiona ENTER y se pasa default, devuelve default.
-    """
+    
     while True:
         entrada = input(mensaje)
         if entrada == "" and default is not None:
@@ -11,7 +11,36 @@ def pedir_int(mensaje, default=None):
         try:
             return int(entrada)
         except ValueError:
-            print("❌ Debes introducir un número válido.")
+            print("❌ Debes introducir un número válido.")"""
+
+
+def pedir_int(mensaje, default=None, minimo=None, maximo=None):
+    """
+    Pide un número entero al usuario.
+    - Si se presiona ENTER y se pasa default, devuelve default.
+    - Si se pasa minimo, el valor ingresado no puede ser menor.
+    - Si se pasa maximo, el valor ingresado no puede ser mayor.
+    """
+    while True:
+        entrada = input(mensaje)
+        if entrada == "" and default is not None:
+            valor = default
+        else:
+            try:
+                valor = int(entrada)
+            except ValueError:
+                print("❌ Debes introducir un número válido.")
+                continue
+
+        if minimo is not None and valor < minimo:
+            print(f"❌ Debe ser al menos {minimo}.")
+            continue
+        if maximo is not None and valor > maximo:
+            print(f"❌ Debe ser como máximo {maximo}.")
+            continue
+
+        return valor
+
 
 
 

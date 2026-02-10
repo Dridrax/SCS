@@ -1,0 +1,36 @@
+{
+    "plugins": {
+        "misiones": {
+            "activas": {}
+        },
+        "inventario": {},
+        "rachas": {
+            "activas": {
+                "racha_cobre": {
+                    "id": "racha_cobre",
+                    "nombre": "cobre",
+                    "descripcion": "da cobre",
+                    "objetivos": [
+                        {
+                            "descripcion": "cobre",
+                            "factor_escalado": 3.6,
+                            "completado": 0
+                        }
+                    ],
+                    "recompensas": {
+                        "dinero": {
+                            "cobre": {
+                                "valor": 17,
+                                "factor_escalado": 1.1
+                            }
+                        }
+                    },
+                    "penalizaciones": {},
+                    "veces_completada": 7
+                }
+            }
+        }
+    },
+    "stats": {},
+    "progress_stats": {}
+}

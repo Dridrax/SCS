@@ -1,0 +1,55 @@
+{
+    "personaje": {
+        "nombre": "prueba",
+        "edad": 1
+    },
+    "nombre_sistema": "pruebas",
+    "stats": {},
+    "progress_stats": {},
+    "historia": {
+        "tipo": "original",
+        "sinopsis": "",
+        "personajes_principales": "",
+        "parejas": ""
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "niveles": false,
+        "misiones": false,
+        "rachas": true
+    },
+    "inventario": {},
+    "misiones_completadas": {},
+    "rachas": {
+        "activas": {
+            "racha_cobre": {
+                "id": "racha_cobre",
+                "nombre": "cobre",
+                "descripcion": "da cobre",
+                "objetivos": [
+                    {
+                        "descripcion": "cobre",
+                        "factor_escalado": 3.6,
+                        "completado": 0
+                    }
+                ],
+                "recompensas": {
+                    "dinero": {
+                        "cobre": {
+                            "valor": 17,
+                            "factor_escalado": 1.1
+                        }
+                    }
+                },
+                "penalizaciones": {},
+                "veces_completada": 7
+            }
+        }
+    },
+    "dinero": {
+        "oro": 67,
+        "plata": 6,
+        "cobre": 111,
+        "platino": 1571
+    }
+}

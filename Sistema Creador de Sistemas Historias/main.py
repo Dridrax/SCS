@@ -1,3 +1,4 @@
+#main.py
 from core.estado_global import estado
 
 from core.guardado.archivos import guardar_sistema, cargar_sistema, guardar_como
@@ -11,6 +12,11 @@ from core.menus.menus import (menu_crear_cargar, menu_mostrar,
                               menu_modificar, configuracion)
 
 
+
+#Temporal solo prueba
+from plugins.ruleta.menu_ruleta import menu_ruleta
+
+
 # ------------------- MENÚ PRINCIPAL -------------------
 def menu_principal():
     while True:
@@ -20,7 +26,8 @@ def menu_principal():
         print("2. Mostrar Sistema")
         print("3. Modificar Sistema")
         print("4. Configuracion")
-        print("5. Salir\n")
+        print("5. Ruleta (TEMPORAL)")
+        print("6. Salir\n")
 
         opcion = pedir_int("Elige una opción: ")
         #Crear/Cargar Sistema
@@ -37,10 +44,13 @@ def menu_principal():
 
         #Configuracion
         elif opcion == 4:
-            configuracion(estado.sistema_actual)              
+            configuracion(estado.sistema_actual)  
+
+        elif opcion == 5:
+            menu_ruleta()
 
         #Salir
-        elif opcion == 5:
+        elif opcion ==6:
             salir_programa()
             break
 
