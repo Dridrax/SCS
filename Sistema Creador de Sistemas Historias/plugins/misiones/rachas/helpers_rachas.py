@@ -449,9 +449,6 @@ def fallar_racha(sistema, racha_id):
 
     penalizaciones = procesar_racha(sistema, racha_id, "penalizaciones")
 
-    print("\n❌ Racha fallada. Penalizaciones aplicadas:")
-    print(penalizaciones)
-    print("🔄 La racha ha sido reiniciada a su estado base.")
 
     return penalizaciones
 
@@ -513,13 +510,19 @@ def gestion_racha(sistema, racha, rachas_list):
         # ----------------------------
         # Recompensas
         # ----------------------------
-        print(f"\nVeces completada: {racha.get('veces_completada',0)}")
-        print("Recompensas base:")
+        print("Recompensa actual (escalada):")
+
+        veces = racha.get("veces_completada", 0)
+
         for t, items in racha.get("recompensas", {}).items():
             for k, v in items.items():
-                val = v.get("valor", v.get("cantidad", 0))
+                base = v.get("valor", v.get("cantidad", 0))
                 factor = v.get("factor_escalado", 1.0)
-                print(f"  {k} ({t}): {val} [Factor: {factor}]")
+
+                recompensa_actual = int(base * (factor ** veces))
+
+                print(f"  {k} ({t}): {recompensa_actual}  [Base: {base} | Factor: {factor}]")
+
 
         # ----------------------------
         # Penalizaciones

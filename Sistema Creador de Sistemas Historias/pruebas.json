@@ -14,7 +14,7 @@
     },
     "plugins_activos": {
         "inventario": true,
-        "niveles": false,
+        "niveles": true,
         "misiones": true,
         "rachas": true
     },
@@ -31,14 +31,14 @@
                         "descripcion": "oro facil",
                         "cantidad_base": 10,
                         "factor_escalado": 2.0,
-                        "nivel": 1,
+                        "nivel": 0,
                         "progreso": 0
                     }
                 ],
                 "recompensas": {
                     "dinero": {
                         "oro": {
-                            "valor": 5242880,
+                            "valor": 10,
                             "factor_escalado": 2.0
                         }
                     }
@@ -46,13 +46,13 @@
                 "penalizaciones": {
                     "dinero": {
                         "oro": {
-                            "valor": -640,
+                            "valor": -10,
                             "factor_escalado": 2.0
                         }
                     }
                 },
-                "veces_completada": 1,
-                "fallos_consecutivos": 0
+                "veces_completada": 0,
+                "fallos_consecutivos": 14
             },
             "racha_xp": {
                 "id": "racha_xp",
@@ -63,7 +63,7 @@
                         "descripcion": "mata lobos",
                         "cantidad_base": 13,
                         "factor_escalado": 1.5,
-                        "nivel": 4,
+                        "nivel": 13,
                         "progreso": 0
                     }
                 ],
@@ -83,7 +83,8 @@
                         }
                     }
                 },
-                "veces_completada": 4
+                "veces_completada": 12,
+                "fallos_consecutivos": 0
             }
         }
     },
@@ -92,6 +93,14 @@
     },
     "misiones": {},
     "dinero": {
-        "oro": 131941416293620
+        "oro": 163840
+    },
+    "nivel": 1,
+    "xp_actual": 0,
+    "xp_para_siguiente": 100,
+    "niveles_config": {
+        "modo_subida": "auto_stats_y_puntos",
+        "puntos_por_nivel": 5,
+        "stats_automaticos": 5
     }
 }
