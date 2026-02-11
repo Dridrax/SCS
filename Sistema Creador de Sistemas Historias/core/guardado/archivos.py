@@ -5,12 +5,13 @@ from core.estado_global import estado
 
 
 # =========================
-# GUARDAR SISTEMA (NORMAL)
+# GUARDAR SISTEMA (MODIFICADO)
 # =========================
-def guardar_sistema(nombre_archivo=None):
+def guardar_sistema(nombre_archivo=None, print_msg=True):
     sistema = estado.sistema_actual
     if not sistema:
-        print("❌ No hay sistema cargado.")
+        if print_msg:
+            print("❌ No hay sistema cargado.")
         return
 
     # Si no se pasa nombre de archivo, intentar usar nombre del sistema
@@ -23,7 +24,8 @@ def guardar_sistema(nombre_archivo=None):
             # Pedir al usuario si no hay nombre de sistema
             nombre_archivo = input("Introduce un nombre de archivo para guardar este sistema: ").strip()
             if not nombre_archivo:
-                print("❌ No se proporcionó nombre de archivo. Guardado cancelado.")
+                if print_msg:
+                    print("❌ No se proporcionó nombre de archivo. Guardado cancelado.")
                 return
 
     sistema_sin_plugins = sistema.copy()
@@ -31,7 +33,6 @@ def guardar_sistema(nombre_archivo=None):
         if not activo and plugin in sistema_sin_plugins:
             # Si el plugin está desactivado, borramos del JSON principal
             sistema_sin_plugins.pop(plugin, None)
-
 
     with open(f"{nombre_archivo}.json", "w", encoding="utf-8") as f:
         json.dump(sistema_sin_plugins, f, ensure_ascii=False, indent=4)
@@ -46,7 +47,11 @@ def guardar_sistema(nombre_archivo=None):
 
     estado.cambios_no_guardados = False
     estado.archivo_actual = nombre_archivo
-    print(f"\n✅ Sistema y plugin_cache guardados en '{nombre_archivo}.json' y '{nombre_archivo}_plugin_cache.json'.")
+
+    if print_msg:
+        print(f"\n✅ Sistema y plugin_cache guardados-")
+        #print(f"\n✅ Sistema y plugin_cache guardados en '{nombre_archivo}.json' y '{nombre_archivo}_plugin_cache.json'.")
+
 
 
 

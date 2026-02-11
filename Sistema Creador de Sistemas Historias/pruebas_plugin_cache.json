@@ -1,35 +1,74 @@
 {
     "plugins": {
-        "misiones": {
-            "activas": {}
-        },
         "inventario": {},
         "rachas": {
             "activas": {
-                "racha_cobre": {
-                    "id": "racha_cobre",
-                    "nombre": "cobre",
-                    "descripcion": "da cobre",
+                "racha_oro": {
+                    "id": "racha_oro",
+                    "nombre": "Oro Facil",
+                    "descripcion": "oro facil prueba",
                     "objetivos": [
                         {
-                            "descripcion": "cobre",
-                            "factor_escalado": 3.6,
-                            "completado": 0
+                            "descripcion": "oro facil",
+                            "cantidad_base": 10,
+                            "factor_escalado": 2.0,
+                            "nivel": 1,
+                            "progreso": 0
                         }
                     ],
                     "recompensas": {
                         "dinero": {
-                            "cobre": {
-                                "valor": 17,
-                                "factor_escalado": 1.1
+                            "oro": {
+                                "valor": 5242880,
+                                "factor_escalado": 2.0
                             }
                         }
                     },
-                    "penalizaciones": {},
-                    "veces_completada": 7
+                    "penalizaciones": {
+                        "dinero": {
+                            "oro": {
+                                "valor": -640,
+                                "factor_escalado": 2.0
+                            }
+                        }
+                    },
+                    "veces_completada": 1,
+                    "fallos_consecutivos": 0
+                },
+                "racha_xp": {
+                    "id": "racha_xp",
+                    "nombre": "Experiencia",
+                    "descripcion": "da experiencia",
+                    "objetivos": [
+                        {
+                            "descripcion": "mata lobos",
+                            "cantidad_base": 13,
+                            "factor_escalado": 1.5,
+                            "nivel": 4,
+                            "progreso": 0
+                        }
+                    ],
+                    "recompensas": {
+                        "xp": {
+                            "xp": {
+                                "valor": 150,
+                                "factor_escalado": 1.5
+                            }
+                        }
+                    },
+                    "penalizaciones": {
+                        "xp": {
+                            "xp": {
+                                "valor": -15,
+                                "factor_escalado": 1.5
+                            }
+                        }
+                    },
+                    "veces_completada": 4
                 }
             }
-        }
+        },
+        "misiones": {}
     },
     "stats": {},
     "progress_stats": {}

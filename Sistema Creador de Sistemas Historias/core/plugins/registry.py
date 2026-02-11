@@ -24,6 +24,8 @@ PLUGINS = {
         "nombre": "Misiones",
         "on_enable": lambda sistema: inicializar_misiones(sistema),
         "on_disable": None
+
+        
     },
 
     "rachas": {

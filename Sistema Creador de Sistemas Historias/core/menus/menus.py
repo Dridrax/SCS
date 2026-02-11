@@ -1,3 +1,4 @@
+#core/menus
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema, cargar_sistema, guardar_como
 
@@ -11,6 +12,7 @@ from core.plugins.registry import PLUGINS
 #plugins
 from plugins.misiones.menus_misiones import mostrar_misiones, menu_administrar_misiones
 from plugins.misiones.rachas.menus_rachas import mostrar_rachas, menu_administrar_rachas
+from plugins.misiones.rachas.helpers_rachas import configurar_rachas
 
 from plugins.niveles.menu_niveles import menu_configurar_niveles
 
@@ -114,7 +116,7 @@ def menu_mostrar(sistema):
             opciones.append(("Mostrar Misiones Activas", lambda: mostrar_misiones(sistema)))
 
         # Rachas
-        if plugins.get("rachas", False):
+        if plugins.get("misiones", False):
             opciones.append(("Mostrar Rachas", lambda: mostrar_rachas(sistema)))
 
         # Menú numerado
@@ -161,7 +163,7 @@ def menu_modificar(sistema):
             opciones.append(("Administrar Misiones", lambda: menu_administrar_misiones(sistema)))
 
         # Rachas
-        if plugins.get("rachas", False):
+        if plugins.get("misiones", False):
             opciones.append(("Modificar Rachas", lambda: menu_administrar_rachas(sistema)))
 
         # Menú numerado
@@ -178,7 +180,6 @@ def menu_modificar(sistema):
             estado.cambios_no_guardados = True
         else:
             break
-
 
 # ------------------- CONFIGURACION DEL SISTEMA -------------------
 def configuracion(sistema):
@@ -205,6 +206,10 @@ def configuracion(sistema):
         if plugins.get("niveles", False):
             opciones.append(("Niveles", lambda: menu_configurar_niveles(sistema)))
 
+        if plugins.get("misiones", False):
+            opciones.append(("Configuración Rachas", lambda: configurar_rachas(sistema)))
+
+
         # Mostrar menú dinámico
         for i, (texto, _) in enumerate(opciones, start=1):
             print(f"{i}. {texto}")
@@ -218,8 +223,6 @@ def configuracion(sistema):
             funcion()
         else:
             break
-
-
 
 # ------------------- MODIFICAR STATS MENUS Y SUBMENUS -------------------
 def menu_modificar_stats(sistema):
@@ -418,7 +421,6 @@ def menu_plugins(autoguardar=True):
         else:
             print("❌ Opción no válida.")
         
-    
 """MENUS.PY - Documentación y guía de uso
 
 Este archivo contiene los menús principales y submenús del programa SCS.

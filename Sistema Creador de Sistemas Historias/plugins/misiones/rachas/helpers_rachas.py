@@ -41,29 +41,50 @@ def crear_racha(
     recompensas=None,
     penalizaciones=None
 ):
-    """
-    Crea una racha nueva.
-    """
     inicializar_rachas(sistema)
     activas = sistema["rachas"]["activas"]
 
     if id in activas:
-        return False  # Ya existe
+        return False
+
+    # Asegurar estructura base fija en recompensas
+    def normalizar_bloque(bloque):
+        bloque_final = {}
+
+        for tipo, items in (bloque or {}).items():
+            bloque_final[tipo] = {}
+
+            for nombre, info in items.items():
+                nueva_info = info.copy()
+
+                # Convertir "valor" → "valor_base"
+                if "valor" in nueva_info:
+                    nueva_info["valor_base"] = nueva_info.pop("valor")
+
+                if "cantidad" in nueva_info:
+                    nueva_info["cantidad_base"] = nueva_info.pop("cantidad")
+
+                bloque_final[tipo][nombre] = nueva_info
+
+        return bloque_final
 
     activas[id] = {
         "id": id,
         "nombre": nombre,
         "descripcion": descripcion,
-        "objetivos": objetivos or [],  # Lista de dicts {descripcion, factor_escalado, completado}
-        "recompensas": recompensas or {},  # Cada ítem: {valor/cantidad, factor_escalado, ...}
-        "penalizaciones": penalizaciones or {},
-        "veces_completada": 0
+        "objetivos": objetivos or [],
+        "recompensas": normalizar_bloque(recompensas),
+        "penalizaciones": normalizar_bloque(penalizaciones),
+        "veces_completada": 0,
+        "fallos_consecutivos": 0
     }
 
     estado.cambios_no_guardados = True
     sync_rachas_plugin_cache(sistema)
-    guardar_sistema()
+    guardar_sistema(print_msg=False)
+
     return True
+
 
 # --------------------------------------------------
 # Modificar racha
@@ -81,9 +102,6 @@ def menu_editar_bloque_racha(racha, clave):
 
 
 def modificar_racha(sistema, racha_id):
-    """
-    Modifica una racha existente de forma interactiva.
-    """
     inicializar_rachas(sistema)
     racha = sistema["rachas"]["activas"].get(racha_id)
     if not racha:
@@ -104,7 +122,8 @@ def modificar_racha(sistema, racha_id):
     while True:
         print("\n--- OBJETIVOS ---")
         for i, obj in enumerate(racha["objetivos"], 1):
-            print(f"{i}. {obj['descripcion']} | Factor: {obj.get('factor_escalado',1.0)}")
+            objetivo_actual = obj["cantidad_base"] * (obj["factor_escalado"] ** obj["nivel"])
+            print(f"{i}. {obj['descripcion']} {obj['progreso']}/{int(objetivo_actual)} [FE: {obj['factor_escalado']}]")
 
         print("[A] Añadir   [E] Editar   [D] Eliminar   [Enter] Volver")
 
@@ -112,16 +131,27 @@ def modificar_racha(sistema, racha_id):
 
         if opcion == "a":
             desc = input("Descripción objetivo: ").strip()
+            cantidad_base = safe_int_input("Cantidad base del objetivo: ", default=1)
             factor = safe_float_input("Factor de escalado (1.0 = sin cambio): ", default=1.0)
-            racha["objetivos"].append({"descripcion": desc, "factor_escalado": factor, "completado": 0})
+            racha["objetivos"].append({
+                "descripcion": desc,
+                "cantidad_base": cantidad_base,
+                "factor_escalado": factor,
+                "nivel": 0,
+                "progreso": 0
+            })
 
         elif opcion == "e":
             idx = safe_int_input("Número de objetivo a editar: ", min_val=1, max_val=len(racha["objetivos"])) - 1
             obj = racha["objetivos"][idx]
             desc = input(f"Descripción ({obj['descripcion']}): ").strip() or obj['descripcion']
-            factor = safe_float_input(f"Factor de escalado ({obj.get('factor_escalado',1.0)}): ", default=obj.get('factor_escalado',1.0))
-            obj['descripcion'] = desc
-            obj['factor_escalado'] = factor
+            cantidad_base = safe_int_input(f"Cantidad base ({obj['cantidad_base']}): ", default=obj['cantidad_base'])
+            factor = safe_float_input(f"Factor de escalado ({obj['factor_escalado']}): ", default=obj['factor_escalado'])
+            obj.update({
+                "descripcion": desc,
+                "cantidad_base": cantidad_base,
+                "factor_escalado": factor
+            })
 
         elif opcion == "d":
             idx = safe_int_input("Número de objetivo a eliminar: ", min_val=1, max_val=len(racha["objetivos"])) - 1
@@ -148,9 +178,31 @@ def modificar_racha(sistema, racha_id):
         else:
             print("❌ Opción inválida.")
 
-    estado.cambios_no_guardados = True
-    guardar_sistema()
-    return True
+        estado.cambios_no_guardados = True
+        guardar_sistema()
+        return True
+
+    # -----------------------
+    # EDITAR RECOMPENSAS / PENALIZACIONES
+    # -----------------------
+    while True:
+        print("\n--- RECOMPENSAS / PENALIZACIONES ---")
+        print("1. Editar recompensas")
+        print("2. Editar penalizaciones")
+        print("3. Salir")
+        opcion = input("> ").strip()
+        if opcion == "1":
+            menu_editar_bloque_interactivo(racha.setdefault("recompensas", {}), "recompensas")
+        elif opcion == "2":
+            menu_editar_bloque_interactivo(racha.setdefault("penalizaciones", {}), "penalizaciones")
+        elif opcion == "3":
+            break
+        else:
+            print("❌ Opción inválida.")
+
+        estado.cambios_no_guardados = True
+        guardar_sistema()
+        return True
 
 
 def menu_editar_bloque_interactivo(bloque, nombre_bloque):
@@ -233,77 +285,181 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
         else:
             print("❌ Opción inválida.")
 
+
 # --------------------------------------------------
-# Completar / Fallar racha
+# PROCESAR RACHA (OPCIÓN A - BASE FIJA)
 # --------------------------------------------------
 
-def procesar_racha(sistema, racha_id, clave="recompensas"):
-    """
-    Aplica recompensas o penalizaciones.
-    Cada item se escala por su propio factor_escalado
-    y el nuevo valor se guarda como base.
-    """
+def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
     inicializar_rachas(sistema)
-    racha = sistema["rachas"]["activas"].get(racha_id)
 
+    racha = sistema["rachas"]["activas"].get(racha_id)
     if not racha:
-        print("❌ Racha no encontrada.")
         return False
+
+    # ----------------------
+    # Verificación (solo recompensas)
+    # ----------------------
+    if clave == "recompensas" and not forzar:
+        objetivos = racha.get("objetivos", [])
+        todos_completos = all(
+            obj.get("progreso", 0) >=
+            obj.get("cantidad_base", 1) *
+            (obj.get("factor_escalado", 1.0) ** obj.get("nivel", 0))
+            for obj in objetivos
+        )
+        if not todos_completos:
+            return None
 
     datos = racha.get(clave, {})
     if not datos:
-        print(f"❌ Esta racha no tiene {clave}.")
         return False
 
     entregado = {}
 
-    for tipo, items in datos.items():
-        entregado[tipo] = {}
+    # 🔹 Escalado correcto
+    if clave == "recompensas":
+        multiplicador = racha.get("veces_completada", 0) + 1
+    else:
+        multiplicador = racha.get("fallos_consecutivos", 0) + 1
 
+    for tipo, items in datos.items():
         if not isinstance(items, dict):
             continue
+
+        entregado[tipo] = {}
 
         for nombre, info in items.items():
             if not isinstance(info, dict):
                 continue
 
-            # Detectar campo base
-            if "valor" in info:
-                campo = "valor"
-            elif "cantidad" in info:
-                campo = "cantidad"
-            else:
+            campo = "valor" if "valor" in info else "cantidad" if "cantidad" in info else None
+            if not campo:
                 continue
 
             base = info[campo]
             factor = info.get("factor_escalado", 1.0)
 
-            nuevo_valor = int(base * factor)
-
-            # 🔁 Guardar nuevo valor como base
-            info[campo] = nuevo_valor
+            # 🔥 CALCULO LIMPIO (NO modifica base)
+            nuevo_valor = int(base * (factor ** (multiplicador - 1)))
 
             entregado[tipo][nombre] = nuevo_valor
 
-    aplicar_recompensas(
-        sistema,
-        preparar_recompensa_para_aplicar(sistema, entregado)
-    )
+    # Limpiar tipos vacíos
+    entregado = {k: v for k, v in entregado.items() if v}
 
+    if entregado:
+        aplicar_recompensas(
+            sistema,
+            preparar_recompensa_para_aplicar(sistema, entregado)
+        )
+
+    # ----------------------
+    # Actualizar contadores
+    # ----------------------
     if clave == "recompensas":
         racha["veces_completada"] = racha.get("veces_completada", 0) + 1
+        racha["fallos_consecutivos"] = 0
+
+    elif clave == "penalizaciones":
+        racha["fallos_consecutivos"] = racha.get("fallos_consecutivos", 0) + 1
+        racha["veces_completada"] = 0
+
+        # Reiniciar progresión completa
+        for obj in racha.get("objetivos", []):
+            obj["nivel"] = 0
+            obj["progreso"] = 0
 
     estado.cambios_no_guardados = True
-    guardar_sistema()
+    guardar_sistema(print_msg=False)
+
     return entregado
 
 
 
-def completar_racha(sistema, racha_id):
-    return procesar_racha(sistema, racha_id, "recompensas")
+# --------------------------------------------------
+# COMPLETAR RACHA
+# --------------------------------------------------
+
+def completar_racha(sistema, racha_id, forzar=False):
+    inicializar_rachas(sistema)
+
+    racha = sistema["rachas"]["activas"].get(racha_id)
+    if not racha:
+        return False
+
+    # ----------------------
+    # FORZADO
+    # ----------------------
+    if forzar:
+        for obj in racha.get("objetivos", []):
+            obj["progreso"] = 0
+            obj["nivel"] = obj.get("nivel", 0) + 1
+
+        return procesar_racha(sistema, racha_id, "recompensas", forzar=True)
+
+    # ----------------------
+    # PROGRESO NORMAL
+    # ----------------------
+    todos_completados = True
+
+    for obj in racha.get("objetivos", []):
+        objetivo_actual = obj["cantidad_base"] * (
+            obj["factor_escalado"] ** obj.get("nivel", 0)
+        )
+        progreso_actual = obj.get("progreso", 0)
+
+        print(f"\nObjetivo: {obj['descripcion']} {progreso_actual}/{int(objetivo_actual)}")
+
+        cantidad = safe_int_input(
+            f"Ingrese avance desde {progreso_actual}: ", default=0
+        )
+        cantidad = max(0, cantidad)
+
+        completado = marcar_progreso_objetivo(obj, cantidad)
+        if not completado:
+            todos_completados = False
+
+    estado.cambios_no_guardados = True
+    guardar_sistema(print_msg=False)
+
+    if todos_completados:
+        return procesar_racha(sistema, racha_id, "recompensas", forzar=True)
+
+    return None
+
+
+# --------------------------------------------------
+# FALLAR RACHA
+# --------------------------------------------------
 
 def fallar_racha(sistema, racha_id):
-    return procesar_racha(sistema, racha_id, "penalizaciones")
+    """
+    Falla una racha.
+    - Aplica penalizaciones.
+    - Reinicia completamente la progresión (lo hace procesar_racha).
+    """
+
+    inicializar_rachas(sistema)
+
+    racha = sistema["rachas"]["activas"].get(racha_id)
+    if not racha:
+        print("❌ Racha no encontrada.")
+        return False
+
+    penalizaciones = procesar_racha(sistema, racha_id, "penalizaciones")
+
+    print("\n❌ Racha fallada. Penalizaciones aplicadas:")
+    print(penalizaciones)
+    print("🔄 La racha ha sido reiniciada a su estado base.")
+
+    return penalizaciones
+
+
+
+
+
+
 
 # --------------------------------------------------
 # Eliminar racha
@@ -334,18 +490,30 @@ def eliminar_racha(sistema, racha_id):
 
 def gestion_racha(sistema, racha, rachas_list):
     """
-    Menu interno para completar, fallar o eliminar una racha seleccionada.
-    Muestra correctamente valor y factor de escalado de recompensas y penalizaciones.
+    Menu interno para administrar una racha:
+    - Completar por progreso
+    - Forzar completado
+    - Fallar (penalizaciones escaladas)
+    - Eliminar
+    - Muestra número de fallos consecutivos y cuánto falta para reinicio
     """
     while True:
         print(f"\n--- DETALLES DE {racha['nombre']} ---")
         print(f"ID: {racha['id']}")
         print(f"Descripción: {racha['descripcion']}")
-        print("Objetivos:")
-        for i, obj in enumerate(racha.get("objetivos", []), 1):
-            print(f"  {i}. {obj['descripcion']} | Factor: {obj.get('factor_escalado', 1.0)} | Completado: {obj.get('completado',0)}")
 
-        print(f"Veces completada: {racha.get('veces_completada',0)}")
+        # ----------------------------
+        # Objetivos
+        # ----------------------------
+        print("\nObjetivos:")
+        for i, obj in enumerate(racha.get("objetivos", []), 1):
+            objetivo_actual = obj["cantidad_base"] * (obj["factor_escalado"] ** obj["nivel"])
+            print(f"  {i}. {obj['descripcion']} {obj['progreso']}/{int(objetivo_actual)} [FE: {obj['factor_escalado']}]")
+
+        # ----------------------------
+        # Recompensas
+        # ----------------------------
+        print(f"\nVeces completada: {racha.get('veces_completada',0)}")
         print("Recompensas base:")
         for t, items in racha.get("recompensas", {}).items():
             for k, v in items.items():
@@ -353,26 +521,46 @@ def gestion_racha(sistema, racha, rachas_list):
                 factor = v.get("factor_escalado", 1.0)
                 print(f"  {k} ({t}): {val} [Factor: {factor}]")
 
-        print("Penalizaciones base:")
+        # ----------------------------
+        # Penalizaciones
+        # ----------------------------
+        fallos = racha.get("fallos_consecutivos", 0)
+        max_fallos = sistema.get("configuracion", {}).get("racha_recuperacion_fallos", 3)
+        faltan_para_reiniciar = max_fallos - fallos if max_fallos > fallos else 0
+
+        print(f"\nFallos consecutivos: {fallos} (Faltan {faltan_para_reiniciar} rachas completadas para reinicio)")
+        print("Penalizaciones actuales:")
         for t, items in racha.get("penalizaciones", {}).items():
             for k, v in items.items():
-                val = v.get("valor", v.get("cantidad", 0))
+                base = v.get("valor", v.get("cantidad", 0))
                 factor = v.get("factor_escalado", 1.0)
-                print(f"  {k} ({t}): {val} [Factor: {factor}]")
+                # Penalización escalada
+                penal_actual = int(base * (factor ** fallos)) if factor != 1.0 else base
+                print(f"  {k} ({t}): {penal_actual} [Factor: {factor}]")
 
-        print("\n[C] Completar   [F] Fallar   [D] Eliminar   [Enter] Volver")
+        # ----------------------------
+        # Menú de acciones
+        # ----------------------------
+        print("\n[P] Completar por progreso   [F] Forzar completado   [E] Fallar   [D] Eliminar   [Enter] Volver")
         accion = input("> ").strip().lower()
 
-        if accion == "c":
-            recompensas = completar_racha(sistema, racha["id"])
-            
-            print("\n✅ Racha completada. Recompensas entregadas:")
-            print(recompensas)
+        if accion == "p":
+            recompensas = completar_racha(sistema, racha["id"], forzar=False)
+            if recompensas:
+                print("\n✅ Racha completada. Recompensas entregadas:")
+                print(recompensas)
+            else:
+                print("\n⚠ Racha no completada. Algunos objetivos aún no alcanzaron su meta.")
             break
 
         elif accion == "f":
+            recompensas = completar_racha(sistema, racha["id"], forzar=True)
+            print("\n✅ Racha completada forzadamente. Recompensas entregadas:")
+            print(recompensas)
+            break
+
+        elif accion == "e":
             penalizaciones = fallar_racha(sistema, racha["id"])
-            
             print("\n❌ Racha fallada. Penalizaciones aplicadas:")
             print(penalizaciones)
             break
@@ -387,6 +575,9 @@ def gestion_racha(sistema, racha, rachas_list):
 
         else:
             break
+
+
+
 
 # --------------------------------------------------
 # Funciones de ayuda para inputs seguros
@@ -454,3 +645,53 @@ def seleccionar_racha(sistema, accion="modificar"):
 
     print("❌ Racha no encontrada.")
     return None
+
+
+def marcar_progreso_objetivo(objetivo, cantidad):
+    """
+    Incrementa progreso de un objetivo y marca nivel si se cumple.
+    Retorna True si objetivo completado en este paso.
+    Mantiene exceso de progreso acumulado para siguiente nivel.
+    """
+    objetivo["progreso"] += cantidad
+    objetivo_actual = objetivo["cantidad_base"] * (objetivo["factor_escalado"] ** objetivo.get("nivel", 0))
+
+    completado = False
+    while objetivo["progreso"] >= objetivo_actual:
+        objetivo["progreso"] -= objetivo_actual
+        objetivo["nivel"] += 1
+        objetivo_actual = objetivo["cantidad_base"] * (objetivo["factor_escalado"] ** objetivo["nivel"])
+        completado = True
+
+    return completado
+
+
+
+def configurar_rachas(sistema):
+    """
+    Permite al administrador configurar parámetros generales de las rachas:
+    - Número de rachas completadas consecutivas necesarias para reiniciar penalizaciones.
+    """
+    if sistema is None:
+        sistema = estado.sistema_actual
+    if not sistema:
+        print("❌ No hay sistema cargado.")
+        return
+
+    # Asegurar que la sección de configuración exista
+    sistema.setdefault("configuracion", {})
+    config = sistema["configuracion"]
+
+    print("\n=== CONFIGURACIÓN DE RACHAS ===")
+
+    # Valor actual
+    valor_actual = config.get("racha_recuperacion_fallos", 3)
+    print(f"Número de rachas completadas consecutivas para reiniciar penalizaciones (actual: {valor_actual}): ")
+
+    nuevo_valor = safe_int_input("Ingresa nuevo valor (Enter = mantener actual): ", min_val=1, default=valor_actual)
+    config["racha_recuperacion_fallos"] = nuevo_valor
+
+    print(f"✅ Configuración actualizada: reinicio de penalizaciones tras {nuevo_valor} rachas completadas consecutivas.")
+
+    estado.cambios_no_guardados = True
+    guardar_sistema()

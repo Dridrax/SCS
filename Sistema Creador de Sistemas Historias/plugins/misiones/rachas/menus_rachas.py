@@ -75,8 +75,15 @@ def menu_crear_racha(sistema):
         if agregar != "s":
             break
         desc = input("Descripción del objetivo: ").strip()
+        cantidad_base = safe_int_input("Cantidad base del objetivo: ", default=1)
         factor = safe_float_input("Factor de escalado (1.0 = sin cambio): ", default=1.0)
-        objetivos.append({"descripcion": desc, "factor_escalado": factor, "completado": 0})
+        objetivos.append({
+            "descripcion": desc,
+            "cantidad_base": cantidad_base,
+            "factor_escalado": factor,
+            "nivel": 0,
+            "progreso": 0
+        })
 
     # -----------------------
     # RECOMPENSAS
