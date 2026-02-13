@@ -9,8 +9,12 @@ Cada plugin se define con:
 """
 
 from core.utils.plugin_registry import inicializar_plugins_activos
-from plugins.niveles import PLUGIN as PLUGIN_NIVELES
+
 from plugins.misiones import init_plugin_misiones
+
+from plugins.niveles import PLUGIN as PLUGIN_NIVELES
+
+from plugins.rachas import PLUGIN as PLUGIN_RACHAS
 
 PLUGINS = {
     "inventario": {
@@ -19,13 +23,15 @@ PLUGINS = {
         "on_disable": None
     },
     
-    "niveles": PLUGIN_NIVELES,
-    
     "misiones": {
         "nombre": "Misiones",
         "on_enable": init_plugin_misiones,
         "on_disable": None
-    }
+    },
+
+    "niveles": PLUGIN_NIVELES,
+    
+    "rachas": PLUGIN_RACHAS
     
 }
 

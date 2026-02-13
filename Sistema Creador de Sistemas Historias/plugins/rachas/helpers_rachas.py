@@ -3,9 +3,10 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.recompensas.aplicar import aplicar_recompensas
-from core.recompensas.tipos import obtener_tipos_recompensa_validos, cargar_recursos_desde_sistema
+from core.recompensas.tipos import obtener_tipos_recompensa_validos
 from core.recompensas.ui_preparacion import preparar_recompensa_para_aplicar
-from plugins.misiones.menus_misiones import menu_editar_bloque
+from core.utils.funciones_utiles import safe_float_input, safe_int_input, sync_plugin_cache
+from core.recompensas.bloques import menu_editar_bloque_interactivo
 
 
 # --------------------------------------------------
@@ -17,16 +18,8 @@ def inicializar_rachas(sistema):
     Asegura que la estructura de rachas exista y sincroniza cache.
     """
     sistema.setdefault("rachas", {}).setdefault("activas", {})
-    sync_rachas_plugin_cache(sistema)
+    sync_plugin_cache(sistema, "rachas", ["activas", "historial"])
 
-def sync_rachas_plugin_cache(sistema):
-    """
-    Sincroniza las rachas activas en el plugin cache.
-    No borra otros posibles datos del plugin.
-    """
-    estado.plugin_cache.setdefault("plugins", {})
-    estado.plugin_cache["plugins"].setdefault("rachas", {})
-    estado.plugin_cache["plugins"]["rachas"]["activas"] = sistema.get("rachas", {}).get("activas", {})
 
 # --------------------------------------------------
 # Crear racha
@@ -79,7 +72,8 @@ def crear_racha(
     }
 
     estado.cambios_no_guardados = True
-    sync_rachas_plugin_cache(sistema)
+    sync_plugin_cache(sistema, "rachas", ["activas", "historial"])
+
     guardar_sistema(print_msg=False)
 
     return True
@@ -89,15 +83,15 @@ def crear_racha(
 # Modificar racha
 # --------------------------------------------------
 
-def menu_editar_bloque_racha(racha, clave):
-    """
+"""def menu_editar_bloque_racha(racha, clave):
+    
     Permite usar menu_editar_bloque de misiones con rachas.
-    """
+    
     # Creamos temporalmente un objeto con el mismo formato que una misión
     temp = {clave: racha.setdefault(clave, {})}
     menu_editar_bloque(temp, clave)
     # Guardamos los cambios de vuelta en la racha
-    racha[clave] = temp[clave]
+    racha[clave] = temp[clave]"""
 
 
 def modificar_racha(sistema, racha_id):
@@ -174,137 +168,32 @@ def modificar_racha(sistema, racha_id):
     # -----------------------
     # EDITAR RECOMPENSAS
     # -----------------------
-    
-    menu_editar_bloque_interactivo(racha.setdefault("recompensas", {}), "recompensas")
+    tipos_validos = obtener_tipos_recompensa_validos()
+    menu_editar_bloque_interactivo(
+        racha.setdefault("recompensas", {}),
+        "recompensas",
+        tipos_validos=tipos_validos
+    )
 
     # -----------------------
     # EDITAR PENALIZACIONES
     # -----------------------
-    
-    menu_editar_bloque_interactivo(racha.setdefault("penalizaciones", {}), "penalizaciones")
+    menu_editar_bloque_interactivo(
+        racha.setdefault("penalizaciones", {}),
+        "penalizaciones",
+        tipos_validos=tipos_validos
+    )
 
+    # -----------------------
+    # SINCRONIZAR Y GUARDAR
+    # -----------------------
+    sync_plugin_cache(sistema, "rachas", ["activas", "historial"])
     estado.cambios_no_guardados = True
     guardar_sistema(print_msg=False)
     print("✅ Racha modificada correctamente.")
     return True
 
 
-
-def menu_editar_bloque_interactivo(bloque, nombre_bloque):
-    """
-    Editor dinámico de recompensas/penalizaciones para SCS.
-    Soporta todos los tipos base + recursos dinámicos.
-    """
-    
-    while True:
-        print(f"\n--- {nombre_bloque.upper()} ---")
-
-        # Mostrar contenido actual
-        if bloque:
-            for tipo, items in bloque.items():
-                print(f" {tipo}:")
-                for nombre, info in items.items():
-                    base = info.get("valor_base", info.get("valor",
-                           info.get("cantidad_base", info.get("cantidad", 0))))
-                    factor = info.get("factor_escalado", 1.0)
-                    print(f"   {nombre}: {base} [Factor: {factor}]")
-
-        print("\n1. Agregar")
-        print("2. Editar")
-        print("3. Eliminar")
-        print("4. Volver")
-
-        opcion = safe_int_input("Opción: ", default=4)
-
-        # --------------------------------------------------
-        # AGREGAR
-        # --------------------------------------------------
-        if opcion == 1:
-            if sistema_actual := estado.sistema_actual:
-                cargar_recursos_desde_sistema(estado.sistema_actual)  # actualiza RECURSOS_REGISTRADOS
-            tipos_validos = obtener_tipos_recompensa_validos()
-            print("\nTipos disponibles:")
-            for t in tipos_validos:
-                print(f" - {t}")
-
-            tipo = input("Tipo: ").strip()
-            if tipo not in tipos_validos:
-                print("❌ Tipo inválido.")
-                continue
-
-            nombre = input("Nombre del recurso/stat/objeto: ").strip()
-            base = safe_int_input("Valor / Cantidad base: ", default=0)
-            factor = safe_float_input("Factor de escalado (1.0 = fijo): ", default=1.0)
-
-            # AGREGAR ELEMENTO CORRECTAMENTE
-            tope = None
-            if tipo != "objetos":
-                tope = safe_int_input("Tope máximo (solo lineal_tope, Enter = sin tope): ", default=None)
-
-            item = {}
-            if tipo == "objetos":
-                item["cantidad"] = base
-            else:
-                item["valor_base"] = base
-                item["tope"] = tope
-
-            item["factor_escalado"] = factor
-
-            bloque.setdefault(tipo, {})[nombre] = item
-
-
-
-            print("✅ Agregado correctamente.")
-
-        # --------------------------------------------------
-        # EDITAR
-        # --------------------------------------------------
-        elif opcion == 2:
-            tipo = input("Tipo a editar: ").strip()
-            nombre = input("Nombre a editar: ").strip()
-
-            if tipo not in bloque or nombre not in bloque[tipo]:
-                print("❌ No encontrado.")
-                continue
-
-            item = bloque[tipo][nombre]
-
-            base_actual = item.get("valor_base", item.get("cantidad", 0))
-            factor_actual = item.get("factor_escalado", 1.0)
-
-            nuevo_base = safe_int_input(f"Valor / Cantidad ({base_actual}): ", default=base_actual)
-            nuevo_factor = safe_float_input(f"Factor ({factor_actual}): ", default=factor_actual)
-
-            if tipo == "objetos":
-                item["cantidad"] = nuevo_base
-            else:
-                item["valor_base"] = nuevo_base
-
-            item["factor_escalado"] = nuevo_factor
-
-            if tipo != "objetos":
-                tope_actual = item.get("tope", None)
-                nuevo_tope = safe_int_input(f"Tope máximo ({tope_actual}): ", default=tope_actual)
-                item["tope"] = nuevo_tope
-
-
-            print("✅ Editado correctamente.")
-
-        # --------------------------------------------------
-        # ELIMINAR
-        # --------------------------------------------------
-        elif opcion == 3:
-            tipo = input("Tipo: ").strip()
-            nombre = input("Nombre: ").strip()
-
-            if tipo in bloque and nombre in bloque[tipo]:
-                del bloque[tipo][nombre]
-                print("✅ Eliminado.")
-            else:
-                print("❌ No encontrado.")
-
-        elif opcion == 4:
-            break
 
 # --------------------------------------------------
 # PROCESAR RACHA (OPCIÓN A - BASE FIJA)
@@ -508,7 +397,8 @@ def eliminar_racha(sistema, racha_id):
         return False
 
     del activas[racha_id]
-    sync_rachas_plugin_cache(sistema)
+    sync_plugin_cache(sistema, "rachas", ["activas", "historial"])
+
     estado.cambios_no_guardados = True
     guardar_sistema()
     print("✅ Racha eliminada.")
@@ -643,33 +533,6 @@ def gestion_racha(sistema, racha, rachas_list):
         else:
             break
 
-# --------------------------------------------------
-# Funciones de ayuda para inputs seguros
-# --------------------------------------------------
-
-def safe_int_input(prompt, min_val=None, max_val=None, default=None):
-    while True:
-        val = input(prompt).strip()
-        if val == "" and default is not None:
-            return default
-        try:
-            val = int(val)
-            if (min_val is not None and val < min_val) or (max_val is not None and val > max_val):
-                print(f"❌ Debe estar entre {min_val} y {max_val}.")
-                continue
-            return val
-        except ValueError:
-            print("❌ Entrada no válida. Debe ser un número entero.")
-
-def safe_float_input(prompt, default=None):
-    while True:
-        val = input(prompt).strip()
-        if val == "" and default is not None:
-            return default
-        try:
-            return float(val)
-        except ValueError:
-            print("❌ Entrada no válida. Debe ser un número.")
 
 # --------------------------------------------------
 # Seleccionar racha
@@ -724,82 +587,4 @@ def marcar_progreso_objetivo(objetivo, cantidad):
         completado = True
 
     return completado
-
-def configurar_rachas(sistema):
-    """
-    Menú interactivo para configurar rachas:
-    1 Reinicio de penalizaciones
-    2 Tipo de escalado de recompensas (con ejemplos)
-    """
-    if sistema is None:
-        sistema = estado.sistema_actual
-    if not sistema:
-        print("❌ No hay sistema cargado.")
-        return
-
-    sistema.setdefault("configuracion", {})
-    config = sistema["configuracion"]
-
-    while True:
-        print("\n=== CONFIGURACIÓN DE RACHAS ===")
-        print("1 Cambiar número de rachas completadas para reiniciar penalizaciones")
-        print("2 Cambiar tipo de escalado de recompensas")
-        print("0 Salir del menú")
-
-        opcion = safe_int_input("Selecciona opción: ", min_val=0, max_val=2)
-
-        if opcion == 0:
-            break
-
-        elif opcion == 1:
-            valor_actual = config.get("racha_recuperacion_fallos", 3)
-            print(f"\nNúmero actual: {valor_actual}")
-            nuevo_valor = safe_int_input("Nuevo valor (Enter = mantener actual): ", min_val=1, default=valor_actual)
-            config["racha_recuperacion_fallos"] = nuevo_valor
-            print(f"✅ Reinicio de penalizaciones tras {nuevo_valor} rachas completadas.")
-
-        elif opcion == 2:
-            print("\nTipos de escalado disponibles:")
-            print("1. Exponencial (valor_base * factor^n)")
-            print("2. Lineal (valor_base + (factor-1)*valor_base * n)")
-            print("3. Lineal + Tope (igual que lineal, pero con límite máximo)")
-            print("4. Lineal por porcentaje (valor_base * (1 + (factor-1)*n))")
-            print("5. Lineal suavizado (valor_base + incremento suavizado * n)")
-
-            ejemplos = {}
-            valor_base = 100
-            factor = 1.5
-            for tipo, nombre in enumerate(["exponencial", "lineal", "lineal_tope", "lineal_porcentaje", "lineal_suavizado"], start=1):
-                valores = []
-                for n in range(5):
-                    if nombre == "exponencial":
-                        valores.append(int(valor_base * (factor ** n)))
-                    elif nombre == "lineal":
-                        valores.append(int(valor_base + (factor-1)*valor_base * n))
-                    elif nombre == "lineal_tope":
-                        tope = 300
-                        val = int(valor_base + (factor-1)*valor_base * n)
-                        valores.append(min(val, tope))
-                    elif nombre == "lineal_porcentaje":
-                        valores.append(int(valor_base * (1 + (factor-1) * n)))
-                    elif nombre == "lineal_suavizado":
-                        incremento = (factor-1)*valor_base
-                        valores.append(int(valor_base + incremento * (1 - 0.5**n)))
-                ejemplos[nombre] = valores
-
-            for k, v in ejemplos.items():
-                print(f"{k}: {v}")
-
-            opciones_map = {1: "exponencial", 2: "lineal", 3: "lineal_tope", 4: "lineal_porcentaje", 5: "lineal_suavizado"}
-            tipo_actual = config.get("racha_tipo_escalado", "exponencial")
-            print(f"\nTipo actual: {tipo_actual}")
-            seleccion = safe_int_input("Selecciona opción (Enter = mantener actual): ", default=1, min_val=1, max_val=5)
-            config["racha_tipo_escalado"] = opciones_map.get(seleccion, tipo_actual)
-            print(f"✅ Tipo de escalado actualizado a: {config['racha_tipo_escalado']}")
-
-        estado.cambios_no_guardados = True
-        guardar_sistema(print_msg=False)
-
-    print("🔹 Saliste del menú de configuración de rachas.")
-
 

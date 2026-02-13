@@ -1,17 +1,7 @@
+#core/utils/funciones_utiles.py
 
-"""def pedir_int(mensaje, default=None):
-    
-    Pide un número entero al usuario.
-    Si se presiona ENTER y se pasa default, devuelve default.
-    
-    while True:
-        entrada = input(mensaje)
-        if entrada == "" and default is not None:
-            return default
-        try:
-            return int(entrada)
-        except ValueError:
-            print("❌ Debes introducir un número válido.")"""
+from core.estado_global import estado
+
 
 
 def pedir_int(mensaje, default=None, minimo=None, maximo=None):
@@ -44,20 +34,6 @@ def pedir_int(mensaje, default=None, minimo=None, maximo=None):
 
 
 
-"""Mejorado def pedir_int(texto, minimo=None, maximo=None):
-    while True:
-        try:
-            valor = int(input(texto))
-            if minimo is not None and valor < minimo:
-                print(f"❌ Debe ser ≥ {minimo}")
-                continue
-            if maximo is not None and valor > maximo:
-                print(f"❌ Debe ser ≤ {maximo}")
-                continue
-            return valor
-        except ValueError:
-            print("❌ Introduce un número válido.")
-"""
 
 def pedir_si_no(texto):
     while True:
@@ -108,9 +84,6 @@ def modificar_progreso(stat, cambio):
         stat["actual"] = 0
 
 
-
-
-
 def modificar_factor_escalado(stat):
     """
     Permite al autor cambiar el factor de escalado de un progress stat.
@@ -127,3 +100,52 @@ def modificar_factor_escalado(stat):
 
     stat["factor_escalado"] = nuevo_factor
     print(f"\n✅ Factor de escalado actualizado a {nuevo_factor}")
+
+
+def safe_int_input(prompt, min_val=None, max_val=None, default=None):
+    while True:
+        val = input(prompt).strip()
+        if val == "" and default is not None:
+            return default
+        try:
+            val = int(val)
+            if (min_val is not None and val < min_val) or (max_val is not None and val > max_val):
+                print(f"❌ Debe estar entre {min_val} y {max_val}.")
+                continue
+            return val
+        except ValueError:
+            print("❌ Entrada no válida. Debe ser un número entero.")
+
+def safe_float_input(prompt, default=None):
+    while True:
+        val = input(prompt).strip()
+        if val == "" and default is not None:
+            return default
+        try:
+            return float(val)
+        except ValueError:
+            print("❌ Entrada no válida. Debe ser un número.")
+
+def sync_plugin_cache(sistema, nombre_plugin, claves=None):
+    """
+    Sincroniza datos del sistema hacia estado.plugin_cache.
+
+    sistema: dict principal del sistema cargado
+    nombre_plugin: nombre del plugin (string)
+    claves: lista de claves a copiar (ej: ["activas", "historial"])
+            Si es None, copia todo el bloque del plugin.
+    """
+
+    estado.plugin_cache.setdefault("plugins", {})
+
+    datos_plugin = sistema.get(nombre_plugin, {})
+
+    if claves is None:
+        # Copia todo el bloque del plugin
+        estado.plugin_cache["plugins"][nombre_plugin] = datos_plugin
+    else:
+        # Copia solo las claves indicadas
+        estado.plugin_cache["plugins"][nombre_plugin] = {
+            clave: datos_plugin.get(clave, {})
+            for clave in claves
+        }

@@ -1,22 +1,6 @@
 {
     "plugins": {
         "inventario": {},
-        "misiones": {
-            "activas": {
-                "mision_1": {
-                    "id": "mision_1",
-                    "nombre": "PRUEBA MISION XP",
-                    "descripcion": "para ver si funcionan los recuross",
-                    "objetivo": "",
-                    "recompensas": {
-                        "objetos": []
-                    },
-                    "penalizaciones": {
-                        "objetos": []
-                    }
-                }
-            }
-        },
         "rachas": {
             "activas": {
                 "racha_escalado": {
@@ -29,7 +13,7 @@
                             "cantidad_base": 10,
                             "factor_escalado": 2.0,
                             "tope": 0,
-                            "nivel": 19,
+                            "nivel": 48,
                             "progreso": 0
                         }
                     ],
@@ -43,20 +27,21 @@
                         }
                     },
                     "penalizaciones": {},
-                    "veces_completada": 19,
+                    "veces_completada": 48,
                     "fallos_consecutivos": 0
                 }
-            }
+            },
+            "historial": {}
         }
     },
     "stats": {
-        "popo": 75
+        "popo": 110
     },
     "progress_stats": {
         "èè": {
-            "actual": 75,
-            "max": 100,
-            "nivel": 1,
+            "actual": 10,
+            "max": 120,
+            "nivel": 2,
             "factor_escalado": 1.2
         }
     }
