@@ -1,6 +1,7 @@
 # core/recompensas/aplicar.py
 
 from core.estado_global import estado
+from core.utils.funciones_utiles import modificar_progreso
 from .tipos import cargar_recursos_desde_sistema
 from core.utils.hooks import ejecutar_hook_si_existe
 from core.recompensas.tipos import (
@@ -8,7 +9,7 @@ from core.recompensas.tipos import (
     es_tipo_recompensa_valido
 )
 
-
+from plugins.inventario.inventario import agregar_item
 from plugins.niveles.helpers_niveles import revisar_y_subir_nivel_destino
 
 
@@ -74,24 +75,32 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
         # PROGRESS STATS
         # ─────────────────────────────
         if tipo == "progress_stats":
-            if "progress_stats" not in sistema or not isinstance(valor, dict):
-                resultado["ignoradas"][tipo] = "Sistema no soporta progress_stats"
+        
+            if not isinstance(valor, dict):
+                resultado["ignoradas"][tipo] = "Formato inválido para progress_stats"
                 continue
+            
+            for nombre_stat, datos in valor.items():
+            
+                stat = sistema.get("progress_stats", {}).get(nombre_stat)
+        
+                if not stat:
+                    resultado["ignoradas"].setdefault(tipo, {})
+                    resultado["ignoradas"][tipo] = f"{nombre_stat} no existe"
+                    continue
+                
+                cantidad = datos.get("cantidad", 0)
+                factor = datos.get("factor_escalado", 1.0)
+        
+                total = int(cantidad * factor)
+        
+                # 🔥 AQUÍ ocurre la magia real
+                modificar_progreso(stat, total)
+        
+                resultado["aplicadas"].setdefault(tipo, {})
+                resultado["aplicadas"][tipo][nombre_stat] = total
 
-            for stat, datos in valor.items():
-                prog = sistema["progress_stats"].setdefault(stat, {
-                    "actual": 0,
-                    "max": datos.get("max", 100),
-                    "nivel": datos.get("nivel", 1),
-                    "factor_escalado": datos.get("factor_escalado", 1.2)
-                })
 
-                prog["actual"] += int(datos.get("actual", 0))
-                prog["nivel"] += int(datos.get("nivel", 0))
-                prog["max"] = max(prog["max"], datos.get("max", prog["max"]))
-
-            resultado["aplicadas"][tipo] = valor
-            continue
 
         # ─────────────────────────────
         # PUNTOS STATS
@@ -135,23 +144,34 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
         # OBJETOS (PLUGIN)
         # ─────────────────────────────
         if tipo == "objetos":
-            if not sistema.get("plugins_activos", {}).get("inventario", False):
-                resultado["ignoradas"][tipo] = "Plugin inventario desactivado"
-                continue
-
-            if not agregar_item:
-                resultado["ignoradas"][tipo] = "Función agregar_item no disponible"
-                continue
-
-            if not isinstance(valor, list):
+        
+            if not isinstance(valor, dict):
                 resultado["ignoradas"][tipo] = "Formato inválido para objetos"
                 continue
+            
+            for nombre_objeto, datos in valor.items():
+            
+                cantidad = datos.get("cantidad", 1)
+                factor = datos.get("factor_escalado", 1.0)
 
-            for item_data in valor:
-                agregar_item(sistema, item_data)
+                total = int(cantidad * factor)
 
-            resultado["aplicadas"][tipo] = len(valor)
-            continue
+                for _ in range(total):
+                    item_data = {
+                        "nombre": nombre_objeto,
+                        "rareza": datos.get("rareza", "comun"),
+                        "tipo": datos.get("tipo", "general"),
+                        "descripcion": datos.get("descripcion", ""),
+                        "efectos": datos.get("efectos", {}),
+                        "cantidad": 1
+                    }
+
+                    agregar_item(sistema, item_data)
+
+                resultado["aplicadas"].setdefault(tipo, {})
+                resultado["aplicadas"][tipo][nombre_objeto] = total
+
+
 
         # ─────────────────────────────
         # NIVEL

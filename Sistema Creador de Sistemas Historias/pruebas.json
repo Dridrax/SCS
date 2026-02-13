@@ -5,12 +5,12 @@
     },
     "nombre_sistema": "pruebas",
     "stats": {
-        "popo": 196
+        "popo": 75
     },
     "progress_stats": {
         "èè": {
-            "actual": 196,
-            "max": 10,
+            "actual": 75,
+            "max": 100,
             "nivel": 1,
             "factor_escalado": 1.2
         }
@@ -31,35 +31,45 @@
     "misiones_completadas": {},
     "rachas": {
         "activas": {
-            "racha_xp": {
-                "id": "racha_xp",
-                "nombre": "xp gratis",
-                "descripcion": "",
-                "objetivos": [],
+            "racha_escalado": {
+                "id": "racha_escalado",
+                "nombre": "Pruebas escalado",
+                "descripcion": "una racha apra probar los diferentes tipos de escalado",
+                "objetivos": [
+                    {
+                        "descripcion": "prueba",
+                        "cantidad_base": 10,
+                        "factor_escalado": 2.0,
+                        "tope": 0,
+                        "nivel": 19,
+                        "progreso": 0
+                    }
+                ],
                 "recompensas": {
                     "xp_niveles": {
                         "xp": {
-                            "valor_base": 5000,
-                            "factor_escalado": 2.7
+                            "valor_base": 100,
+                            "tope": 0,
+                            "factor_escalado": 1.2
                         }
                     }
                 },
                 "penalizaciones": {},
-                "veces_completada": 44,
+                "veces_completada": 19,
                 "fallos_consecutivos": 0
             }
         }
     },
     "configuracion": {
-        "racha_recuperacion_fallos": 2
+        "racha_recuperacion_fallos": 2,
+        "racha_tipo_escalado": "lineal_porcentaje"
     },
-    "misiones": {},
     "dinero": {
         "oro": 163840
     },
-    "nivel": 250,
-    "xp_actual": 2431996582737008778237,
-    "xp_para_siguiente": 5130540177919008833536,
+    "nivel": 16,
+    "xp_actual": 1022,
+    "xp_para_siguiente": 1522,
     "niveles_config": {
         "modo_subida": "auto_stats_y_puntos",
         "puntos_por_nivel": 5,
@@ -73,5 +83,21 @@
         }
     },
     "recursos": {},
-    "puntos_stats": 1245
+    "puntos_stats": 75,
+    "misiones": {
+        "activas": {
+            "mision_1": {
+                "id": "mision_1",
+                "nombre": "PRUEBA MISION XP",
+                "descripcion": "para ver si funcionan los recuross",
+                "objetivo": "",
+                "recompensas": {
+                    "objetos": []
+                },
+                "penalizaciones": {
+                    "objetos": []
+                }
+            }
+        }
+    }
 }

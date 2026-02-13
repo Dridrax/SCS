@@ -1,36 +1,61 @@
 {
     "plugins": {
         "inventario": {},
-        "misiones": {},
+        "misiones": {
+            "activas": {
+                "mision_1": {
+                    "id": "mision_1",
+                    "nombre": "PRUEBA MISION XP",
+                    "descripcion": "para ver si funcionan los recuross",
+                    "objetivo": "",
+                    "recompensas": {
+                        "objetos": []
+                    },
+                    "penalizaciones": {
+                        "objetos": []
+                    }
+                }
+            }
+        },
         "rachas": {
             "activas": {
-                "racha_xp": {
-                    "id": "racha_xp",
-                    "nombre": "xp gratis",
-                    "descripcion": "",
-                    "objetivos": [],
+                "racha_escalado": {
+                    "id": "racha_escalado",
+                    "nombre": "Pruebas escalado",
+                    "descripcion": "una racha apra probar los diferentes tipos de escalado",
+                    "objetivos": [
+                        {
+                            "descripcion": "prueba",
+                            "cantidad_base": 10,
+                            "factor_escalado": 2.0,
+                            "tope": 0,
+                            "nivel": 19,
+                            "progreso": 0
+                        }
+                    ],
                     "recompensas": {
                         "xp_niveles": {
                             "xp": {
-                                "valor_base": 5000,
-                                "factor_escalado": 2.7
+                                "valor_base": 100,
+                                "tope": 0,
+                                "factor_escalado": 1.2
                             }
                         }
                     },
                     "penalizaciones": {},
-                    "veces_completada": 44,
+                    "veces_completada": 19,
                     "fallos_consecutivos": 0
                 }
             }
         }
     },
     "stats": {
-        "popo": 196
+        "popo": 75
     },
     "progress_stats": {
         "èè": {
-            "actual": 196,
-            "max": 10,
+            "actual": 75,
+            "max": 100,
             "nivel": 1,
             "factor_escalado": 1.2
         }

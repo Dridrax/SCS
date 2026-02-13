@@ -1,3 +1,4 @@
+#core/stats/stats.py
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.utils.funciones_utiles import modificar_progreso, pedir_int, modificar_factor_escalado

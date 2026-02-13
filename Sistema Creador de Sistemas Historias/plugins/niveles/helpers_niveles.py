@@ -1,5 +1,5 @@
 from core.estado_global import estado
-
+from core.utils.funciones_utiles import modificar_progreso  
 
 def revisar_y_subir_nivel_destino(sistema, destino=None):
     """
@@ -48,6 +48,8 @@ def subir_nivel_desde_config(sistema, config_nivel):
         sistema[nivel_key] += 1
 
         # Stats automáticos
+
+
         if modo in ["auto_stats_y_puntos", "solo_stats"]:
             for cont in ["stats", "progress_stats"]:
                 if cont in sistema and isinstance(sistema[cont], dict):
@@ -55,7 +57,8 @@ def subir_nivel_desde_config(sistema, config_nivel):
                         if cont == "stats":
                             sistema[cont][k] += stats_auto
                         else:
-                            sistema[cont][k]["actual"] += stats_auto
+                            modificar_progreso(sistema[cont][k], stats_auto)
+
 
         # Puntos de stats
         if modo in ["auto_stats_y_puntos", "solo_puntos"]:

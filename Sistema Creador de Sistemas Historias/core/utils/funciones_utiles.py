@@ -108,6 +108,9 @@ def modificar_progreso(stat, cambio):
         stat["actual"] = 0
 
 
+
+
+
 def modificar_factor_escalado(stat):
     """
     Permite al autor cambiar el factor de escalado de un progress stat.

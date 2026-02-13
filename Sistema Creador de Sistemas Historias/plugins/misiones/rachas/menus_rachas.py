@@ -77,10 +77,12 @@ def menu_crear_racha(sistema):
         desc = input("Descripción del objetivo: ").strip()
         cantidad_base = safe_int_input("Cantidad base del objetivo: ", default=1)
         factor = safe_float_input("Factor de escalado (1.0 = sin cambio): ", default=1.0)
+        tope = safe_int_input("Tope máximo (solo lineal_tope, Enter = sin tope): ", default=None)
         objetivos.append({
             "descripcion": desc,
             "cantidad_base": cantidad_base,
             "factor_escalado": factor,
+            "tope": tope,
             "nivel": 0,
             "progreso": 0
         })
@@ -112,6 +114,7 @@ def menu_crear_racha(sistema):
         print("✅ Racha creada correctamente.")
     else:
         print("❌ Ya existe una racha con ese ID.")
+
 
 
 # --------------------------------------------------
