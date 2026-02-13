@@ -1,6 +1,7 @@
+#plugins/niveles/menu_niveles
 from core.estado_global import estado
 from core.utils.funciones_utiles import pedir_int
-from plugins.niveles.helpers import revisar_y_subir_nivel
+from plugins.niveles.helpers_niveles import revisar_y_subir_nivel_destino
 
 def menu_configurar_niveles(sistema):
     """
@@ -31,7 +32,7 @@ def menu_configurar_niveles(sistema):
             sistema["xp_para_siguiente"] = pedir_int(f"XP para siguiente nivel (actual: {sistema.get('xp_para_siguiente',100)}): ", default=sistema.get('xp_para_siguiente',100))
 
             # Revisar si se debe subir de nivel automáticamente
-            revisar_y_subir_nivel(sistema)
+            revisar_y_subir_nivel_destino(sistema, "xp_actual")
             print("✅ Configuración básica actualizada.")
 
         elif opcion == 2:

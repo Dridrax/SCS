@@ -4,8 +4,17 @@
         "edad": 1
     },
     "nombre_sistema": "pruebas",
-    "stats": {},
-    "progress_stats": {},
+    "stats": {
+        "popo": 196
+    },
+    "progress_stats": {
+        "èè": {
+            "actual": 196,
+            "max": 10,
+            "nivel": 1,
+            "factor_escalado": 1.2
+        }
+    },
     "historia": {
         "tipo": "original",
         "sinopsis": "",
@@ -22,68 +31,21 @@
     "misiones_completadas": {},
     "rachas": {
         "activas": {
-            "racha_oro": {
-                "id": "racha_oro",
-                "nombre": "Oro Facil",
-                "descripcion": "oro facil prueba",
-                "objetivos": [
-                    {
-                        "descripcion": "oro facil",
-                        "cantidad_base": 10,
-                        "factor_escalado": 2.0,
-                        "nivel": 0,
-                        "progreso": 0
-                    }
-                ],
-                "recompensas": {
-                    "dinero": {
-                        "oro": {
-                            "valor": 10,
-                            "factor_escalado": 2.0
-                        }
-                    }
-                },
-                "penalizaciones": {
-                    "dinero": {
-                        "oro": {
-                            "valor": -10,
-                            "factor_escalado": 2.0
-                        }
-                    }
-                },
-                "veces_completada": 0,
-                "fallos_consecutivos": 14
-            },
             "racha_xp": {
                 "id": "racha_xp",
-                "nombre": "Experiencia",
-                "descripcion": "da experiencia",
-                "objetivos": [
-                    {
-                        "descripcion": "mata lobos",
-                        "cantidad_base": 13,
-                        "factor_escalado": 1.5,
-                        "nivel": 13,
-                        "progreso": 0
-                    }
-                ],
+                "nombre": "xp gratis",
+                "descripcion": "",
+                "objetivos": [],
                 "recompensas": {
-                    "xp": {
+                    "xp_niveles": {
                         "xp": {
-                            "valor": 150,
-                            "factor_escalado": 1.5
+                            "valor_base": 5000,
+                            "factor_escalado": 2.7
                         }
                     }
                 },
-                "penalizaciones": {
-                    "xp": {
-                        "xp": {
-                            "valor": -15,
-                            "factor_escalado": 1.5
-                        }
-                    }
-                },
-                "veces_completada": 12,
+                "penalizaciones": {},
+                "veces_completada": 44,
                 "fallos_consecutivos": 0
             }
         }
@@ -95,12 +57,21 @@
     "dinero": {
         "oro": 163840
     },
-    "nivel": 1,
-    "xp_actual": 0,
-    "xp_para_siguiente": 100,
+    "nivel": 250,
+    "xp_actual": 2431996582737008778237,
+    "xp_para_siguiente": 5130540177919008833536,
     "niveles_config": {
         "modo_subida": "auto_stats_y_puntos",
         "puntos_por_nivel": 5,
         "stats_automaticos": 5
-    }
+    },
+    "recursos_definidos": {
+        "xp_niveles": {
+            "descripcion": "xp para subir niveles personaje",
+            "requiere_plugin": "niveles",
+            "destino": "xp_actual"
+        }
+    },
+    "recursos": {},
+    "puntos_stats": 1245
 }

@@ -9,6 +9,8 @@ from core.utils.funciones_utiles import pedir_int, pedir_si_no
 from core.sistemas.mostrar_sistema import mostrar_ficha
 from core.plugins.registry import PLUGINS
 
+from core.recompensas.ui_preparacion import menu_configurar_recursos
+
 #plugins
 from plugins.misiones.menus_misiones import mostrar_misiones, menu_administrar_misiones
 from plugins.misiones.rachas.menus_rachas import mostrar_rachas, menu_administrar_rachas
@@ -201,6 +203,8 @@ def configuracion(sistema):
 
         # 2️⃣ Plugins → siempre disponible
         opciones.append(("Plugins", menu_plugins))
+
+        opciones.append(("Configurar Recursos", menu_configurar_recursos))
 
         # 3️⃣ Niveles → SOLO si el plugin está activo
         if plugins.get("niveles", False):

@@ -1,76 +1,38 @@
 {
     "plugins": {
         "inventario": {},
+        "misiones": {},
         "rachas": {
             "activas": {
-                "racha_oro": {
-                    "id": "racha_oro",
-                    "nombre": "Oro Facil",
-                    "descripcion": "oro facil prueba",
-                    "objetivos": [
-                        {
-                            "descripcion": "oro facil",
-                            "cantidad_base": 10,
-                            "factor_escalado": 2.0,
-                            "nivel": 0,
-                            "progreso": 0
-                        }
-                    ],
-                    "recompensas": {
-                        "dinero": {
-                            "oro": {
-                                "valor": 10,
-                                "factor_escalado": 2.0
-                            }
-                        }
-                    },
-                    "penalizaciones": {
-                        "dinero": {
-                            "oro": {
-                                "valor": -10,
-                                "factor_escalado": 2.0
-                            }
-                        }
-                    },
-                    "veces_completada": 0,
-                    "fallos_consecutivos": 14
-                },
                 "racha_xp": {
                     "id": "racha_xp",
-                    "nombre": "Experiencia",
-                    "descripcion": "da experiencia",
-                    "objetivos": [
-                        {
-                            "descripcion": "mata lobos",
-                            "cantidad_base": 13,
-                            "factor_escalado": 1.5,
-                            "nivel": 13,
-                            "progreso": 0
-                        }
-                    ],
+                    "nombre": "xp gratis",
+                    "descripcion": "",
+                    "objetivos": [],
                     "recompensas": {
-                        "xp": {
+                        "xp_niveles": {
                             "xp": {
-                                "valor": 150,
-                                "factor_escalado": 1.5
+                                "valor_base": 5000,
+                                "factor_escalado": 2.7
                             }
                         }
                     },
-                    "penalizaciones": {
-                        "xp": {
-                            "xp": {
-                                "valor": -15,
-                                "factor_escalado": 1.5
-                            }
-                        }
-                    },
-                    "veces_completada": 12,
+                    "penalizaciones": {},
+                    "veces_completada": 44,
                     "fallos_consecutivos": 0
                 }
             }
-        },
-        "misiones": {}
+        }
     },
-    "stats": {},
-    "progress_stats": {}
+    "stats": {
+        "popo": 196
+    },
+    "progress_stats": {
+        "èè": {
+            "actual": 196,
+            "max": 10,
+            "nivel": 1,
+            "factor_escalado": 1.2
+        }
+    }
 }

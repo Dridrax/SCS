@@ -3,9 +3,11 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.recompensas.aplicar import aplicar_recompensas
+from core.recompensas.tipos import obtener_tipos_recompensa_validos
 from core.recompensas.ui_preparacion import preparar_recompensa_para_aplicar
 from plugins.misiones.helpers_misiones import agregar_recompensa, editar_recompensa, eliminar_recompensa
 from plugins.misiones.menus_misiones import menu_editar_bloque
+
 
 # --------------------------------------------------
 # Inicialización y cache
@@ -84,7 +86,6 @@ def crear_racha(
     guardar_sistema(print_msg=False)
 
     return True
-
 
 # --------------------------------------------------
 # Modificar racha
@@ -204,87 +205,107 @@ def modificar_racha(sistema, racha_id):
         guardar_sistema()
         return True
 
-
 def menu_editar_bloque_interactivo(bloque, nombre_bloque):
     """
-    Permite agregar, editar y eliminar recompensas/penalizaciones.
-    Cada ítem se guarda como {nombre: {"valor"/"cantidad": x, "factor_escalado": y}}.
+    Editor dinámico de recompensas/penalizaciones para SCS.
+    Soporta todos los tipos base + recursos dinámicos.
     """
     while True:
         print(f"\n--- {nombre_bloque.upper()} ---")
+
+        # Mostrar contenido actual
         if bloque:
-            print("Contenido actual:")
-            for t, items in bloque.items():
-                print(f" {t}:")
-                for k, v in (items.items() if isinstance(items, dict) else enumerate(items)):
-                    if isinstance(v, dict):
-                        val = v.get("valor", v.get("cantidad", 0))
-                        factor = v.get("factor_escalado", 1.0)
-                        print(f"   {k}: {val} [Factor: {factor}]")
-                    else:
-                        print(f"   {k}: {v}")
-        print("1. Agregar")
+            for tipo, items in bloque.items():
+                print(f" {tipo}:")
+                for nombre, info in items.items():
+                    base = info.get("valor_base", info.get("valor",
+                           info.get("cantidad_base", info.get("cantidad", 0))))
+                    factor = info.get("factor_escalado", 1.0)
+                    print(f"   {nombre}: {base} [Factor: {factor}]")
+
+        print("\n1. Agregar")
         print("2. Editar")
         print("3. Eliminar")
         print("4. Volver")
+
         opcion = safe_int_input("Opción: ", default=4)
 
+        # --------------------------------------------------
+        # AGREGAR
+        # --------------------------------------------------
         if opcion == 1:
-            tipo = input("Tipo (objetos/stats/dinero/progress_stats/puntos_stats/nivel/tiradas): ").strip()
-            nombre = input("Nombre: ").strip()
-            factor = safe_float_input("Factor de escalado (1.0 = sin cambio): ", default=1.0)
+            tipos_validos = obtener_tipos_recompensa_validos()
+            print("\nTipos disponibles:")
+            for t in tipos_validos:
+                print(f" - {t}")
 
-            if tipo == "objetos":
-                cantidad = safe_int_input("Cantidad: ", default=1)
-                rareza = input("Rareza: ").strip()
-                tipo_obj = input("Tipo: ").strip()
-                bloque.setdefault(tipo, {})[nombre] = {
-                    "cantidad": cantidad,
-                    "rareza": rareza,
-                    "tipo": tipo_obj,
-                    "factor_escalado": factor
-                }
-            else:
-                valor = safe_int_input("Valor: ", default=0)
-                bloque.setdefault(tipo, {})[nombre] = {
-                    "valor": valor,
-                    "factor_escalado": factor
-                }
-            print("✅ Agregado.")
-
-        elif opcion == 2:
-            tipo = input("Tipo a editar: ").strip()
-            clave_dato = input("Nombre del ítem a editar: ").strip()
-            if tipo not in bloque or clave_dato not in bloque[tipo]:
-                print("❌ Ítem no encontrado.")
+            tipo = input("Tipo: ").strip()
+            if tipo not in tipos_validos:
+                print("❌ Tipo inválido.")
                 continue
 
-            item = bloque[tipo][clave_dato]
-            if "valor" in item:
-                nuevo_valor = safe_int_input(f"Valor ({item['valor']}): ", default=item['valor'])
-                item["valor"] = nuevo_valor
-            elif "cantidad" in item:
-                nueva_cantidad = safe_int_input(f"Cantidad ({item['cantidad']}): ", default=item['cantidad'])
-                item["cantidad"] = nueva_cantidad
+            nombre = input("Nombre del recurso/stat/objeto: ").strip()
+            base = safe_int_input("Valor / Cantidad base: ", default=0)
+            factor = safe_float_input("Factor de escalado (1.0 = fijo): ", default=1.0)
 
-            nuevo_factor = safe_float_input(f"Factor de escalado ({item.get('factor_escalado', 1.0)}): ", default=item.get('factor_escalado', 1.0))
+            # Determinar si es objeto o recurso/stat
+            if tipo == "objetos":
+                cantidad = base
+                bloque.setdefault(tipo, {})[nombre] = {
+                    "cantidad": cantidad,
+                    "factor_escalado": factor
+                }
+            else:
+                bloque.setdefault(tipo, {})[nombre] = {
+                    "valor_base": base,
+                    "factor_escalado": factor
+                }
+
+            print("✅ Agregado correctamente.")
+
+        # --------------------------------------------------
+        # EDITAR
+        # --------------------------------------------------
+        elif opcion == 2:
+            tipo = input("Tipo a editar: ").strip()
+            nombre = input("Nombre a editar: ").strip()
+
+            if tipo not in bloque or nombre not in bloque[tipo]:
+                print("❌ No encontrado.")
+                continue
+
+            item = bloque[tipo][nombre]
+
+            base_actual = item.get("valor_base", item.get("cantidad", 0))
+            factor_actual = item.get("factor_escalado", 1.0)
+
+            nuevo_base = safe_int_input(f"Valor / Cantidad ({base_actual}): ", default=base_actual)
+            nuevo_factor = safe_float_input(f"Factor ({factor_actual}): ", default=factor_actual)
+
+            if tipo == "objetos":
+                item["cantidad"] = nuevo_base
+            else:
+                item["valor_base"] = nuevo_base
+
             item["factor_escalado"] = nuevo_factor
-            print("✅ Editado.")
 
+            print("✅ Editado correctamente.")
+
+        # --------------------------------------------------
+        # ELIMINAR
+        # --------------------------------------------------
         elif opcion == 3:
-            tipo = input("Tipo a eliminar: ").strip()
-            clave_dato = input("Nombre del ítem a eliminar: ").strip()
-            if tipo in bloque and clave_dato in bloque[tipo]:
-                del bloque[tipo][clave_dato]
+            tipo = input("Tipo: ").strip()
+            nombre = input("Nombre: ").strip()
+
+            if tipo in bloque and nombre in bloque[tipo]:
+                del bloque[tipo][nombre]
                 print("✅ Eliminado.")
             else:
-                print("❌ Ítem no encontrado.")
+                print("❌ No encontrado.")
 
         elif opcion == 4:
             break
-        else:
-            print("❌ Opción inválida.")
-
 
 # --------------------------------------------------
 # PROCESAR RACHA (OPCIÓN A - BASE FIJA)
@@ -333,17 +354,15 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
             if not isinstance(info, dict):
                 continue
 
-            campo = "valor" if "valor" in info else "cantidad" if "cantidad" in info else None
-            if not campo:
+            base = info.get("valor_base")
+            if base is None:
                 continue
 
-            base = info[campo]
+
             factor = info.get("factor_escalado", 1.0)
-
-            # 🔥 CALCULO LIMPIO (NO modifica base)
             nuevo_valor = int(base * (factor ** (multiplicador - 1)))
-
             entregado[tipo][nombre] = nuevo_valor
+
 
     # Limpiar tipos vacíos
     entregado = {k: v for k, v in entregado.items() if v}
@@ -374,8 +393,6 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
     guardar_sistema(print_msg=False)
 
     return entregado
-
-
 
 # --------------------------------------------------
 # COMPLETAR RACHA
@@ -452,12 +469,6 @@ def fallar_racha(sistema, racha_id):
 
     return penalizaciones
 
-
-
-
-
-
-
 # --------------------------------------------------
 # Eliminar racha
 # --------------------------------------------------
@@ -516,7 +527,8 @@ def gestion_racha(sistema, racha, rachas_list):
 
         for t, items in racha.get("recompensas", {}).items():
             for k, v in items.items():
-                base = v.get("valor", v.get("cantidad", 0))
+                base = v.get("valor_base", 0)
+
                 factor = v.get("factor_escalado", 1.0)
 
                 recompensa_actual = int(base * (factor ** veces))
@@ -535,7 +547,8 @@ def gestion_racha(sistema, racha, rachas_list):
         print("Penalizaciones actuales:")
         for t, items in racha.get("penalizaciones", {}).items():
             for k, v in items.items():
-                base = v.get("valor", v.get("cantidad", 0))
+                base = v.get("valor_base", 0)
+
                 factor = v.get("factor_escalado", 1.0)
                 # Penalización escalada
                 penal_actual = int(base * (factor ** fallos)) if factor != 1.0 else base
@@ -579,9 +592,6 @@ def gestion_racha(sistema, racha, rachas_list):
         else:
             break
 
-
-
-
 # --------------------------------------------------
 # Funciones de ayuda para inputs seguros
 # --------------------------------------------------
@@ -609,9 +619,6 @@ def safe_float_input(prompt, default=None):
             return float(val)
         except ValueError:
             print("❌ Entrada no válida. Debe ser un número.")
-
-
-
 
 # --------------------------------------------------
 # Seleccionar racha
@@ -649,7 +656,6 @@ def seleccionar_racha(sistema, accion="modificar"):
     print("❌ Racha no encontrada.")
     return None
 
-
 def marcar_progreso_objetivo(objetivo, cantidad):
     """
     Incrementa progreso de un objetivo y marca nivel si se cumple.
@@ -667,8 +673,6 @@ def marcar_progreso_objetivo(objetivo, cantidad):
         completado = True
 
     return completado
-
-
 
 def configurar_rachas(sistema):
     """
