@@ -41,10 +41,3 @@ def inicializar_todos_los_plugins_activos(sistema):
     Inicializa automáticamente todos los plugins activos registrados.
     """
     inicializar_plugins_activos(sistema)
-
-"""
-"rachas": {
-        "nombre": "Rachas",
-        "on_enable": lambda sistema: inicializar_rachas(sistema),
-        "on_disable": None
-    }"""

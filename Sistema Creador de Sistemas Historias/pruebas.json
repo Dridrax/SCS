@@ -1,17 +1,17 @@
 {
     "personaje": {
-        "nombre": "prueba",
-        "edad": 1
+        "nombre": "pruebas",
+        "edad": 10
     },
     "nombre_sistema": "pruebas",
     "stats": {
-        "popo": 110
+        "vida": 155
     },
     "progress_stats": {
-        "èè": {
-            "actual": 10,
-            "max": 120,
-            "nivel": 2,
+        "cabeza": {
+            "actual": 43,
+            "max": 44,
+            "nivel": 10,
             "factor_escalado": 1.2
         }
     },
@@ -23,34 +23,144 @@
     },
     "plugins_activos": {
         "inventario": true,
-        "niveles": true,
         "misiones": true,
+        "niveles": true,
         "rachas": false
     },
-    "inventario": {},
-    "misiones_completadas": {},
+    "inventario": {
+        "d67eeb82-8eb3-4d97-8783-b8ee0c867021": {
+            "id": "d67eeb82-8eb3-4d97-8783-b8ee0c867021",
+            "nombre": "palo",
+            "rareza": "",
+            "tipo": "",
+            "descripcion": "",
+            "efectos": {},
+            "cantidad": 63
+        },
+        "ff2de24b-59f2-40e8-b103-498279d25c21": {
+            "id": "ff2de24b-59f2-40e8-b103-498279d25c21",
+            "nombre": "Gema Brillante",
+            "rareza": "comun",
+            "tipo": "reliquia",
+            "descripcion": "",
+            "efectos": {},
+            "cantidad": 2
+        }
+    },
     "configuracion": {
-        "racha_recuperacion_fallos": 2,
-        "racha_tipo_escalado": "lineal_porcentaje"
+        "racha_tipo_escalado": "lineal"
     },
-    "dinero": {
-        "oro": 163840
-    },
-    "nivel": 23,
-    "xp_actual": 537,
-    "xp_para_siguiente": 5448,
+    "nivel": 3,
+    "xp_actual": 320,
+    "xp_para_siguiente": 400,
     "niveles_config": {
         "modo_subida": "auto_stats_y_puntos",
         "puntos_por_nivel": 5,
-        "stats_automaticos": 5
+        "stats_automaticos": 5,
+        "factor_escalado": 2.0
     },
+    "recompensas_por_nivel": [],
     "recursos_definidos": {
         "xp_niveles": {
-            "descripcion": "xp para subir niveles personaje",
+            "descripcion": "",
             "requiere_plugin": "niveles",
-            "destino": "xp_actual"
+            "destino": "xp_actual",
+            "modo": "simple"
+        },
+        "Cristales": {
+            "descripcion": "",
+            "requiere_plugin": null,
+            "destino": "recursos",
+            "modo": "simple"
+        },
+        "Fichas": {
+            "descripcion": "",
+            "requiere_plugin": null,
+            "destino": "recursos",
+            "modo": "contenedor"
         }
     },
-    "recursos": {},
-    "puntos_stats": 110
+    "recursos": {
+        "Cristales": 96,
+        "Fichas": {
+            "ficha": 80
+        }
+    },
+    "puntos_stats": 82,
+    "dinero": {
+        "oro": 1020,
+        "platino": 10
+    },
+    "misiones_completadas": {},
+    "misiones": {
+        "activas": {},
+        "historial": {
+            "mision_gemas": {
+                "id": "mision_gemas",
+                "nombre": "Recolecta gemas magicas",
+                "descripcion": "Recolecta 5 gemas en el bosque encantado",
+                "objetivos": [
+                    {
+                        "id": "33b7c24e-b348-4dc1-ba3a-3cedb10d4db2",
+                        "descripcion": "Recolectar 5 gemas",
+                        "cantidad_base": 5,
+                        "progreso": 0,
+                        "interno": false,
+                        "recompensas": {
+                            "objetos": [
+                                {
+                                    "nombre": "Gema Brillante",
+                                    "cantidad": 1,
+                                    "tipo": "reliquia"
+                                }
+                            ],
+                            "dinero": {
+                                "oro": {
+                                    "valor_base": 100
+                                }
+                            }
+                        },
+                        "penalizaciones": {
+                            "objetos": []
+                        },
+                        "estado_objetivo": "entregado"
+                    }
+                ],
+                "estado": "completada"
+            },
+            "mision_fallo": {
+                "id": "mision_fallo",
+                "nombre": "fallar mision",
+                "descripcion": "tiene que restarse dinero y la gema brillante",
+                "objetivos": [
+                    {
+                        "id": "986e5ed1-6ca0-4ae0-b268-3edeb32cc110",
+                        "descripcion": "nao",
+                        "cantidad_base": 1,
+                        "progreso": 0,
+                        "interno": false,
+                        "recompensas": {
+                            "objetos": []
+                        },
+                        "penalizaciones": {
+                            "objetos": [
+                                {
+                                    "nombre": "Gema Brillante",
+                                    "cantidad": 1,
+                                    "tipo": "reliquia"
+                                }
+                            ],
+                            "dinero": {
+                                "oro": {
+                                    "valor_base": -50
+                                }
+                            }
+                        },
+                        "estado_objetivo": "fallado"
+                    }
+                ],
+                "estado": "fallada"
+            }
+        }
+    }
 }

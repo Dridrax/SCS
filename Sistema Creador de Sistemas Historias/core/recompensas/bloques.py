@@ -2,6 +2,8 @@
 
 from core.estado_global import estado
 from core.utils.funciones_utiles import pedir_int, safe_int_input, safe_float_input
+from core.recompensas.tipos import obtener_tipos_recompensa_validos, cargar_recursos_desde_sistema, RECURSOS_REGISTRADOS
+
 
 def obtener_bloque(objeto, clave="recompensas"):
     """
@@ -9,6 +11,7 @@ def obtener_bloque(objeto, clave="recompensas"):
     Si no existe, lo inicializa como dict vacío.
     """
     return objeto.setdefault(clave, {})
+
 
 
 # ----------------------------------------
@@ -90,17 +93,17 @@ def eliminar_recompensa(bloque, tipo=None, clave=None, index=None):
     return True
 
 
-# ----------------------------------------
+# ─────────────────────────────
 # MENÚ INTERACTIVO GENÉRICO
-# ----------------------------------------
-
-def menu_editar_bloque_interactivo(bloque, nombre_bloque, tipos_validos=None):
+# ─────────────────────────────
+def menu_editar_bloque_interactivo(bloque, nombre_bloque):
     """
     Editor dinámico de bloques (recompensas, penalizaciones, etc.)
-    - bloque: dict con la info a editar
-    - nombre_bloque: nombre para mostrar
-    - tipos_validos: opcional, lista de tipos permitidos (objetos, stats, dinero, etc.)
+    Ahora soporta recursos dinámicos cargados desde el sistema.
     """
+    # ⚡ Cargar recursos dinámicos del sistema antes de mostrar el menú
+    cargar_recursos_desde_sistema(estado.sistema_actual)
+
     while True:
         print(f"\n--- {nombre_bloque.upper()} ---")
 
@@ -114,8 +117,13 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque, tipos_validos=None):
                                info.get("cantidad_base", info.get("cantidad", 0))))
                         factor = info.get("factor_escalado", 1.0)
                         print(f"   {nombre}: {base} [Factor: {factor}]")
+                elif isinstance(items, list):
+                    for idx, obj_item in enumerate(items):
+                        print(f"  [{idx}] {obj_item}")
                 else:
                     print(f"  {items}")
+        else:
+            print(" (vacío)")
 
         print("\n1. Agregar")
         print("2. Editar")
@@ -124,130 +132,404 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque, tipos_validos=None):
 
         opcion = safe_int_input("Opción: ", default=4)
 
-        # --------------------------------------------------
-        # SALIR
-        # --------------------------------------------------
         if opcion == 4:
             break
 
-        # --------------------------------------------------
+        # ------------------------------
         # AGREGAR
-        # --------------------------------------------------
+        # ------------------------------
         if opcion == 1:
+            tipos_validos = obtener_tipos_recompensa_validos()
+
+            print("\nTipos disponibles:")
+            for t in sorted(tipos_validos):
+                print(f" - {t}")
+
             tipo = input("Tipo: ").strip()
-            if tipos_validos and tipo not in tipos_validos:
+
+            if tipo not in tipos_validos:
                 print("❌ Tipo inválido.")
                 continue
 
-            nombre = input("Nombre del recurso/stat/objeto: ").strip()
-            base = safe_int_input("Valor / Cantidad base: ", default=0)
-            factor = safe_float_input("Factor de escalado (1.0 = fijo): ", default=1.0)
-
-            # AGREGAR ELEMENTO
-            item = {}
+            # ─────────────────────────────
+            # OBJETOS (lista)
+            # ─────────────────────────────
             if tipo == "objetos":
-                item["cantidad"] = base
+            
+                nombre = input("Nombre del objeto: ").strip()
+                base = safe_int_input("Cantidad base: ", default=0)
+                factor = safe_float_input("Factor de escalado (1.0 = fijo): ", default=1.0)
+
+                # Calcular cantidad final
+                cantidad_total = max(int(base * factor), 1)
+
+                item = {
+                    "nombre": nombre,
+                    "cantidad": cantidad_total,
+                    "factor_escalado": factor,
+                    "tipo": input("Tipo del objeto (opcional): ").strip(),
+                    "rareza": input("Rareza (opcional): ").strip(),
+                    "descripcion": "",
+                    "efectos": {}
+                }
+
+                bloque.setdefault("objetos", []).append(item)
+
             else:
-                item["valor_base"] = base
-                tope = safe_int_input("Tope máximo (Enter = sin tope): ", default=None)
-                item["tope"] = tope
+                base = safe_int_input("Valor base: ", default=0)
+                factor = safe_float_input("Factor de escalado (1.0 = fijo): ", default=1.0)
+                tope = safe_int_input("Tope máximo (0 = sin tope): ", default=0)
 
-            item["factor_escalado"] = factor
+                # 🔥 Detectar si es recurso dinámico
+                if tipo in RECURSOS_REGISTRADOS:
+                    config = RECURSOS_REGISTRADOS[tipo]
+                    modo = config.get("modo", "contenedor")
 
-            bloque.setdefault(tipo, {})[nombre] = item
+                    if modo == "simple":
+                        # 🔥 SIEMPRE usar estructura multinivel uniforme
+                        bloque.setdefault(tipo, {})[tipo] = {
+                            "valor_base": base,
+                            "factor_escalado": factor,
+                            "tope": tope
+                        }
+
+                    else:
+                        # Contenedor (comportamiento clásico)
+                        nombre = input("Subtipo / nombre interno: ").strip()
+                        bloque.setdefault(tipo, {})[nombre] = {
+                            "valor_base": base,
+                            "factor_escalado": factor,
+                            "tope": tope
+                        }
+
+                else:
+                    # Tipos clásicos (stats, dinero, etc.)
+                    nombre = input("Nombre del recurso/stat: ").strip()
+                    bloque.setdefault(tipo, {})[nombre] = {
+                        "valor_base": base,
+                        "factor_escalado": factor,
+                        "tope": tope
+                    }
+
             estado.cambios_no_guardados = True
             print("✅ Agregado correctamente.")
 
-        # --------------------------------------------------
+
+
+        # ------------------------------
         # EDITAR
-        # --------------------------------------------------
+        # ------------------------------
         elif opcion == 2:
             tipo = input("Tipo a editar: ").strip()
-            nombre = input("Nombre a editar: ").strip()
-
-            if tipo not in bloque or nombre not in bloque[tipo]:
-                print("❌ No encontrado.")
+            if tipo not in bloque:
+                print("❌ Tipo no encontrado.")
                 continue
 
-            item = bloque[tipo][nombre]
-            base_actual = item.get("valor_base", item.get("cantidad", 0))
-            factor_actual = item.get("factor_escalado", 1.0)
-
-            nuevo_base = safe_int_input(f"Valor / Cantidad ({base_actual}): ", default=base_actual)
-            nuevo_factor = safe_float_input(f"Factor ({factor_actual}): ", default=factor_actual)
-
             if tipo == "objetos":
-                item["cantidad"] = nuevo_base
+                for idx, obj_item in enumerate(bloque["objetos"]):
+                    print(f"[{idx}] {obj_item}")
+                index = safe_int_input("Index del objeto a editar (Enter para cancelar): ", default=None)
+                if index is None:
+                    print("❌ Operación cancelada.")
+                    continue
+                if index < 0 or index >= len(bloque["objetos"]):
+                    print("❌ Index inválido.")
+                    continue
+                obj_item = bloque["objetos"][index]
+
+
+                obj_item["nombre"] = input(
+                    f"Nombre ({obj_item.get('nombre','')}): "
+                ).strip() or obj_item.get("nombre","")
+
+                cantidad_actual = obj_item.get("cantidad", 1)
+                obj_item["cantidad"] = safe_int_input(
+                    f"Cantidad ({cantidad_actual}): ",
+                    default=cantidad_actual
+                )
+
+                factor_actual = obj_item.get("factor_escalado", 1.0)
+                obj_item["factor_escalado"] = safe_float_input(
+                    f"Factor ({factor_actual}): ",
+                    default=factor_actual
+                )
+
+                obj_item["tipo"] = input(
+                    f"Tipo ({obj_item.get('tipo','')}): "
+                ).strip() or obj_item.get("tipo","")
+
+                obj_item["rareza"] = input(
+                    f"Rareza ({obj_item.get('rareza','comun')}): "
+                ).strip() or obj_item.get("rareza","comun")
+
             else:
+                claves = list(bloque[tipo].keys())
+                for i, k in enumerate(claves, 1):
+                    print(f"{i}. {k}: {bloque[tipo][k]}")
+                nombre = input("Nombre a editar: ").strip()
+                if nombre not in bloque[tipo]:
+                    print("❌ Clave no encontrada.")
+                    continue
+                item = bloque[tipo][nombre]
+                base_actual = item.get("valor_base", item.get("cantidad", 0))
+                factor_actual = item.get("factor_escalado", 1.0)
+                nuevo_base = safe_int_input(f"Valor / Cantidad ({base_actual}): ", default=base_actual)
+                nuevo_factor = safe_float_input(f"Factor ({factor_actual}): ", default=factor_actual)
                 item["valor_base"] = nuevo_base
+                item["factor_escalado"] = nuevo_factor
                 tope_actual = item.get("tope", None)
                 item["tope"] = safe_int_input(f"Tope máximo ({tope_actual}): ", default=tope_actual)
 
-            item["factor_escalado"] = nuevo_factor
+
             estado.cambios_no_guardados = True
             print("✅ Editado correctamente.")
 
-        # --------------------------------------------------
+        # ------------------------------
         # ELIMINAR
-        # --------------------------------------------------
+        # ------------------------------
         elif opcion == 3:
             tipo = input("Tipo: ").strip()
-            nombre = input("Nombre: ").strip()
-            if tipo in bloque and nombre in bloque[tipo]:
-                del bloque[tipo][nombre]
-                estado.cambios_no_guardados = True
-                print("✅ Eliminado.")
+            if tipo not in bloque:
+                print("❌ Tipo no encontrado.")
+                continue
+
+            if tipo == "objetos":
+                for idx, obj_item in enumerate(bloque["objetos"]):
+                    print(f"[{idx}] {obj_item}")
+                index = safe_int_input("Index del objeto a eliminar (Enter para cancelar): ", default=None)
+                if index is None:
+                    print("❌ Operación cancelada.")
+                    continue
+                if index < 0 or index >= len(bloque["objetos"]):
+                    print("❌ Index inválido.")
+                    continue
+                bloque["objetos"].pop(index)
+                if not bloque["objetos"]:
+                    del bloque["objetos"]
+
+
             else:
-                print("❌ No encontrado.")
+                nombre = input("Nombre a eliminar: ").strip()
+                if nombre in bloque[tipo]:
+                    del bloque[tipo][nombre]
+
+            estado.cambios_no_guardados = True
+            print("✅ Eliminado.")
 
 
-# ----------------------------------------
+# ─────────────────────────────
 # MENÚ SIMPLE BASADO EN CLAVES
-# ----------------------------------------
-
+# ─────────────────────────────
 def menu_editar_bloque(objeto, clave):
     """
-    Menú clásico basado en claves. Internamente usa obtener_bloque y las funciones CRUD.
+    Menú simplificado para editar recompensas o penalizaciones en misiones.
+    No usa escalado ni tope. Solo valores fijos.
+    Compatible con aplicar_recompensas().
     """
-    bloque = obtener_bloque(objeto, clave)
+
+    cargar_recursos_desde_sistema(estado.sistema_actual)
+    bloque = objeto.setdefault(clave, {})
+
     while True:
         print(f"\n--- {clave.upper()} ---")
-        print("1. Agregar")
+        tipos_validos = obtener_tipos_recompensa_validos()
+
+        # ─────────────
+        # MOSTRAR ACTUAL
+        # ─────────────
+        if bloque:
+            for tipo, items in bloque.items():
+                print(f" {tipo}:")
+                if isinstance(items, dict):
+                    for nombre, valor in items.items():
+                        print(f"   {nombre}: {valor}")
+                elif isinstance(items, list):
+                    for idx, obj_item in enumerate(items):
+                        print(f"   [{idx}] {obj_item}")
+                else:
+                    print(f"  {items}")
+        else:
+            print(" (vacío)")
+
+        print("\n1. Agregar")
         print("2. Editar")
         print("3. Eliminar")
         print("4. Volver")
+
         opcion = pedir_int("Opción: ", default=4)
 
-        if opcion == 1:
-            tipo = input("Tipo: ").strip()
-            datos = {}
-            if tipo == "objetos":
-                datos["nombre"] = input("Nombre objeto: ")
-                datos["cantidad"] = int(input("Cantidad: "))
-                datos["rareza"] = input("Rareza: ")
-                datos["tipo"] = input("Tipo: ")
-            else:
-                datos["nombre"] = input("Nombre: ")
-                datos["valor"] = int(input("Valor: "))
-            agregar_recompensa(bloque, tipo, datos)
-            print("✅ Agregado.")
-
-        elif opcion == 2:
-            tipo = input("Tipo a editar: ").strip()
-            clave_dato = input("Clave (nombre del stat/objeto): ").strip() or None
-            valor = input("Valor/Actualizar: ").strip()
-            try: valor = int(valor)
-            except: pass
-            editar_recompensa(bloque, tipo, clave=clave_dato, valor=valor)
-            print("✅ Editado.")
-
-        elif opcion == 3:
-            tipo = input("Tipo a eliminar: ").strip()
-            clave_dato = input("Clave a eliminar (opcional): ").strip() or None
-            index = None
-            if tipo == "objetos":
-                index = int(input("Index objeto: "))
-            eliminar_recompensa(bloque, tipo=tipo, clave=clave_dato, index=index)
-            print("✅ Eliminado.")
-        else:
+        if opcion == 4:
             break
+
+        print("\nTipos disponibles:")
+        for t in sorted(tipos_validos):
+            print(f" - {t}")
+
+        tipo = input("Tipo: ").strip()
+
+        if tipo not in tipos_validos:
+            print("❌ Tipo inválido.")
+            continue
+
+        # ─────────────────────────────
+        # AGREGAR
+        # ─────────────────────────────
+        if opcion == 1:
+
+            if tipo == "objetos":
+                base = pedir_int("Cantidad: ", default=1)
+                factor = 1.0  # En este menú no hay escalado, pero lo dejamos por consistencia
+            
+                cantidad_total = max(int(base * factor), 1)
+            
+                datos = {
+                    "nombre": input("Nombre del objeto: ").strip(),
+                    "cantidad": cantidad_total,
+                    "tipo": input("Tipo de objeto (opcional): ").strip()
+                }
+            
+                bloque.setdefault("objetos", []).append(datos)
+
+            else:
+                # 🔥 Detectar si es recurso dinámico
+                if tipo in RECURSOS_REGISTRADOS:
+                    config = RECURSOS_REGISTRADOS[tipo]
+                    modo = config.get("modo", "contenedor")
+
+                    valor = pedir_int("Valor: ", default=0)
+
+                    if modo == "simple":
+                        # Guardar directamente sin subclave
+                        bloque[tipo] = {
+                            "valor_base": valor
+                        }
+                        #bloque.setdefault(tipo, {})[tipo] = {"valor_base": valor}
+
+                    else:
+                        # Contenedor (comportamiento antiguo)
+                        nombre = input("Subtipo / nombre interno: ").strip()
+                        bloque.setdefault(tipo, {})[nombre] = {
+                            "valor_base": valor
+                        }
+
+                else:
+                    # Tipos clásicos (stats, dinero, etc.)
+                    nombre = input("Nombre del recurso/stat/dinero/puntos: ").strip()
+                    valor = pedir_int("Valor: ", default=0)
+
+                    bloque.setdefault(tipo, {})[nombre] = {
+                        "valor_base": valor
+                    }
+
+            estado.cambios_no_guardados = True
+            print("✅ Agregado correctamente.")
+
+        # ─────────────────────────────
+        # EDITAR
+        # ─────────────────────────────
+        elif opcion == 2:
+
+            if tipo == "objetos":
+
+                if "objetos" not in bloque or not bloque["objetos"]:
+                    print("❌ No hay objetos para editar.")
+                    continue
+
+                for idx, obj_item in enumerate(bloque["objetos"]):
+                    print(f"[{idx}] {obj_item}")
+
+
+                index = safe_int_input("Index del objeto a editar (Enter para cancelar): ", default=None)
+                if index is None:
+                    print("❌ Operación cancelada.")
+                    continue
+                if index < 0 or index >= len(bloque["objetos"]):
+                    print("❌ Index inválido.")
+                    continue
+                obj_item = bloque["objetos"][index]
+
+
+
+                obj_item["nombre"] = input(
+                    f"Nombre ({obj_item.get('nombre','')}): "
+                ).strip() or obj_item.get("nombre", "")
+
+                obj_item["cantidad"] = pedir_int(
+                    f"Cantidad ({obj_item.get('cantidad',1)}): ",
+                    default=obj_item.get("cantidad", 1)
+                )
+
+                obj_item["tipo"] = input(
+                    f"Tipo ({obj_item.get('tipo','')}): "
+                ).strip() or obj_item.get("tipo", "")
+
+            else:
+
+                if tipo not in bloque or not bloque[tipo]:
+                    print("❌ No hay entradas para editar.")
+                    continue
+
+                claves = list(bloque[tipo].keys())
+
+                for i, k in enumerate(claves, 1):
+                    print(f"{i}. {k}: {bloque[tipo][k]}")
+
+                nombre = input("Nombre a editar: ").strip()
+
+                if nombre not in bloque[tipo]:
+                    print("❌ Clave no encontrada.")
+                    continue
+
+                valor_actual = bloque[tipo][nombre].get("valor_base", 0)
+
+                nuevo_valor = pedir_int(
+                    f"Nuevo valor ({valor_actual}): ",
+                    default=valor_actual
+                )
+
+                bloque[tipo][nombre]["valor_base"] = nuevo_valor
+
+            estado.cambios_no_guardados = True
+            print("✅ Editado correctamente.")
+
+        # ─────────────────────────────
+        # ELIMINAR
+        # ─────────────────────────────
+        elif opcion == 3:
+
+            if tipo == "objetos":
+
+                if "objetos" not in bloque or not bloque["objetos"]:
+                    print("❌ No hay objetos para eliminar.")
+                    continue
+
+                for idx, obj_item in enumerate(bloque["objetos"]):
+                    print(f"[{idx}] {obj_item}")
+
+                index = safe_int_input("Index del objeto a eliminar (Enter para cancelar): ", default=None)
+                if index is None:
+                    print("❌ Operación cancelada.")
+                    continue
+                if index < 0 or index >= len(bloque["objetos"]):
+                    print("❌ Index inválido.")
+                    continue
+                bloque["objetos"].pop(index)
+                if not bloque["objetos"]:
+                    del bloque["objetos"]
+
+            else:
+
+                if tipo not in bloque or not bloque[tipo]:
+                    print("❌ No hay entradas para eliminar.")
+                    continue
+
+                nombre = input("Nombre a eliminar: ").strip()
+
+                if nombre in bloque[tipo]:
+                    del bloque[tipo][nombre]
+
+                    if not bloque[tipo]:
+                        del bloque[tipo]
+
+            estado.cambios_no_guardados = True
+            print("✅ Eliminado correctamente.")

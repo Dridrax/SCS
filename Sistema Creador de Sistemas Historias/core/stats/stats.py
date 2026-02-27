@@ -112,7 +112,7 @@ def mostrar_progress_stats_bar(progress_stats, ancho_barra=20):
     Muestra los stats de progreso con barra visual.
     
     Cada stat muestra:
-        Nombre: [████▒▒▒▒▒▒] actual/max Nivel N
+        Nombre: [###---] actual/max Nivel N
     
     Parámetros:
         progress_stats: dict con la estructura de progress_stats
@@ -140,7 +140,7 @@ def mostrar_progress_stats_bar(progress_stats, ancho_barra=20):
         bloques_vacios = ancho_barra - bloques_llenos
 
         # crear barra
-        barra = "█" * bloques_llenos + "▒" * bloques_vacios
+        barra = "#" * bloques_llenos + "-" * bloques_vacios
 
         print(f"{nombre}: [{barra}] {actual}/{maximo} Nivel {nivel}")
 

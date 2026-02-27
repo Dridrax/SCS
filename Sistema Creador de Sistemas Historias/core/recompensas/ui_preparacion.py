@@ -92,10 +92,27 @@ def preparar_recompensa_para_aplicar(sistema, recompensas: dict):
             if nombre not in sistema["recursos_definidos"]:
                 print(f"⚠ El recurso '{nombre}' no está definido en el sistema.")
 
+                # 🔥 Validación anti-colisiones estructurales
+                if nombre.lower() in sistema.get("dinero", {}):
+                    print("❌ Conflicto: ya existe como moneda en 'dinero'. Recompensa descartada.")
+                    recomp["recursos"].pop(nombre)
+                    continue
+                
+                if nombre in sistema.get("stats", {}):
+                    print("❌ Conflicto: ya existe como stat. Recompensa descartada.")
+                    recomp["recursos"].pop(nombre)
+                    continue
+                
+                if nombre in sistema.get("progress_stats", {}):
+                    print("❌ Conflicto: ya existe como progress_stat. Recompensa descartada.")
+                    recomp["recursos"].pop(nombre)
+                    continue
+                
                 if _preguntar_creacion(f"¿Crear recurso '{nombre}'?"):
                     sistema["recursos_definidos"][nombre] = {
                         "descripcion": "",
-                        "requiere_plugin": None
+                        "requiere_plugin": None,
+                        "destino": "recursos"  # 🔥 Default limpio
                     }
                     print(f"Recurso '{nombre}' creado.")
                 else:
@@ -156,6 +173,11 @@ def preparar_recompensa_para_aplicar(sistema, recompensas: dict):
             print(f"➡ Inventario desactivado. {total_objetos} objetos descartados.")
             recomp.pop("objetos")
             _convertir_a_dinero_si_posible(sistema, recomp, total_objetos)
+        else:
+            # ✅ Objetos activos: dejarlos tal como vienen (ya vienen con cantidad, tipo, rareza, etc.)
+            pass  # nada que hacer
+
+
 
     return recomp
 
@@ -166,34 +188,26 @@ def preparar_recompensa_para_aplicar(sistema, recompensas: dict):
 def destinos_disponibles(plugin):
     """
     Devuelve la lista de destinos válidos según el plugin requerido.
-    
-    Parámetros:
-        plugin (str | None): Nombre del plugin que requiere el recurso.
-                             Si es None, se devuelven los destinos generales.
-    
-    Retorna:
-        list[str]: Lista de nombres de destinos válidos.
-    
-    NOTAS PARA FUTUROS DESTINOS:
-        1. Agrega el nuevo destino en el diccionario 'plugins_destinos'.
-        2. La clave es el plugin que lo permite, o None si es general.
-        3. Los valores son listas con los nombres de los destinos válidos.
-    
-    Ejemplo:
-        plugins_destinos = {
-            None: ["recursos", "stats_extra", "objetos"],
-            "inventario": ["objetos", "equipamiento"],
-            "combate": ["stats_extra", "habilidades"],
-        }
-        Para agregar un nuevo destino llamado "magia" que solo use el plugin "hechizos":
-            plugins_destinos["hechizos"] = ["magia"]
     """
+
     plugins_destinos = {
-        None: ["stats", "progress_stats"],  # Destinos generales
-        "niveles": ["nivel", "xp_actual", "xp_para_siguiente"],
-        # Agregar nuevos plugins aquí como claves y sus destinos como lista
+        None: [
+            "stats",
+            "progress_stats",
+            "dinero",      #  Nuevo destino válido
+            "recursos",    #  Contenedor limpio de recursos dinámicos
+        ],
+        "niveles": [
+            "nivel",
+            "xp_actual",
+            "xp_para_siguiente",
+        ],
+        # Añadir futuros plugins aquí
     }
+
     return plugins_destinos.get(plugin, plugins_destinos[None])
+
+
 
 def seleccionar_destino(plugin, destino_actual=None):
     """
@@ -226,6 +240,23 @@ def seleccionar_destino(plugin, destino_actual=None):
         except ValueError:
             print("Entrada inválida. Ingresa un número.")
 
+
+def seleccionar_modo(modo_actual=None):
+    while True:
+        print("\nModo del recurso:")
+        print("1. Simple (valor numérico directo)")
+        print("2. Contenedor (subtipos internos)")
+
+        opcion = input("Selecciona modo: ").strip()
+
+        if opcion == "1":
+            return "simple"
+        elif opcion == "2":
+            return "contenedor"
+        elif not opcion and modo_actual:
+            return modo_actual
+        else:
+            print("Opción inválida.")
 
 # ─────────────────────────────
 # MENÚ CONFIGURAR RECURSOS
@@ -261,15 +292,30 @@ def menu_configurar_recursos():
                     print(f"  Descripción: {config.get('descripcion', '')}")
                     print(f"  Requiere plugin: {config.get('requiere_plugin')}")
                     print(f"  Destino: {config.get('destino')}")
+                    print(f"  Modo: {config.get('modo')}")
 
         # ───────────────
         # CREAR
         # ───────────────
         elif opcion == "2":
             nombre = input("Nombre del recurso: ").strip()
+            
             if not nombre:
                 print("Nombre inválido.")
                 continue
+
+            if nombre.lower() in sistema.get("dinero", {}):
+                print("❌ Ya existe una moneda con ese nombre en 'dinero'.")
+                continue
+
+            if nombre in sistema.get("stats", {}):
+                print("❌ Ya existe un stat con ese nombre.")
+                continue
+
+            if nombre in sistema.get("progress_stats", {}):
+                print("❌ Ya existe un progress_stat con ese nombre.")
+                continue
+
             if nombre in sistema["recursos_definidos"]:
                 print("Ese recurso ya existe.")
                 continue
@@ -278,14 +324,36 @@ def menu_configurar_recursos():
             requiere_plugin = input("Requiere plugin (opcional): ").strip() or None
 
             destino = seleccionar_destino(requiere_plugin)
+            modo = seleccionar_modo()
 
             sistema["recursos_definidos"][nombre] = {
                 "descripcion": descripcion,
                 "requiere_plugin": requiere_plugin,
-                "destino": destino
+                "destino": destino,
+                "modo": modo
             }
 
-            registrar_recurso(nombre, descripcion, requiere_plugin, destino)
+            if destino == "recursos":
+            
+                # 🔥 Asegurar que recursos sea SIEMPRE dict
+                if not isinstance(sistema.get("recursos"), dict):
+                    sistema["recursos"] = {}
+            
+                if modo == "simple":
+                    sistema["recursos"].setdefault(nombre, 0)
+                else:
+                    sistema["recursos"].setdefault(nombre, {})
+            
+            else:
+            
+                if modo == "simple":
+                    if not isinstance(sistema.get(destino), int):
+                        sistema[destino] = 0
+                else:
+                    if not isinstance(sistema.get(destino), dict):
+                        sistema[destino] = {}
+
+            registrar_recurso(nombre, descripcion, requiere_plugin, destino, modo)
 
             estado.cambios_no_guardados = True
             print("Recurso creado correctamente.")
@@ -299,20 +367,26 @@ def menu_configurar_recursos():
                 print("No existe ese recurso.")
                 continue
 
+            recurso_actual = sistema["recursos_definidos"][nombre]
+
             descripcion = input("Nueva descripción (vacío para mantener): ").strip()
-            requiere_plugin = input("Nuevo plugin requerido (vacío para mantener): ").strip() or sistema["recursos_definidos"][nombre]["requiere_plugin"]
-            destino = seleccionar_destino(requiere_plugin, sistema["recursos_definidos"][nombre]["destino"])
+            requiere_plugin = input("Nuevo plugin requerido (vacío para mantener): ").strip() or recurso_actual.get("requiere_plugin")
+            destino = seleccionar_destino(requiere_plugin, recurso_actual.get("destino"))
+            modo = seleccionar_modo(recurso_actual.get("modo", "contenedor"))
 
             if descripcion:
-                sistema["recursos_definidos"][nombre]["descripcion"] = descripcion
-            sistema["recursos_definidos"][nombre]["requiere_plugin"] = requiere_plugin
-            sistema["recursos_definidos"][nombre]["destino"] = destino
+                recurso_actual["descripcion"] = descripcion
+
+            recurso_actual["requiere_plugin"] = requiere_plugin
+            recurso_actual["destino"] = destino
+            recurso_actual["modo"] = modo
 
             registrar_recurso(
                 nombre,
-                sistema["recursos_definidos"][nombre].get("descripcion", ""),
-                sistema["recursos_definidos"][nombre].get("requiere_plugin"),
-                sistema["recursos_definidos"][nombre].get("destino", "recursos")
+                recurso_actual.get("descripcion", ""),
+                recurso_actual.get("requiere_plugin"),
+                recurso_actual.get("destino", "recursos"),
+                recurso_actual.get("modo", "contenedor")
             )
 
             estado.cambios_no_guardados = True

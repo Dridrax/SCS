@@ -41,25 +41,57 @@ def crear_racha(
     if id in activas:
         return False
 
+    # ----------------------------
     # Normalizar recompensas/penalizaciones
+    # ----------------------------
     def normalizar_bloque(bloque):
         bloque_final = {}
+
         for tipo, items in (bloque or {}).items():
+
+            # 🔹 CASO OBJETOS → LISTA SIMPLE (SIN ESCALADO)
+            if tipo == "objetos":
+                bloque_final[tipo] = []
+
+                for obj in items or []:
+                    nuevo_obj = obj.copy()
+
+                    # Convertir cantidad a cantidad_base si existe
+                    if "cantidad" in nuevo_obj:
+                        nuevo_obj["cantidad_base"] = nuevo_obj.pop("cantidad")
+
+                    # Eliminar cosas que NO queremos en rachas
+                    nuevo_obj.pop("factor_escalado", None)
+                    nuevo_obj.pop("tope", None)
+
+                    bloque_final[tipo].append(nuevo_obj)
+
+                continue
+
+            # 🔹 RESTO DE TIPOS → dict normal
             bloque_final[tipo] = {}
-            for nombre, info in items.items():
+
+            for nombre, info in (items or {}).items():
                 nueva_info = info.copy()
-                # Convertir "valor" o "cantidad" a base
+
+                # Convertir valor/cantidad a base
                 if "valor" in nueva_info:
                     nueva_info["valor_base"] = nueva_info.pop("valor")
+
                 if "cantidad" in nueva_info:
                     nueva_info["cantidad_base"] = nueva_info.pop("cantidad")
-                # Asegurar factor y tope
+
+                # En rachas NO forzamos escalado
                 nueva_info.setdefault("factor_escalado", 1.0)
-                if tipo != "objetos":
-                    nueva_info.setdefault("tope", None)
+                nueva_info.setdefault("tope", None)
+
                 bloque_final[tipo][nombre] = nueva_info
+
         return bloque_final
 
+    # ----------------------------
+    # Crear racha
+    # ----------------------------
     activas[id] = {
         "id": id,
         "nombre": nombre,
@@ -73,10 +105,10 @@ def crear_racha(
 
     estado.cambios_no_guardados = True
     sync_plugin_cache(sistema, "rachas", ["activas", "historial"])
-
     guardar_sistema(print_msg=False)
 
     return True
+
 
 
 # --------------------------------------------------
@@ -168,11 +200,10 @@ def modificar_racha(sistema, racha_id):
     # -----------------------
     # EDITAR RECOMPENSAS
     # -----------------------
-    tipos_validos = obtener_tipos_recompensa_validos()
     menu_editar_bloque_interactivo(
         racha.setdefault("recompensas", {}),
-        "recompensas",
-        tipos_validos=tipos_validos
+        "recompensas"
+
     )
 
     # -----------------------
@@ -180,8 +211,8 @@ def modificar_racha(sistema, racha_id):
     # -----------------------
     menu_editar_bloque_interactivo(
         racha.setdefault("penalizaciones", {}),
-        "penalizaciones",
-        tipos_validos=tipos_validos
+        "penalizaciones"
+
     )
 
     # -----------------------
@@ -206,9 +237,7 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
     if not racha:
         return False
 
-    # ----------------------
     # Verificación (solo recompensas)
-    # ----------------------
     if clave == "recompensas" and not forzar:
         objetivos = racha.get("objetivos", [])
         todos_completos = all(
@@ -226,18 +255,65 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
 
     entregado = {}
 
-    # 🔹 Escalado correcto
+    # Escalado correcto
     if clave == "recompensas":
         multiplicador = racha.get("veces_completada", 0) + 1
     else:
         multiplicador = racha.get("fallos_consecutivos", 0) + 1
 
     for tipo, items in datos.items():
-        if not isinstance(items, dict):
+        if tipo != "objetos" and not isinstance(items, dict):
             continue
 
-        entregado[tipo] = {}
+        if tipo == "objetos":
+            objetos_dict = {}
+            tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
+        
+            for obj in items:
+                nombre = obj.get("nombre")
+                if not nombre:
+                    continue
+                
+                base = obj.get("cantidad", obj.get("cantidad_base", 1))
+                factor = obj.get("factor_escalado", 1.0)
+        
+                # 🔥 IMPORTANTE: usar multiplicador - 1 (veces completada)
+                if tipo_escalado == "exponencial":
+                    cantidad_total = int(base * (factor ** (multiplicador - 1)))
+        
+                elif tipo_escalado == "lineal":
+                    cantidad_total = int(base + (factor - 1) * base * (multiplicador - 1))
+        
+                elif tipo_escalado == "lineal_tope":
+                    tope = obj.get("tope")
+                    val = int(base + (factor - 1) * base * (multiplicador - 1))
+                    cantidad_total = min(val, tope) if tope is not None else val
+        
+                elif tipo_escalado == "lineal_porcentaje":
+                    cantidad_total = int(base * (1 + (factor - 1) * (multiplicador - 1)))
+        
+                elif tipo_escalado == "lineal_suavizado":
+                    incremento = (factor - 1) * base
+                    cantidad_total = int(base + incremento * (1 - 0.5 ** (multiplicador - 1)))
+        
+                else:
+                    cantidad_total = base
+        
+                cantidad_total = max(cantidad_total, 1)
+        
+                objetos_dict[nombre] = {
+                    "cantidad": cantidad_total,
+                    "tipo": obj.get("tipo", "general"),
+                    "rareza": obj.get("rareza", "comun"),
+                    "descripcion": obj.get("descripcion", ""),
+                    "efectos": obj.get("efectos", {})
+                }
+        
+            entregado[tipo] = objetos_dict
+            continue
 
+        # Para recursos que no son objetos
+        entregado[tipo] = {}
         for nombre, info in items.items():
             if not isinstance(info, dict):
                 continue
@@ -246,34 +322,24 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
             if base is None:
                 continue
 
-
-            # Obtener tipo de escalado desde la configuración del sistema
             tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
             factor = info.get("factor_escalado", 1.0)
 
-            # Calcular nuevo valor según el tipo de escalado
             if tipo_escalado == "exponencial":
                 nuevo_valor = int(base * (factor ** (multiplicador - 1)))
-
             elif tipo_escalado == "lineal":
                 nuevo_valor = int(base + (factor - 1) * base * (multiplicador - 1))
-
             elif tipo_escalado == "lineal_tope":
-                tope = info.get("tope", None)  # Opcional, permitir que cada racha tenga un máximo
+                tope = info.get("tope")
                 val = int(base + (factor - 1) * base * (multiplicador - 1))
                 nuevo_valor = min(val, tope) if tope is not None else val
-
             elif tipo_escalado == "lineal_porcentaje":
                 nuevo_valor = int(base * (1 + (factor - 1) * (multiplicador - 1)))
-
             elif tipo_escalado == "lineal_suavizado":
                 incremento = (factor - 1) * base
-                nuevo_valor = int(base + incremento * (1 - 0.5**(multiplicador - 1)))  # suavizado exponencial
-            
-            # 🔹 Aquí estaba la línea que faltaba:
-            
-            entregado[tipo][nombre] = nuevo_valor
+                nuevo_valor = int(base + incremento * (1 - 0.5**(multiplicador - 1)))
 
+            entregado[tipo][nombre] = nuevo_valor
 
     # Limpiar tipos vacíos
     entregado = {k: v for k, v in entregado.items() if v}
@@ -284,18 +350,13 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
             preparar_recompensa_para_aplicar(sistema, entregado)
         )
 
-    # ----------------------
     # Actualizar contadores
-    # ----------------------
     if clave == "recompensas":
         racha["veces_completada"] = racha.get("veces_completada", 0) + 1
         racha["fallos_consecutivos"] = 0
-
     elif clave == "penalizaciones":
         racha["fallos_consecutivos"] = racha.get("fallos_consecutivos", 0) + 1
         racha["veces_completada"] = 0
-
-        # Reiniciar progresión completa
         for obj in racha.get("objetivos", []):
             obj["nivel"] = 0
             obj["progreso"] = 0
@@ -304,6 +365,8 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
     guardar_sistema(print_msg=False)
 
     return entregado
+
+
 
 # --------------------------------------------------
 # COMPLETAR RACHA
@@ -440,60 +503,104 @@ def gestion_racha(sistema, racha, rachas_list):
         tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
 
         for t, items in racha.get("recompensas", {}).items():
-            for k, v in items.items():
-                base = v.get("valor_base", 0)
-                factor = v.get("factor_escalado", 1.0)
-                tope = v.get("tope", None)
+            # Si es lista (objetos)
+            if isinstance(items, list):
+                for obj in items:
+                    nombre = obj.get("nombre", "objeto")
+                    base = obj.get("cantidad", 0)
+                    factor = obj.get("factor_escalado", 1.0)
+                    tope = obj.get("tope", None)
 
-                if tipo_escalado == "exponencial":
-                    recompensa_actual = int(base * (factor ** veces))
-                elif tipo_escalado == "lineal":
-                    recompensa_actual = int(base + (factor - 1) * base * veces)
-                elif tipo_escalado == "lineal_tope":
-                    val = int(base + (factor - 1) * base * veces)
-                    recompensa_actual = min(val, tope) if tope is not None else val
-                elif tipo_escalado == "lineal_porcentaje":
-                    recompensa_actual = int(base * (1 + (factor - 1) * veces))
-                elif tipo_escalado == "lineal_suavizado":
-                    incremento = (factor - 1) * base
-                    recompensa_actual = int(base + incremento * (1 - 0.5 ** veces))
+                    if tipo_escalado == "exponencial":
+                        valor = int(base * (factor ** veces))
+                    elif tipo_escalado == "lineal":
+                        valor = int(base + (factor - 1) * base * veces)
+                    elif tipo_escalado == "lineal_tope":
+                        val = int(base + (factor - 1) * base * veces)
+                        valor = min(val, tope) if tope is not None else val
+                    elif tipo_escalado == "lineal_porcentaje":
+                        valor = int(base * (1 + (factor - 1) * veces))
+                    elif tipo_escalado == "lineal_suavizado":
+                        incremento = (factor - 1) * base
+                        valor = int(base + incremento * (1 - 0.5 ** veces))
 
-                tope_str = f" | Tope: {tope}" if tope is not None else ""
-                print(f"  {k} ({t}): {recompensa_actual}  [Base: {base} | Factor: {factor}{tope_str}]")
+                    tope_str = f" | Tope: {tope}" if tope is not None else ""
+                    print(f"  {nombre} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
+
+            # Si es dict (stats, XP, dinero, etc.)
+            elif isinstance(items, dict):
+                for k, v in items.items():
+                    base = v.get("valor_base", 0)
+                    factor = v.get("factor_escalado", 1.0)
+                    tope = v.get("tope", None)
+
+                    if tipo_escalado == "exponencial":
+                        valor = int(base * (factor ** veces))
+                    elif tipo_escalado == "lineal":
+                        valor = int(base + (factor - 1) * base * veces)
+                    elif tipo_escalado == "lineal_tope":
+                        val = int(base + (factor - 1) * base * veces)
+                        valor = min(val, tope) if tope is not None else val
+                    elif tipo_escalado == "lineal_porcentaje":
+                        valor = int(base * (1 + (factor - 1) * veces))
+                    elif tipo_escalado == "lineal_suavizado":
+                        incremento = (factor - 1) * base
+                        valor = int(base + incremento * (1 - 0.5 ** veces))
+
+                    tope_str = f" | Tope: {tope}" if tope is not None else ""
+                    print(f"  {k} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
 
         # ----------------------------
-        # Penalizaciones
+        # Penalizaciones (misma lógica)
         # ----------------------------
-        fallos = racha.get("fallos_consecutivos", 0)
-        max_fallos = sistema.get("configuracion", {}).get("racha_recuperacion_fallos", 3)
-        faltan_para_reiniciar = max_fallos - fallos if max_fallos > fallos else 0
-
-        print(f"\nFallos consecutivos: {fallos} (Faltan {faltan_para_reiniciar} rachas completadas para reinicio)")
         print("Penalizaciones actuales:")
+        fallos = racha.get("fallos_consecutivos", 0)
 
         for t, items in racha.get("penalizaciones", {}).items():
-            for k, v in items.items():
-                base = v.get("valor_base", 0)
-                factor = v.get("factor_escalado", 1.0)
-                tope = v.get("tope", None)
+            if isinstance(items, list):
+                for obj in items:
+                    nombre = obj.get("nombre", "objeto")
+                    base = obj.get("cantidad", 0)
+                    factor = obj.get("factor_escalado", 1.0)
+                    tope = obj.get("tope", None)
 
-                # Aplicar mismo tipo de escalado que recompensas para mostrar correctamente
-                if tipo_escalado == "exponencial":
-                    penal_actual = int(base * (factor ** fallos))
-                elif tipo_escalado == "lineal":
-                    penal_actual = int(base + (factor - 1) * base * fallos)
-                elif tipo_escalado == "lineal_tope":
-                    val = int(base + (factor - 1) * base * fallos)
-                    penal_actual = min(val, tope) if tope is not None else val
-                elif tipo_escalado == "lineal_porcentaje":
-                    penal_actual = int(base * (1 + (factor - 1) * fallos))
-                elif tipo_escalado == "lineal_suavizado":
-                    incremento = (factor - 1) * base
-                    penal_actual = int(base + incremento * (1 - 0.5 ** fallos))
+                    if tipo_escalado == "exponencial":
+                        valor = int(base * (factor ** fallos))
+                    elif tipo_escalado == "lineal":
+                        valor = int(base + (factor - 1) * base * fallos)
+                    elif tipo_escalado == "lineal_tope":
+                        val = int(base + (factor - 1) * base * fallos)
+                        valor = min(val, tope) if tope is not None else val
+                    elif tipo_escalado == "lineal_porcentaje":
+                        valor = int(base * (1 + (factor - 1) * fallos))
+                    elif tipo_escalado == "lineal_suavizado":
+                        incremento = (factor - 1) * base
+                        valor = int(base + incremento * (1 - 0.5 ** fallos))
 
-                tope_str = f" | Tope: {tope}" if tope is not None else ""
-                print(f"  {k} ({t}): {penal_actual} [Base: {base} | Factor: {factor}{tope_str}]")
+                    tope_str = f" | Tope: {tope}" if tope is not None else ""
+                    print(f"  {nombre} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
 
+            elif isinstance(items, dict):
+                for k, v in items.items():
+                    base = v.get("valor_base", 0)
+                    factor = v.get("factor_escalado", 1.0)
+                    tope = v.get("tope", None)
+
+                    if tipo_escalado == "exponencial":
+                        valor = int(base * (factor ** fallos))
+                    elif tipo_escalado == "lineal":
+                        valor = int(base + (factor - 1) * base * fallos)
+                    elif tipo_escalado == "lineal_tope":
+                        val = int(base + (factor - 1) * base * fallos)
+                        valor = min(val, tope) if tope is not None else val
+                    elif tipo_escalado == "lineal_porcentaje":
+                        valor = int(base * (1 + (factor - 1) * fallos))
+                    elif tipo_escalado == "lineal_suavizado":
+                        incremento = (factor - 1) * base
+                        valor = int(base + incremento * (1 - 0.5 ** fallos))
+
+                    tope_str = f" | Tope: {tope}" if tope is not None else ""
+                    print(f"  {k} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
 
         # ----------------------------
         # Menú de acciones

@@ -1,3 +1,4 @@
+#plugins/inventario/menus_inv.py
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.utils.funciones_utiles import pedir_int
@@ -98,8 +99,10 @@ def menu_modificar_item():
         rareza = input(f"Rareza [{item_sel['rareza']}]: ").strip() or item_sel['rareza']
         tipo = input(f"Tipo [{item_sel['tipo']}]: ").strip() or item_sel['tipo']
         descripcion = input(f"Descripción [{item_sel['descripcion']}]: ").strip() or item_sel['descripcion']
-        cantidad = input(f"Cantidad [{item_sel['cantidad']}]: ").strip()
-        cantidad = int(cantidad) if cantidad.isdigit() else item_sel['cantidad']
+
+        # NUEVO: manejar cantidad como int y permitir eliminar si <=0
+        cantidad_input = input(f"Cantidad [{item_sel['cantidad']}]: ").strip()
+        cantidad = int(cantidad_input) if cantidad_input.isdigit() else item_sel['cantidad']
 
         # Modificar efectos
         efectos = item_sel.get("efectos", {}).copy()
@@ -122,56 +125,48 @@ def menu_modificar_item():
             "efectos": efectos
         })
 
+        # Si la cantidad quedó ≤0, quitamos el item de la lista del menú
+        if cantidad <= 0:
+            print(f"\nItem '{item_sel['nombre']}' eliminado por tener cantidad 0.")
+            items.remove(item_sel)
 # _________________________
 # MENU ELIMINAR ITEM
 # _________________________
-def menu_eliminar_item():
-    sistema = estado.sistema_actual
-    if not sistema:
-        print("❌ No hay sistema cargado.")
-        return
-
+def menu_eliminar_item(sistema, item_id, cantidad=1):
+    """
+    Elimina un item del inventario.
+    - sistema: dict del sistema actual
+    - item_id: id del item a eliminar
+    - cantidad: cantidad a eliminar (default 1)
+    
+    Si la cantidad es menor que la existente, se resta.
+    Si la cantidad es mayor o igual, se elimina por completo.
+    """
     inventario = sistema.get("inventario", {})
-    if not inventario:
-        print("❌ No hay items en el inventario.")
-        return
 
-    while True:
-        print("\n=== ELIMINAR ITEM ===")
-        items = list(inventario.values())
-        for i, item in enumerate(items, 1):
-            print(f"{i}. {item['nombre']} | Rareza: {item['rareza']} | Cantidad: {item['cantidad']}")
-        print(f"{len(items)+1}. Volver")
+    if item_id not in inventario:
+        print(f"❌ No se encontró el item con ID '{item_id}'.")
+        return False
 
-        entrada = input("\nSelecciona un item por número o nombre para eliminar: ").strip()
-        if entrada == str(len(items)+1) or entrada.lower() == "volver":
-            break
+    item = inventario[item_id]
+    if item.get("cantidad", 1) > cantidad:
+        item["cantidad"] -= cantidad
+        print(f"✅ Se eliminaron {cantidad} de '{item['nombre']}'. Quedan {item['cantidad']}.")
+    else:
+        del inventario[item_id]
+        print(f"✅ Item '{item['nombre']}' eliminado del inventario.")
 
-        # Selección por número
-        item_sel = None
-        if entrada.isdigit():
-            idx = int(entrada) - 1
-            if 0 <= idx < len(items):
-                item_sel = items[idx]
-        # Selección por nombre
-        else:
-            for item in items:
-                if item['nombre'].lower() == entrada.lower():
-                    item_sel = item
-                    break
+    # Actualizar plugin_cache
+    if "plugins" in estado.plugin_cache:
+        plugin_inv = estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})
+        if item_id in plugin_inv:
+            if item_id in inventario:
+                plugin_inv[item_id] = inventario[item_id]
+            else:
+                del plugin_inv[item_id]
 
-        if not item_sel:
-            print("❌ Item no encontrado.")
-            continue
-
-        # Confirmar eliminación
-        confirmar = input(f"⚠️ ¿Eliminar '{item_sel['nombre']}'? (s/n): ").lower()
-        if confirmar != "s":
-            print("❌ Operación cancelada.")
-            continue
-
-        # Llamar a la función principal
-        eliminar_item(sistema, item_sel['id'])
+    estado.cambios_no_guardados = True
+    return True
 
 # _________________________
 # MOSTRAR ITEM
@@ -233,7 +228,6 @@ def mostrar_items(sistema=None):
             nuevos_datos["tipo"] = input(f"Nuevo tipo ({item['tipo']}): ") or item['tipo']
             nuevos_datos["descripcion"] = input(f"Nueva descripción ({item['descripcion']}): ") or item['descripcion']
             nuevos_datos["cantidad"] = pedir_int(f"Nueva cantidad ({item['cantidad']}): ") or item['cantidad']
-            #nuevos_datos["cantidad"] = int(cantidad_input) if cantidad_input.isdigit() else item['cantidad']
 
             # Editar efectos
             efectos = item.get("efectos", {}).copy()
@@ -254,13 +248,19 @@ def mostrar_items(sistema=None):
 
         # Función interna para eliminar item
         def eliminar_item_interactivo(item):
-            confirmar = input(f"¿Seguro que quieres eliminar '{item['nombre']}'? (s/n): ").lower()
+            print(f"Cantidad actual de '{item['nombre']}': {item['cantidad']}")
+            cantidad = pedir_int("Cantidad a eliminar: ")
+            if cantidad <= 0:
+                print("❌ Operación cancelada.")
+                return
+            confirmar = input(f"⚠️ ¿Eliminar {cantidad} de '{item['nombre']}'? (s/n): ").lower()
             if confirmar == "s":
-                eliminar_item(sistema, item['id'])
-                items_list.remove(item)
+                eliminar_item(sistema, item['id'], cantidad)
+                if item.get("cantidad", 0) <= 0:
+                    items_list.remove(item)
                 estado.cambios_no_guardados = True
                 guardar_sistema()
-                print(f"✅ Item '{item['nombre']}' eliminado.")
+                print(f"✅ Item '{item['nombre']}' actualizado.")
 
         # Mostrar detalles del item
         while True:

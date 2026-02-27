@@ -5,7 +5,7 @@ from core.guardado.archivos import guardar_sistema, cargar_sistema, guardar_como
 from core.administrar_puntos.menu_admin_puntos import menu_distribuir_puntos
 
 from core.sistemas.crear_sistema import crear_nuevo_sistema
-from core.utils.funciones_utiles import pedir_int, pedir_si_no
+from core.utils.funciones_utiles import pedir_int
 from core.sistemas.mostrar_sistema import mostrar_ficha
 from core.plugins.registry import PLUGINS
 
@@ -27,13 +27,6 @@ from core.stats.stats import (mostrar_stats, mostrar_progress_stats_bar,
                               modificar_stat_simples, modificar_stat_progress, 
                               agregar_stat_simple, agregar_progress_stat,
                               eliminar_stat_simple, eliminar_progress_stat)
-
-
-
-
-
-
-
 
 
 # ------------------- CREAR / CARGAR -------------------
@@ -199,6 +192,8 @@ def configuracion(sistema):
         opciones = []
 
         opciones.append(("Guardar", guardar_sistema))
+
+        opciones.append(("Configurar Sistema", lambda:configurar_sistema(sistema)))
         
         opciones.append(("Recursos", menu_configurar_recursos))
         
@@ -340,14 +335,6 @@ def menu_modificar_items(sistema):
 
 #------------------- ADMINISTRAR PLUGINS/MENU PLUGINS -------------------
 
-# Diccionario con todos los plugins disponibles y sus funciones on_enable (opcional)
-"""PLUGINS = {
-    "inventario": {
-        "on_enable": lambda sistema: sistema.setdefault("inventario", {})
-    },
-    # "habilidades": {...}, "bendiciones": {...} etc.
-}"""
-
 def menu_plugins(autoguardar=True):
     sistema = estado.sistema_actual
 
@@ -421,6 +408,107 @@ def menu_plugins(autoguardar=True):
             estado.cambios_no_guardados = True
         else:
             print("❌ Opción no válida.")
+
+# ------------------- MODIFICAR Sistema(Nombre, Nombre del sistema, Original o fanfiction) -------------------
+
+def configurar_sistema(sistema):
+    """
+    Permite modificar valores que normalmente solo se definen al crear el sistema:
+    - Nombre del personaje
+    - Edad del personaje
+    - Nombre del sistema
+    - Datos de la historia (tipo, sinopsis, personajes, parejas, fandom)
+    """
+
+    while True:
+        print("\n=== CONFIGURAR SISTEMA ===")
+        print(f"1. Nombre del personaje: {sistema['personaje'].get('nombre')}")
+        print(f"2. Edad del personaje: {sistema['personaje'].get('edad')}")
+        print(f"3. Nombre del sistema: {sistema.get('nombre_sistema')}")
+        historia = sistema.get("historia", {})
+        print(f"4. Tipo de historia: {historia.get('tipo')}")
+        print("5. Modificar historia (sinopsis, personajes, parejas, fandom)")
+        print("6. Salir\n")
+
+        opcion = input("Selecciona una opción (Enter para salir): ").strip()
+        if opcion == "" or opcion == "6":
+            guardar_sistema(print_msg=False)
+            break
+
+        if opcion == "1":
+            nuevo_nombre = input(f"Nuevo nombre del personaje (Enter para mantener '{sistema['personaje']['nombre']}'): ").strip()
+            if nuevo_nombre:
+                sistema['personaje']['nombre'] = nuevo_nombre
+
+        elif opcion == "2":
+            nueva_edad = input(f"Nueva edad (Enter para mantener '{sistema['personaje']['edad']}'): ").strip()
+            if nueva_edad:
+                try:
+                    sistema['personaje']['edad'] = int(nueva_edad)
+                except ValueError:
+                    print("❌ Edad inválida. No se modificó.")
+
+        elif opcion == "3":
+            nuevo_nombre_sistema = input(f"Nuevo nombre del sistema (Enter para mantener '{sistema.get('nombre_sistema')}'): ").strip()
+            if nuevo_nombre_sistema:
+                sistema['nombre_sistema'] = nuevo_nombre_sistema
+
+        elif opcion == "4":
+            while True:
+                tipo = input("Nuevo tipo de historia: Original o Fanfiction (O/F, Enter para mantener): ").lower().strip()
+                if tipo == "":
+                    break
+                if tipo in ("o", "f"):
+                    historia.clear()
+                    if tipo == "o":
+                        historia["tipo"] = "original"
+                        historia["sinopsis"] = input("Sinopsis: ")
+                        historia["personajes_principales"] = input("Personajes principales: ")
+                        historia["parejas"] = input("Parejas: ")
+                    else:
+                        historia["tipo"] = "fanfiction"
+                        historia["fandom"] = input("Fandom: ")
+                        historia["sinopsis"] = input("Sinopsis: ")
+                        historia["personajes"] = input("Personajes: ")
+                        historia["parejas"] = input("Parejas: ")
+                    break
+                else:
+                    print("❌ Tipo inválido. Usa O o F.")
+
+        elif opcion == "5":
+            if historia.get("tipo") == "original":
+                sinopsis = input(f"Sinopsis (Enter para mantener): ").strip()
+                if sinopsis:
+                    historia["sinopsis"] = sinopsis
+                personajes = input(f"Personajes principales (Enter para mantener): ").strip()
+                if personajes:
+                    historia["personajes_principales"] = personajes
+                parejas = input(f"Parejas (Enter para mantener): ").strip()
+                if parejas:
+                    historia["parejas"] = parejas
+            elif historia.get("tipo") == "fanfiction":
+                fandom = input(f"Fandom (Enter para mantener): ").strip()
+                if fandom:
+                    historia["fandom"] = fandom
+                sinopsis = input(f"Sinopsis (Enter para mantener): ").strip()
+                if sinopsis:
+                    historia["sinopsis"] = sinopsis
+                personajes = input(f"Personajes (Enter para mantener): ").strip()
+                if personajes:
+                    historia["personajes"] = personajes
+                parejas = input(f"Parejas (Enter para mantener): ").strip()
+                if parejas:
+                    historia["parejas"] = parejas
+            else:
+                print("❌ Historia no definida.")
+
+        else:
+            print("❌ Opción inválida.")
+
+    # Marcar cambios
+    estado.cambios_no_guardados = True
+    print("\n✅ Sistema configurado correctamente.\n")
+
         
 """MENUS.PY - Documentación y guía de uso
 

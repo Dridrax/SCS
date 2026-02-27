@@ -1,47 +1,205 @@
 {
     "plugins": {
-        "inventario": {},
+        "inventario": {
+            "d67eeb82-8eb3-4d97-8783-b8ee0c867021": {
+                "id": "d67eeb82-8eb3-4d97-8783-b8ee0c867021",
+                "nombre": "palo",
+                "rareza": "",
+                "tipo": "",
+                "descripcion": "",
+                "efectos": {},
+                "cantidad": 63
+            },
+            "ff2de24b-59f2-40e8-b103-498279d25c21": {
+                "id": "ff2de24b-59f2-40e8-b103-498279d25c21",
+                "nombre": "Gema Brillante",
+                "rareza": "comun",
+                "tipo": "reliquia",
+                "descripcion": "",
+                "efectos": {},
+                "cantidad": 2
+            }
+        },
         "rachas": {
             "activas": {
-                "racha_escalado": {
-                    "id": "racha_escalado",
-                    "nombre": "Pruebas escalado",
-                    "descripcion": "una racha apra probar los diferentes tipos de escalado",
-                    "objetivos": [
-                        {
-                            "descripcion": "prueba",
-                            "cantidad_base": 10,
-                            "factor_escalado": 2.0,
-                            "tope": 0,
-                            "nivel": 48,
-                            "progreso": 0
-                        }
-                    ],
+                "racha_definitiva": {
+                    "id": "racha_definitiva",
+                    "nombre": "racha definitiva",
+                    "descripcion": "",
+                    "objetivos": [],
                     "recompensas": {
                         "xp_niveles": {
-                            "xp": {
-                                "valor_base": 100,
-                                "tope": 0,
-                                "factor_escalado": 1.2
+                            "xp_niveles": {
+                                "valor_base": 10,
+                                "factor_escalado": 1.5,
+                                "tope": 0
+                            }
+                        },
+                        "stats": {
+                            "vida": {
+                                "valor_base": 10,
+                                "factor_escalado": 1.5,
+                                "tope": 0
+                            }
+                        },
+                        "puntos_stats": {
+                            "puntos": {
+                                "valor_base": 5,
+                                "factor_escalado": 1.25,
+                                "tope": 0
+                            }
+                        },
+                        "progress_stats": {
+                            "cabeza": {
+                                "valor_base": 10,
+                                "factor_escalado": 1.5,
+                                "tope": 0
+                            }
+                        },
+                        "objetos": [
+                            {
+                                "nombre": "palo",
+                                "tipo": "",
+                                "rareza": "",
+                                "descripcion": "",
+                                "efectos": {},
+                                "cantidad_base": 1,
+                                "cantidad": 1,
+                                "factor_escalado": 1.5
+                            }
+                        ],
+                        "dinero": {
+                            "oro": {
+                                "valor_base": 10,
+                                "factor_escalado": 1.5,
+                                "tope": 0
+                            }
+                        },
+                        "Fichas": {
+                            "ficha": {
+                                "valor_base": 10,
+                                "factor_escalado": 1.0,
+                                "tope": 0
+                            }
+                        },
+                        "Cristales": {
+                            "Cristales": {
+                                "valor_base": 12,
+                                "factor_escalado": 1.0,
+                                "tope": 0
                             }
                         }
                     },
                     "penalizaciones": {},
-                    "veces_completada": 48,
+                    "veces_completada": 8,
+                    "fallos_consecutivos": 0
+                },
+                "objeto": {
+                    "id": "objeto",
+                    "nombre": "noa",
+                    "descripcion": "",
+                    "objetivos": [],
+                    "recompensas": {
+                        "objetos": [
+                            {
+                                "nombre": "palo",
+                                "tipo": "",
+                                "rareza": "",
+                                "descripcion": "",
+                                "efectos": {},
+                                "cantidad_base": 1,
+                                "cantidad": 1,
+                                "factor_escalado": 1.5
+                            }
+                        ]
+                    },
+                    "penalizaciones": {},
+                    "veces_completada": 20,
                     "fallos_consecutivos": 0
                 }
             },
             "historial": {}
+        },
+        "misiones": {
+            "activas": {},
+            "historial": {
+                "mision_gemas": {
+                    "id": "mision_gemas",
+                    "nombre": "Recolecta gemas magicas",
+                    "descripcion": "Recolecta 5 gemas en el bosque encantado",
+                    "objetivos": [
+                        {
+                            "id": "33b7c24e-b348-4dc1-ba3a-3cedb10d4db2",
+                            "descripcion": "Recolectar 5 gemas",
+                            "cantidad_base": 5,
+                            "progreso": 0,
+                            "interno": false,
+                            "recompensas": {
+                                "objetos": [
+                                    {
+                                        "nombre": "Gema Brillante",
+                                        "cantidad": 1,
+                                        "tipo": "reliquia"
+                                    }
+                                ],
+                                "dinero": {
+                                    "oro": {
+                                        "valor_base": 100
+                                    }
+                                }
+                            },
+                            "penalizaciones": {
+                                "objetos": []
+                            },
+                            "estado_objetivo": "entregado"
+                        }
+                    ],
+                    "estado": "completada"
+                },
+                "mision_fallo": {
+                    "id": "mision_fallo",
+                    "nombre": "fallar mision",
+                    "descripcion": "tiene que restarse dinero y la gema brillante",
+                    "objetivos": [
+                        {
+                            "id": "986e5ed1-6ca0-4ae0-b268-3edeb32cc110",
+                            "descripcion": "nao",
+                            "cantidad_base": 1,
+                            "progreso": 0,
+                            "interno": false,
+                            "recompensas": {
+                                "objetos": []
+                            },
+                            "penalizaciones": {
+                                "objetos": [
+                                    {
+                                        "nombre": "Gema Brillante",
+                                        "cantidad": 1,
+                                        "tipo": "reliquia"
+                                    }
+                                ],
+                                "dinero": {
+                                    "oro": {
+                                        "valor_base": -50
+                                    }
+                                }
+                            },
+                            "estado_objetivo": "fallado"
+                        }
+                    ],
+                    "estado": "fallada"
+                }
+            }
         }
     },
     "stats": {
-        "popo": 110
+        "vida": 155
     },
     "progress_stats": {
-        "èè": {
-            "actual": 10,
-            "max": 120,
-            "nivel": 2,
+        "cabeza": {
+            "actual": 43,
+            "max": 44,
+            "nivel": 10,
             "factor_escalado": 1.2
         }
     }

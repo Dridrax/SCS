@@ -2,6 +2,7 @@
 
 from core.utils.plugin_registry import registrar_plugin
 from .helpers_niveles import revisar_y_subir_nivel_destino
+from core.utils.hooks import registrar_hook_destino
 
 def init_plugin_niveles(sistema: dict):
     """
@@ -25,9 +26,9 @@ def init_plugin_niveles(sistema: dict):
     sistema.setdefault("recompensas_por_nivel", [])
 
     # Hooks: Revisar automáticamente si hay suficiente XP al cargar
+    registrar_hook_destino("xp_actual", revisar_y_subir_nivel_destino)
     revisar_y_subir_nivel_destino(sistema)
-
-
+    
 # Registrar plugin en el sistema central
 registrar_plugin("niveles", init_plugin_niveles)
 
