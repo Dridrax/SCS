@@ -8,16 +8,7 @@
                 "tipo": "",
                 "descripcion": "",
                 "efectos": {},
-                "cantidad": 63
-            },
-            "ff2de24b-59f2-40e8-b103-498279d25c21": {
-                "id": "ff2de24b-59f2-40e8-b103-498279d25c21",
-                "nombre": "Gema Brillante",
-                "rareza": "comun",
-                "tipo": "reliquia",
-                "descripcion": "",
-                "efectos": {},
-                "cantidad": 2
+                "cantidad": 69
             }
         },
         "rachas": {
@@ -110,86 +101,61 @@
                                 "cantidad_base": 1,
                                 "cantidad": 1,
                                 "factor_escalado": 1.5
+                            },
+                            {
+                                "nombre": "palo",
+                                "cantidad": 17,
+                                "factor_escalado": 17.0,
+                                "tipo": "",
+                                "rareza": "",
+                                "descripcion": "",
+                                "efectos": {}
                             }
-                        ]
+                        ],
+                        "Cristales": {
+                            "Cristales": {
+                                "valor_base": 2,
+                                "factor_escalado": 1.0,
+                                "tope": 0
+                            }
+                        },
+                        "dinero": {
+                            "": {
+                                "valor_base": 1,
+                                "factor_escalado": 1.0,
+                                "tope": 1
+                            }
+                        }
                     },
                     "penalizaciones": {},
                     "veces_completada": 20,
                     "fallos_consecutivos": 0
+                },
+                "eliminar_gema": {
+                    "id": "eliminar_gema",
+                    "nombre": "palo",
+                    "descripcion": "a",
+                    "objetivos": [],
+                    "recompensas": {},
+                    "penalizaciones": {
+                        "objetos": [
+                            {
+                                "nombre": "palo",
+                                "tipo": "",
+                                "rareza": "",
+                                "descripcion": "",
+                                "efectos": {},
+                                "cantidad_base": -1,
+                                "cantidad": -1,
+                                "factor_escalado": 1.5
+                            }
+                        ]
+                    },
+                    "veces_completada": 0,
+                    "fallos_consecutivos": 12
                 }
             },
             "historial": {}
-        },
-        "misiones": {
-            "activas": {},
-            "historial": {
-                "mision_gemas": {
-                    "id": "mision_gemas",
-                    "nombre": "Recolecta gemas magicas",
-                    "descripcion": "Recolecta 5 gemas en el bosque encantado",
-                    "objetivos": [
-                        {
-                            "id": "33b7c24e-b348-4dc1-ba3a-3cedb10d4db2",
-                            "descripcion": "Recolectar 5 gemas",
-                            "cantidad_base": 5,
-                            "progreso": 0,
-                            "interno": false,
-                            "recompensas": {
-                                "objetos": [
-                                    {
-                                        "nombre": "Gema Brillante",
-                                        "cantidad": 1,
-                                        "tipo": "reliquia"
-                                    }
-                                ],
-                                "dinero": {
-                                    "oro": {
-                                        "valor_base": 100
-                                    }
-                                }
-                            },
-                            "penalizaciones": {
-                                "objetos": []
-                            },
-                            "estado_objetivo": "entregado"
-                        }
-                    ],
-                    "estado": "completada"
-                },
-                "mision_fallo": {
-                    "id": "mision_fallo",
-                    "nombre": "fallar mision",
-                    "descripcion": "tiene que restarse dinero y la gema brillante",
-                    "objetivos": [
-                        {
-                            "id": "986e5ed1-6ca0-4ae0-b268-3edeb32cc110",
-                            "descripcion": "nao",
-                            "cantidad_base": 1,
-                            "progreso": 0,
-                            "interno": false,
-                            "recompensas": {
-                                "objetos": []
-                            },
-                            "penalizaciones": {
-                                "objetos": [
-                                    {
-                                        "nombre": "Gema Brillante",
-                                        "cantidad": 1,
-                                        "tipo": "reliquia"
-                                    }
-                                ],
-                                "dinero": {
-                                    "oro": {
-                                        "valor_base": -50
-                                    }
-                                }
-                            },
-                            "estado_objetivo": "fallado"
-                        }
-                    ],
-                    "estado": "fallada"
-                }
-            }
         }
     },
     "stats": {

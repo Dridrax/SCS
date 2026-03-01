@@ -299,7 +299,7 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
                 else:
                     cantidad_total = base
         
-                cantidad_total = max(cantidad_total, 1)
+                #cantidad_total = max(cantidad_total, 1)
         
                 objetos_dict[nombre] = {
                     "cantidad": cantidad_total,
@@ -503,11 +503,15 @@ def gestion_racha(sistema, racha, rachas_list):
         tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
 
         for t, items in racha.get("recompensas", {}).items():
-            # Si es lista (objetos)
+
+            # OBJETOS
             if isinstance(items, list):
                 for obj in items:
                     nombre = obj.get("nombre", "objeto")
-                    base = obj.get("cantidad", 0)
+
+                    # 🔥 CAMBIO AQUÍ
+                    base = obj.get("cantidad_base", obj.get("cantidad", 0))
+
                     factor = obj.get("factor_escalado", 1.0)
                     tope = obj.get("tope", None)
 
@@ -527,7 +531,7 @@ def gestion_racha(sistema, racha, rachas_list):
                     tope_str = f" | Tope: {tope}" if tope is not None else ""
                     print(f"  {nombre} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
 
-            # Si es dict (stats, XP, dinero, etc.)
+            # RECURSOS (stats, xp, dinero...)
             elif isinstance(items, dict):
                 for k, v in items.items():
                     base = v.get("valor_base", 0)
@@ -551,16 +555,21 @@ def gestion_racha(sistema, racha, rachas_list):
                     print(f"  {k} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
 
         # ----------------------------
-        # Penalizaciones (misma lógica)
+        # Penalizaciones
         # ----------------------------
         print("Penalizaciones actuales:")
         fallos = racha.get("fallos_consecutivos", 0)
 
         for t, items in racha.get("penalizaciones", {}).items():
+
+            # OBJETOS
             if isinstance(items, list):
                 for obj in items:
                     nombre = obj.get("nombre", "objeto")
-                    base = obj.get("cantidad", 0)
+
+                    # 🔥 CAMBIO AQUÍ
+                    base = obj.get("cantidad_base", obj.get("cantidad", 0))
+
                     factor = obj.get("factor_escalado", 1.0)
                     tope = obj.get("tope", None)
 
@@ -580,6 +589,7 @@ def gestion_racha(sistema, racha, rachas_list):
                     tope_str = f" | Tope: {tope}" if tope is not None else ""
                     print(f"  {nombre} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
 
+            # RECURSOS
             elif isinstance(items, dict):
                 for k, v in items.items():
                     base = v.get("valor_base", 0)
@@ -603,7 +613,7 @@ def gestion_racha(sistema, racha, rachas_list):
                     print(f"  {k} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
 
         # ----------------------------
-        # Menú de acciones
+        # Menú
         # ----------------------------
         print("\n[P] Completar por progreso   [F] Forzar completado   [E] Fallar   [D] Eliminar   [Enter] Volver")
         accion = input("> ").strip().lower()

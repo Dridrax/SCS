@@ -35,16 +35,7 @@
             "tipo": "",
             "descripcion": "",
             "efectos": {},
-            "cantidad": 63
-        },
-        "ff2de24b-59f2-40e8-b103-498279d25c21": {
-            "id": "ff2de24b-59f2-40e8-b103-498279d25c21",
-            "nombre": "Gema Brillante",
-            "rareza": "comun",
-            "tipo": "reliquia",
-            "descripcion": "",
-            "efectos": {},
-            "cantidad": 2
+            "cantidad": 69
         }
     },
     "configuracion": {
@@ -92,75 +83,5 @@
         "platino": 10
     },
     "misiones_completadas": {},
-    "misiones": {
-        "activas": {},
-        "historial": {
-            "mision_gemas": {
-                "id": "mision_gemas",
-                "nombre": "Recolecta gemas magicas",
-                "descripcion": "Recolecta 5 gemas en el bosque encantado",
-                "objetivos": [
-                    {
-                        "id": "33b7c24e-b348-4dc1-ba3a-3cedb10d4db2",
-                        "descripcion": "Recolectar 5 gemas",
-                        "cantidad_base": 5,
-                        "progreso": 0,
-                        "interno": false,
-                        "recompensas": {
-                            "objetos": [
-                                {
-                                    "nombre": "Gema Brillante",
-                                    "cantidad": 1,
-                                    "tipo": "reliquia"
-                                }
-                            ],
-                            "dinero": {
-                                "oro": {
-                                    "valor_base": 100
-                                }
-                            }
-                        },
-                        "penalizaciones": {
-                            "objetos": []
-                        },
-                        "estado_objetivo": "entregado"
-                    }
-                ],
-                "estado": "completada"
-            },
-            "mision_fallo": {
-                "id": "mision_fallo",
-                "nombre": "fallar mision",
-                "descripcion": "tiene que restarse dinero y la gema brillante",
-                "objetivos": [
-                    {
-                        "id": "986e5ed1-6ca0-4ae0-b268-3edeb32cc110",
-                        "descripcion": "nao",
-                        "cantidad_base": 1,
-                        "progreso": 0,
-                        "interno": false,
-                        "recompensas": {
-                            "objetos": []
-                        },
-                        "penalizaciones": {
-                            "objetos": [
-                                {
-                                    "nombre": "Gema Brillante",
-                                    "cantidad": 1,
-                                    "tipo": "reliquia"
-                                }
-                            ],
-                            "dinero": {
-                                "oro": {
-                                    "valor_base": -50
-                                }
-                            }
-                        },
-                        "estado_objetivo": "fallado"
-                    }
-                ],
-                "estado": "fallada"
-            }
-        }
-    }
+    "misiones": {}
 }

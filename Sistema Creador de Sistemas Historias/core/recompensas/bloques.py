@@ -3,7 +3,7 @@
 from core.estado_global import estado
 from core.utils.funciones_utiles import pedir_int, safe_int_input, safe_float_input
 from core.recompensas.tipos import obtener_tipos_recompensa_validos, cargar_recursos_desde_sistema, RECURSOS_REGISTRADOS
-
+from core.utils.selector_recursos_existentes import mostrar_recursos_existentes
 
 def obtener_bloque(objeto, clave="recompensas"):
     """
@@ -26,6 +26,8 @@ def agregar_recompensa(bloque, tipo, datos):
     """
     if tipo == "objetos":
         bloque.setdefault("objetos", []).append(datos)
+
+        
     elif tipo in {"stats", "dinero"}:
         k = datos.get("nombre")
         v = datos.get("valor", 0)
@@ -155,13 +157,15 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
             # OBJETOS (lista)
             # ─────────────────────────────
             if tipo == "objetos":
-            
+                
+                mostrar_recursos_existentes(estado.sistema_actual, "objetos")
+
                 nombre = input("Nombre del objeto: ").strip()
                 base = safe_int_input("Cantidad base: ", default=0)
                 factor = safe_float_input("Factor de escalado (1.0 = fijo): ", default=1.0)
 
                 # Calcular cantidad final
-                cantidad_total = max(int(base * factor), 1)
+                cantidad_total = int(base * factor)
 
                 item = {
                     "nombre": nombre,
@@ -175,7 +179,12 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
 
                 bloque.setdefault("objetos", []).append(item)
 
+                
+
+
             else:
+                mostrar_recursos_existentes(estado.sistema_actual, tipo)
+
                 base = safe_int_input("Valor base: ", default=0)
                 factor = safe_float_input("Factor de escalado (1.0 = fijo): ", default=1.0)
                 tope = safe_int_input("Tope máximo (0 = sin tope): ", default=0)
@@ -210,6 +219,8 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
                         "factor_escalado": factor,
                         "tope": tope
                     }
+
+
 
             estado.cambios_no_guardados = True
             print("✅ Agregado correctamente.")
@@ -377,6 +388,7 @@ def menu_editar_bloque(objeto, clave):
         if opcion == 1:
 
             if tipo == "objetos":
+                mostrar_recursos_existentes(estado.sistema_actual, "objetos")
                 base = pedir_int("Cantidad: ", default=1)
                 factor = 1.0  # En este menú no hay escalado, pero lo dejamos por consistencia
             
@@ -395,7 +407,7 @@ def menu_editar_bloque(objeto, clave):
                 if tipo in RECURSOS_REGISTRADOS:
                     config = RECURSOS_REGISTRADOS[tipo]
                     modo = config.get("modo", "contenedor")
-
+                    mostrar_recursos_existentes(estado.sistema_actual, tipo)
                     valor = pedir_int("Valor: ", default=0)
 
                     if modo == "simple":

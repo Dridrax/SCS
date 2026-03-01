@@ -9,15 +9,10 @@ from core.recompensas.tipos import (
     es_tipo_recompensa_valido
 )
 
-from plugins.inventario.inventario import agregar_item
+from plugins.inventario.inventario import agregar_item, eliminar_item
 from plugins.niveles.helpers_niveles import revisar_y_subir_nivel_destino
 
 
-# ⚠️ Import opcional (solo si el plugin está activo realmente)
-try:
-    from plugins.inventario.inventario import agregar_item
-except ImportError:
-    agregar_item = None
 
 
 def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
@@ -197,11 +192,15 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
             def calcular_total(datos: dict) -> int:
                 cantidad = (
                     datos.get("cantidad_base")
-                    or datos.get("cantidad")
-                    or 1
+                    if datos.get("cantidad_base") is not None
+                    else datos.get("cantidad")
                 )
+
+                if cantidad is None:
+                    cantidad = 1
+
                 factor = datos.get("factor_escalado", 1.0)
-                return max(1, int(cantidad * factor))
+                return int(cantidad * factor)
 
             # ─────────────────────────
             # FORMATO NUEVO (DICT)
@@ -222,7 +221,22 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
                         "cantidad": total
                     }
 
-                    agregar_item(sistema, item_data)
+                    if total > 0:
+                        agregar_item(sistema, item_data)
+
+                    elif total < 0:
+                        # Buscar objeto existente por firma
+                        inventario = sistema.get("inventario", {})
+                        for obj_id, obj in inventario.items():
+                            if (
+                                obj.get("nombre") == item_data["nombre"]
+                                and obj.get("tipo") == item_data["tipo"]
+                                and obj.get("rareza") == item_data["rareza"]
+                                and obj.get("descripcion") == item_data["descripcion"]
+                                and obj.get("efectos") == item_data["efectos"]
+                            ):
+                                eliminar_item(sistema, obj_id, cantidad=abs(total))
+                                break
 
                     resultado["aplicadas"][tipo][nombre_objeto] = {
                         "cantidad": total,
@@ -252,7 +266,22 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
                         "cantidad": total
                     }
 
-                    agregar_item(sistema, item_data)
+                    if total > 0:
+                        agregar_item(sistema, item_data)
+                    
+                    elif total < 0:
+                        # Buscar objeto existente por firma
+                        inventario = sistema.get("inventario", {})
+                        for obj_id, obj in inventario.items():
+                            if (
+                                obj.get("nombre") == item_data["nombre"]
+                                and obj.get("tipo") == item_data["tipo"]
+                                and obj.get("rareza") == item_data["rareza"]
+                                and obj.get("descripcion") == item_data["descripcion"]
+                                and obj.get("efectos") == item_data["efectos"]
+                            ):
+                                eliminar_item(sistema, obj_id, cantidad=abs(total))
+                                break
 
                     resultado["aplicadas"][tipo][nombre_objeto] = {
                         "cantidad": total,
