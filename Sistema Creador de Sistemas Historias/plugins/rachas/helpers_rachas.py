@@ -8,11 +8,9 @@ from core.recompensas.ui_preparacion import preparar_recompensa_para_aplicar
 from core.utils.funciones_utiles import safe_float_input, safe_int_input, sync_plugin_cache
 from core.recompensas.bloques import menu_editar_bloque_interactivo
 
-
 # --------------------------------------------------
 # Inicialización y cache
 # --------------------------------------------------
-
 def inicializar_rachas(sistema):
     """
     Asegura que la estructura de rachas exista y sincroniza cache.
@@ -20,11 +18,9 @@ def inicializar_rachas(sistema):
     sistema.setdefault("rachas", {}).setdefault("activas", {})
     sync_plugin_cache(sistema, "rachas", ["activas", "historial"])
 
-
 # --------------------------------------------------
 # Crear racha
 # --------------------------------------------------
-
 def crear_racha(
     sistema,
     *,
@@ -109,12 +105,9 @@ def crear_racha(
 
     return True
 
-
-
 # --------------------------------------------------
 # Modificar racha
 # --------------------------------------------------
-
 """def menu_editar_bloque_racha(racha, clave):
     
     Permite usar menu_editar_bloque de misiones con rachas.
@@ -124,7 +117,6 @@ def crear_racha(
     menu_editar_bloque(temp, clave)
     # Guardamos los cambios de vuelta en la racha
     racha[clave] = temp[clave]"""
-
 
 def modificar_racha(sistema, racha_id):
     """
@@ -224,12 +216,9 @@ def modificar_racha(sistema, racha_id):
     print("✅ Racha modificada correctamente.")
     return True
 
-
-
 # --------------------------------------------------
 # PROCESAR RACHA (OPCIÓN A - BASE FIJA)
 # --------------------------------------------------
-
 def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
     inicializar_rachas(sistema)
 
@@ -366,12 +355,9 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
 
     return entregado
 
-
-
 # --------------------------------------------------
 # COMPLETAR RACHA
 # --------------------------------------------------
-
 def completar_racha(sistema, racha_id, forzar=False):
     inicializar_rachas(sistema)
 
@@ -419,11 +405,9 @@ def completar_racha(sistema, racha_id, forzar=False):
 
     return None
 
-
 # --------------------------------------------------
 # FALLAR RACHA
 # --------------------------------------------------
-
 def fallar_racha(sistema, racha_id):
     """
     Falla una racha.
@@ -446,7 +430,6 @@ def fallar_racha(sistema, racha_id):
 # --------------------------------------------------
 # Eliminar racha
 # --------------------------------------------------
-
 def eliminar_racha(sistema, racha_id):
     inicializar_rachas(sistema)
     activas = sistema["rachas"]["activas"]
@@ -470,7 +453,6 @@ def eliminar_racha(sistema, racha_id):
 # --------------------------------------------------
 # Gestion racha
 # --------------------------------------------------
-
 def gestion_racha(sistema, racha, rachas_list):
     """
     Menu interno para administrar una racha:
@@ -650,11 +632,9 @@ def gestion_racha(sistema, racha, rachas_list):
         else:
             break
 
-
 # --------------------------------------------------
 # Seleccionar racha
 # --------------------------------------------------
-
 def seleccionar_racha(sistema, accion="modificar"):
     """
     Permite seleccionar una racha por número o nombre.

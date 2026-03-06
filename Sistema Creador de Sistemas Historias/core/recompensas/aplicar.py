@@ -214,8 +214,8 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
 
                     item_data = {
                         "nombre": nombre_objeto,
-                        "rareza": datos.get("rareza", "comun"),
-                        "tipo": datos.get("tipo", "general"),
+                        "rareza": datos.get("rareza", ""),
+                        "tipo": datos.get("tipo", ""),
                         "descripcion": datos.get("descripcion", ""),
                         "efectos": datos.get("efectos", {}),
                         "cantidad": total

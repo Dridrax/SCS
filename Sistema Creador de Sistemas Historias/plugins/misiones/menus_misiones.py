@@ -355,7 +355,25 @@ def gestion_mision(sistema, mision, misiones_list):
                         print(f"  - {tipo} | {nombre}: {val_disp}{destino}")
                 elif isinstance(items, list):
                     for idx, item in enumerate(items):
-                        print(f"  - {tipo} [{idx}]: {item}")
+                    
+                        if tipo == "objetos" and isinstance(item, dict):
+                            nombre = item.get("nombre", "objeto")
+                            cantidad = item.get("cantidad", item.get("cantidad_base", 0))
+                            tipo_obj = item.get("tipo", "")
+                            rareza = item.get("rareza", "")
+                
+                            extra = []
+                            if tipo_obj:
+                                extra.append(f"tipo: {tipo_obj}")
+                            if rareza:
+                                extra.append(f"rareza: {rareza}")
+                
+                            extra_txt = f" ({', '.join(extra)})" if extra else ""
+                
+                            print(f"  - {nombre}: {cantidad}{extra_txt}")
+                
+                        else:
+                            print(f"  - {tipo} [{idx}]: {item}")
                 else:
                     print(f"  - {tipo}: {items}")
 

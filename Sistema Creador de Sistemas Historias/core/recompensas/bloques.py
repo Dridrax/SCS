@@ -349,16 +349,31 @@ def menu_editar_bloque(objeto, clave):
         # MOSTRAR ACTUAL
         # ─────────────
         if bloque:
-            for tipo, items in bloque.items():
+            for tipo, contenido in bloque.items():
                 print(f" {tipo}:")
-                if isinstance(items, dict):
-                    for nombre, valor in items.items():
+
+                # ───── Diccionarios (ej: stats, dinero, etc.)
+                if isinstance(contenido, dict):
+                    for nombre, valor in contenido.items():
                         print(f"   {nombre}: {valor}")
-                elif isinstance(items, list):
-                    for idx, obj_item in enumerate(items):
-                        print(f"   [{idx}] {obj_item}")
+
+                # ───── Listas (ej: objetos)
+                elif isinstance(contenido, list):
+                
+                    if tipo == "objetos":
+                        for idx, obj in enumerate(contenido):
+                            nombre = obj.get("nombre", "???")
+                            cantidad = obj.get("cantidad", 0)
+
+                            print(f"   [{idx}] {nombre} | Cantidad: {cantidad}")
+                    else:
+                        for idx, item in enumerate(contenido):
+                            print(f"   [{idx}] {item}")
+
+                # ───── Otros tipos simples
                 else:
-                    print(f"  {items}")
+                    print(f"   {contenido}")
+
         else:
             print(" (vacío)")
 
@@ -388,19 +403,22 @@ def menu_editar_bloque(objeto, clave):
         if opcion == 1:
 
             if tipo == "objetos":
+            
                 mostrar_recursos_existentes(estado.sistema_actual, "objetos")
+
+                nombre = input("Nombre del objeto: ").strip()
                 base = pedir_int("Cantidad: ", default=1)
-                factor = 1.0  # En este menú no hay escalado, pero lo dejamos por consistencia
-            
-                cantidad_total = max(int(base * factor), 1)
-            
-                datos = {
-                    "nombre": input("Nombre del objeto: ").strip(),
-                    "cantidad": cantidad_total,
-                    "tipo": input("Tipo de objeto (opcional): ").strip()
+
+                item = {
+                    "nombre": nombre,
+                    "cantidad": base,
+                    "tipo": input("Tipo del objeto (opcional): ").strip(),
+                    "rareza": input("Rareza (opcional): ").strip(),
+                    "descripcion": "",
+                    "efectos": {}
                 }
-            
-                bloque.setdefault("objetos", []).append(datos)
+
+                bloque.setdefault("objetos", []).append(item)
 
             else:
                 # 🔥 Detectar si es recurso dinámico
@@ -415,7 +433,6 @@ def menu_editar_bloque(objeto, clave):
                         bloque[tipo] = {
                             "valor_base": valor
                         }
-                        #bloque.setdefault(tipo, {})[tipo] = {"valor_base": valor}
 
                     else:
                         # Contenedor (comportamiento antiguo)
@@ -435,7 +452,6 @@ def menu_editar_bloque(objeto, clave):
 
             estado.cambios_no_guardados = True
             print("✅ Agregado correctamente.")
-
         # ─────────────────────────────
         # EDITAR
         # ─────────────────────────────
@@ -447,18 +463,20 @@ def menu_editar_bloque(objeto, clave):
                     print("❌ No hay objetos para editar.")
                     continue
 
-                for idx, obj_item in enumerate(bloque["objetos"]):
-                    print(f"[{idx}] {obj_item}")
-
-
-                index = safe_int_input("Index del objeto a editar (Enter para cancelar): ", default=None)
-                if index is None:
-                    print("❌ Operación cancelada.")
+                objetos = bloque.get("objetos", {})
+                if not objetos:
+                    print("❌ No hay objetos para editar.")
                     continue
-                if index < 0 or index >= len(bloque["objetos"]):
-                    print("❌ Index inválido.")
+                
+                for nombre_objeto, obj_item in objetos.items():
+                    print(f"{nombre_objeto}: {obj_item}")
+
+                nombre_seleccionado = input("Nombre del objeto a editar: ").strip()
+                if nombre_seleccionado not in objetos:
+                    print("❌ Objeto no encontrado.")
                     continue
-                obj_item = bloque["objetos"][index]
+                
+                obj_item = objetos[nombre_seleccionado]
 
 
 
@@ -466,9 +484,11 @@ def menu_editar_bloque(objeto, clave):
                     f"Nombre ({obj_item.get('nombre','')}): "
                 ).strip() or obj_item.get("nombre", "")
 
-                obj_item["cantidad"] = pedir_int(
-                    f"Cantidad ({obj_item.get('cantidad',1)}): ",
-                    default=obj_item.get("cantidad", 1)
+                cantidad_actual = obj_item.get("cantidad_base", obj_item.get("cantidad", 1))
+
+                obj_item["cantidad_base"] = pedir_int(
+                    f"Cantidad base ({cantidad_actual}): ",
+                    default=cantidad_actual
                 )
 
                 obj_item["tipo"] = input(
@@ -518,15 +538,21 @@ def menu_editar_bloque(objeto, clave):
                 for idx, obj_item in enumerate(bloque["objetos"]):
                     print(f"[{idx}] {obj_item}")
 
-                index = safe_int_input("Index del objeto a eliminar (Enter para cancelar): ", default=None)
-                if index is None:
-                    print("❌ Operación cancelada.")
+                objetos = bloque.get("objetos", {})
+                if not objetos:
+                    print("❌ No hay objetos para eliminar.")
                     continue
-                if index < 0 or index >= len(bloque["objetos"]):
-                    print("❌ Index inválido.")
+                
+                for nombre_objeto, obj_item in objetos.items():
+                    print(f"{nombre_objeto}: {obj_item}")
+                
+                nombre_seleccionado = input("Nombre del objeto a eliminar: ").strip()
+                if nombre_seleccionado not in objetos:
+                    print("❌ Objeto no encontrado.")
                     continue
-                bloque["objetos"].pop(index)
-                if not bloque["objetos"]:
+                
+                del objetos[nombre_seleccionado]
+                if not objetos:
                     del bloque["objetos"]
 
             else:

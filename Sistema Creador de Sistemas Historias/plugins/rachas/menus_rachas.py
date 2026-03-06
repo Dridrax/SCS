@@ -25,7 +25,6 @@ def menu_editar_recompensas_penalizaciones(racha_dict):
 # --------------------------------------------------
 # Menú principal de administración de rachas
 # --------------------------------------------------
-
 def menu_administrar_rachas(sistema=None):
     if sistema is None:
         sistema = estado.sistema_actual
@@ -58,11 +57,9 @@ def menu_administrar_rachas(sistema=None):
             guardar_sistema()
             break
 
-
 # --------------------------------------------------
 # Menú crear racha
 # --------------------------------------------------
-
 def menu_crear_racha(sistema):
     print("\n=== CREAR NUEVA RACHA ===")
     id = input("ID de la racha (único): ").strip()
@@ -122,12 +119,9 @@ def menu_crear_racha(sistema):
     else:
         print("❌ Ya existe una racha con ese ID.")
 
-
-
 # --------------------------------------------------
 # Mostrar y gestionar rachas activas
 # --------------------------------------------------
-
 def mostrar_rachas(sistema=None):
     """
     Muestra todas las rachas activas y permite gestionarlas
