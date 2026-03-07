@@ -3,7 +3,8 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.utils.funciones_utiles import pedir_int
-from .tipos import RECURSOS_REGISTRADOS, registrar_recurso
+from .tipos import (TIPOS_RECOMPENSA, RECURSOS_REGISTRADOS, registrar_recurso, 
+                    esta_tipo_base_activo, activar_tipo_base, desactivar_tipo_base)
 
 # ─────────────────────────────────────────────
 # VALIDACIÓN DE SOPORTE DE RECOMPENSAS
@@ -262,6 +263,23 @@ def seleccionar_modo(modo_actual=None):
 # MENÚ CONFIGURAR RECURSOS
 # ─────────────────────────────
 def menu_configurar_recursos():
+    while True:
+        print("\n=== CONFIGURACIÓN DE RECURSOS ===")
+        print("1. Modificar tipos base de recompensa")
+        print("2. Configurar recursos dinámicos")
+        print("Volver: Enter")
+
+        opcion = pedir_int("\nSelecciona opción:")
+
+        if opcion == 1:
+            menu_modificar_recursos_base()
+        elif opcion == 2:
+            menu_configurar_recurso_dinamicos()
+        else:
+            break
+
+
+def menu_configurar_recurso_dinamicos():
     sistema = estado.sistema_actual
 
     if not sistema:
@@ -409,6 +427,52 @@ def menu_configurar_recursos():
                 print("Recurso eliminado.")
 
         elif opcion == "0":
+            guardar_sistema(print_msg=False)
+            break
+        else:
+            print("Opción inválida.")
+
+# ─────────────────────────────
+# MENÚ MODIFICAR TIPOS BASE
+# ─────────────────────────────
+def menu_modificar_recursos_base():
+    sistema = estado.sistema_actual
+    if not sistema:
+        print("❌ No hay sistema cargado.")
+        return
+
+    while True:
+        print("\n=== MODIFICAR TIPOS BASE DE RECOMPENSA ===")
+        for i, (tipo, plugin) in enumerate(TIPOS_RECOMPENSA.items(), start=1):
+            estado_activo = "✅ Activo" if esta_tipo_base_activo(tipo) else "❌ Desactivado"
+            plugin_str = plugin if plugin else "Sin plugin"
+            print(f"{i}. {tipo} ({estado_activo}) - Plugin: {plugin_str}")
+
+        print("\nOpciones:")
+        print("A. Activar un tipo")
+        print("D. Desactivar un tipo")
+        print("0. Volver")
+
+        opcion = input("Selecciona opción: ").strip().upper()
+
+        if opcion == "A":
+            tipo_sel = input("Nombre del tipo a activar: ").strip()
+            if tipo_sel not in TIPOS_RECOMPENSA:
+                print("❌ Tipo no válido.")
+                continue
+            activar_tipo_base(tipo_sel)
+            print(f"✅ {tipo_sel} activado.")
+
+        elif opcion == "D":
+            tipo_sel = input("Nombre del tipo a desactivar: ").strip()
+            if tipo_sel not in TIPOS_RECOMPENSA:
+                print("❌ Tipo no válido.")
+                continue
+            desactivar_tipo_base(tipo_sel)
+            print(f"❌ {tipo_sel} desactivado.")
+
+        elif opcion == "0":
+            # 🔹 Guardado automático de cambios en sistema
             guardar_sistema(print_msg=False)
             break
         else:
