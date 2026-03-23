@@ -172,5 +172,3 @@ def eliminar_item(sistema, item_id, cantidad=None):
 
     estado.cambios_no_guardados = True
     return True
-
-

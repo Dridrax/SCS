@@ -6,6 +6,7 @@ from core.recompensas.aplicar import aplicar_recompensas
 from core.recompensas.ui_preparacion import preparar_recompensa_para_aplicar
 from core.recompensas.tipos import RECURSOS_REGISTRADOS
 from core.utils.funciones_utiles import sync_plugin_cache
+from core.recompensas.validacion import manejar_conflictos_objetivo
 from plugins.misiones.modelos import crear_modelo_mision
 
 # -----------------------------
@@ -69,7 +70,6 @@ def marcar_progreso_objetivo(objetivo, cantidad):
     """
     Suma progreso de forma segura y gestiona niveles escalados.
     """
-
     if cantidad <= 0:
         return False
 
@@ -78,9 +78,7 @@ def marcar_progreso_objetivo(objetivo, cantidad):
 
     objetivo["progreso"] += cantidad
 
-    cantidad_requerida = objetivo["cantidad_base"] * (
-        objetivo.get("factor_escalado", 1) ** objetivo["nivel"]
-    )
+    cantidad_requerida = int(objetivo["cantidad_base"] * (objetivo.get("factor_escalado", 1) ** objetivo["nivel"]))
 
     if objetivo["progreso"] >= cantidad_requerida:
         objetivo["progreso"] = cantidad_requerida
@@ -88,54 +86,93 @@ def marcar_progreso_objetivo(objetivo, cantidad):
 
     return False
 
-def procesar_recompensas_objetivo(sistema, objetivo):
-    """
-    Aplica las recompensas de un objetivo.
-    Soporta recompensas en dict o lista, respeta los destinos de RECURSOS_REGISTRADOS.
-    Ahora respeta correctamente la cantidad de objetos.
-    """
+def procesar_recompensas_objetivo(sistema, objetivo, mision=None):
+
     recompensas = objetivo.get("recompensas")
+
     if not recompensas:
         print(f"⚠ Objetivo '{objetivo['descripcion']}' no tiene recompensas.")
-        return
+        return "cancelado"
+
+    accion = manejar_conflictos_objetivo(objetivo)
+
+    if accion == "cancelar":
+        print(f"🔹 Entrega de recompensas de '{objetivo['descripcion']}' cancelada.")
+        return "cancelado"
+
+    if accion == "eliminar_objetivo":
+
+        if mision and objetivo in mision.get("objetivos", []):
+            mision["objetivos"].remove(objetivo)
+
+            print(f"✅ Objetivo eliminado de la misión '{mision['nombre']}'.")
+            return "objetivo_eliminado"
+
+        return "objetivo_eliminado"
+
+    if accion == "activar_plugins":
+        return procesar_recompensas_objetivo(sistema, objetivo, mision)
+
+    from core.recompensas.validacion import filtrar_recompensas_validas_entidad
+
+    objetivo_filtrado = filtrar_recompensas_validas_entidad(objetivo)
 
     recompensas_preparadas = {}
 
-    for tipo, items in recompensas.items():
-        # Inicializar según tipo
-        recompensas_preparadas[tipo] = {}
+    for tipo, items in objetivo_filtrado.get("recompensas", {}).items():
 
         if isinstance(items, dict):
-            # Destino principal según tipo registrado
+
+            recompensas_preparadas[tipo] = {}
+
             destino_principal = RECURSOS_REGISTRADOS.get(tipo, {}).get("destino")
+
             for nombre, valor in items.items():
+
                 if isinstance(valor, dict):
-                    val_disp = valor.get("valor_base") or valor.get("valor") or valor.get("cantidad") or 0
+                    val_disp = (
+                        valor.get("valor_base")
+                        or valor.get("valor")
+                        or valor.get("cantidad")
+                        or 0
+                    )
                 else:
                     val_disp = valor
+
                 if destino_principal:
-                    recompensas_preparadas[tipo][nombre] = {"valor": val_disp, "destino": destino_principal}
+
+                    recompensas_preparadas[tipo][nombre] = {
+                        "valor": val_disp,
+                        "destino": destino_principal
+                    }
+
                 else:
+
                     recompensas_preparadas[tipo][nombre] = val_disp
 
         elif isinstance(items, list):
-            # Listas de objetos
+
             lista_objetos = []
+
             for item in items:
-                obj_copy = item.copy()  # evitar mutar el original
-                if "cantidad" not in obj_copy:
-                    obj_copy["cantidad"] = 1  # fallback
+                obj_copy = item.copy()
+                obj_copy.setdefault("cantidad", 1)
                 lista_objetos.append(obj_copy)
+
             recompensas_preparadas[tipo] = lista_objetos
 
         else:
-            # Valor simple
+
             recompensas_preparadas[tipo] = items
 
-    # Aplicar recompensas usando las funciones existentes
-    aplicar_recompensas(sistema, preparar_recompensa_para_aplicar(sistema, recompensas_preparadas))
-    print(f"\nRecompensas del objetivo '{objetivo['descripcion']}' aplicadas correctamente.")
+    aplicar_recompensas(
+        sistema,
+        preparar_recompensa_para_aplicar(sistema, recompensas_preparadas)
+    )
 
+    print(f"\n✅ Recompensas del objetivo '{objetivo['descripcion']}' aplicadas correctamente.")
+
+    return "aplicado"
 
 def completar_mision(sistema, mision_id, forzar=False):
     """
@@ -161,80 +198,130 @@ def completar_mision(sistema, mision_id, forzar=False):
         print("⚠ Hay objetivos incompletos:")
         for o in incompletos:
             print(f"  - {o['descripcion']} | {o.get('progreso',0)}/{o.get('cantidad_base',1)}")
+
         confirmar = input("¿Quieres forzar la misión y decidir sobre los objetivos incompletos? (s/n): ").lower()
         if confirmar != "s":
             print("🔹 La misión no se completó.")
             return False
+
         forzar = True
 
     # 3️⃣ Entrega objetivos pendientes de manera individual
-    for obj in objetivos:
+    for obj in list(objetivos):  # ⚠ iterar copia para evitar errores si se elimina
         if obj.get("estado_objetivo") in ["pendiente_entrega", "completado"]:
+
             if obj.get("progreso", 0) >= obj.get("cantidad_base", 1) or forzar:
+
                 if obj.get("estado_objetivo") != "entregado":
-                    # Preguntar al usuario si quiere entregar la recompensa
+
                     print(f"\nObjetivo: {obj['descripcion']}")
                     respuesta = input("¿Deseas entregar esta recompensa ahora? (s/n): ").lower()
+
                     if respuesta == "s":
-                        procesar_recompensas_objetivo(sistema, obj)
+
+                        resultado = procesar_recompensas_objetivo(sistema, obj, mision)
+                        print(f"[DEBUG] Procesando objetivo: {o['descripcion']}")
+
+                        if resultado == "objetivo_eliminado":
+
+                            incompletos_restantes = [
+                                obj for obj in mision["objetivos"]
+                                if obj.get("progreso", 0) < obj.get("cantidad_base", 1)
+                            ]
+
+                            continue
+
+                        if resultado == "cancelado":
+                            continue
+
                         obj["estado_objetivo"] = "entregado"
+
                         print(f"✅ Recompensas del objetivo '{obj['descripcion']}' entregadas.")
+
                     else:
-                        # Mantener en pendiente_entrega
+
                         obj["estado_objetivo"] = "pendiente_entrega"
                         print(f"🔹 Objetivo '{obj['descripcion']}' queda pendiente de entrega.")
 
     # 4️⃣ Revisar objetivos incompletos restantes
-    incompletos_restantes = [o for o in objetivos if o.get("progreso",0) < o.get("cantidad_base",1)]
+    incompletos_restantes = [
+        o for o in list(objetivos)
+        if o.get("progreso",0) < o.get("cantidad_base",1)
+    ]
+
     if incompletos_restantes:
+
         print("\n⚠ Algunos objetivos siguen incompletos al finalizar la misión:")
-        for o in incompletos_restantes:
+
+        for o in list(incompletos_restantes):
+
             print(f"  - {o['descripcion']} | {o.get('progreso',0)}/{o.get('cantidad_base',1)}")
-            respuesta = input("¿Deseas entregar la recompensa de todas formas o perderla? (s = entregar / n = perder): ").lower()
+
+            respuesta = input(
+                "¿Deseas entregar la recompensa de todas formas o perderla? (s = entregar / n = perder): "
+            ).lower()
+
             if respuesta == "s":
-                procesar_recompensas_objetivo(sistema, o)
+
+                resultado = procesar_recompensas_objetivo(sistema, o, mision)
+
+                if resultado == "objetivo_eliminado":
+                    continue
+
+                if resultado == "cancelado":
+                    continue
+
                 o["estado_objetivo"] = "entregado"
+
                 print(f"✅ Recompensas del objetivo '{o['descripcion']}' entregadas aunque incompleto.")
+
             else:
+
                 print(f"❌ Recompensas del objetivo '{o['descripcion']}' perdidas.")
 
     # 5️⃣ Marcar misión como completada y mover a historial
     sistema["misiones"]["historial"][mision_id] = {**mision, "estado": "completada"}
+
     if mision_id in sistema["misiones"]["activas"]:
         del sistema["misiones"]["activas"][mision_id]
 
     estado.cambios_no_guardados = True
+
     sync_plugin_cache(sistema, "misiones", ["activas", "historial"])
+
     guardar_sistema()
 
     print("\n🏆 Misión completada y recompensas procesadas según elección.")
-    return True
 
+    return True
 
 def fallar_mision(sistema, mision_id):
     mision = obtener_mision(sistema, mision_id)
     if not mision:
         return False
 
-    # Aplicar penalizaciones de objetivos no completados y marcar fallados
     for obj in mision["objetivos"]:
         if obj.get("progreso", 0) < obj.get("cantidad_base", 1):
             if obj.get("penalizaciones"):
-                aplicar_recompensas(sistema, preparar_recompensa_para_aplicar(sistema, obj["penalizaciones"]))
+                penal = obj["penalizaciones"]
+                if penal:
+                    from core.recompensas.aplicar import aplicar_recompensas
+                    from core.recompensas.ui_preparacion import preparar_recompensa_para_aplicar
+                    aplicar_recompensas(sistema, preparar_recompensa_para_aplicar(sistema, penal))
             obj["estado_objetivo"] = "fallado"
         else:
             obj["estado_objetivo"] = "completado"
 
-    # Guardar en historial y eliminar de activas
-    sistema["misiones"]["historial"][mision_id] = {**mision, "estado": "fallada"}
-    del sistema["misiones"]["activas"][mision_id]
+    sistema.setdefault("misiones", {}).setdefault("historial", {})[mision_id] = {**mision, "estado": "fallada"}
+    if mision_id in sistema.get("misiones", {}).get("activas", {}):
+        del sistema["misiones"]["activas"][mision_id]
 
     estado.cambios_no_guardados = True
-    sync_plugin_cache(sistema, "misiones", ["activas","historial"])
+    from core.utils.funciones_utiles import sync_plugin_cache
+    sync_plugin_cache(sistema, "misiones", ["activas", "historial"])
+    from core.guardado.archivos import guardar_sistema
     guardar_sistema()
     return True
-
-
 
 # -----------------------------
 # Mostrar resultados
@@ -251,8 +338,6 @@ def imprimir_resultados(titulo, datos):
                 print(f"    - {obj.get('nombre','Desconocido')} | Cantidad: {obj.get('cantidad',0)} | Rareza: {obj.get('rareza','?')} | Tipo: {obj.get('tipo','?')}")
         else:
             print(f"  {clave}: {valor}")
-
-
 
 """def completar_mision(sistema, mision_id, objetivos_ids=None):
     

@@ -9,11 +9,12 @@ from core.utils.funciones_utiles import pedir_int
 from core.sistemas.mostrar_sistema import mostrar_ficha
 from core.plugins.registry import PLUGINS
 
-from core.recompensas.ui_preparacion import menu_configurar_recursos
+from core.recompensas.ui_preparacion import menu_configurar_recurso_dinamicos, menu_modificar_recursos_base
 
 #plugins
 from plugins.inventario.menus_inv import (menu_agregar_item, mostrar_items,
-                                          menu_modificar_item, menu_eliminar_item)
+                                          menu_modificar_item, menu_eliminar_item,
+                                          seleccionar_item_inventario)
 
 from plugins.misiones.menus_misiones import mostrar_misiones, menu_administrar_misiones
 
@@ -324,7 +325,20 @@ def menu_modificar_items(sistema):
 
         #Eliminar Items
         elif opcion == 3:
-            menu_eliminar_item()
+            item_id = seleccionar_item_inventario(sistema)
+
+            if not item_id:
+                print("\nOperación cancelada.")
+                continue
+
+            cantidad = pedir_int("\nCantidad a eliminar:",
+                                 default=0,
+                                 minimo=0)
+            if cantidad == 0:
+                print("\nOperación cancelada.")
+                continue
+
+            menu_eliminar_item(sistema, item_id, cantidad)
 
         elif opcion == 4:
             mostrar_items()
@@ -381,7 +395,7 @@ def menu_plugins(autoguardar=True):
 
                 # Restaurar datos desde plugin_cache si existen
                 if key in estado.plugin_cache.get("plugins", {}):
-                    sistema[key] = estado.plugin_cache["plugins"][key]
+                    sistema[key] = estado.plugin_cache["plugins"][key].copy()
                 elif plugin_obj and plugin_obj.get("on_enable"):
                     plugin_obj["on_enable"](sistema)
 
@@ -509,7 +523,24 @@ def configurar_sistema(sistema):
     estado.cambios_no_guardados = True
     print("\n✅ Sistema configurado correctamente.\n")
 
-        
+# ------------------- MENU CONFIGURAR RECURSOS BASE/DINAMICOS -------------------
+
+def menu_configurar_recursos():
+    while True:
+        print("\n=== CONFIGURACIÓN DE RECURSOS ===")
+        print("1. Activar/Desactivar Recursos")
+        print("2. Configurar recursos dinámicos")
+        print("0. Volver")
+
+        opcion = pedir_int("\nSelecciona opción:")
+
+        if opcion == 1:
+            menu_modificar_recursos_base()
+        elif opcion == 2:
+            menu_configurar_recurso_dinamicos()
+        else:
+            break
+
 """MENUS.PY - Documentación y guía de uso
 
 Este archivo contiene los menús principales y submenús del programa SCS.

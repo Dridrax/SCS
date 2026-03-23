@@ -7,6 +7,11 @@ from core.recompensas.tipos import obtener_tipos_recompensa_validos
 from core.recompensas.ui_preparacion import preparar_recompensa_para_aplicar
 from core.utils.funciones_utiles import safe_float_input, safe_int_input, sync_plugin_cache
 from core.recompensas.bloques import menu_editar_bloque_interactivo
+from core.recompensas.validacion import (
+    validar_recompensas_entidad,
+    manejar_conflictos,
+    filtrar_recompensas_validas_entidad
+)
 
 # --------------------------------------------------
 # Inicialización y cache
@@ -334,6 +339,46 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
     entregado = {k: v for k, v in entregado.items() if v}
 
     if entregado:
+    
+        entidad_temp = {
+            "recompensas": entregado if clave == "recompensas" else {},
+            "penalizaciones": entregado if clave == "penalizaciones" else {}
+        }
+    
+        resultado_validacion = validar_recompensas_entidad(entidad_temp)
+    
+        if resultado_validacion["invalidas"]:
+        
+            accion = manejar_conflictos(
+                racha["nombre"], 
+                resultado_validacion, 
+                sistema.get("plugins_activos", {}),   # 🔹 agrega plugins activos
+                estado.plugin_cache,   # 🔹 agrega plugins cache
+                id_racha=racha["id"]
+                )
+    
+            if accion == "cancelar":
+                return False
+    
+            elif accion == "eliminar_entidad":
+                eliminar_racha(sistema, racha["id"])
+                return False
+    
+            elif accion == "eliminar_recompensas":
+                entidad_temp = filtrar_recompensas_validas_entidad(entidad_temp)
+                entregado = entidad_temp.get(clave, {})
+
+            elif accion == "ignorar_recompensas":
+                # no se entregan las inválidas esta vez, pero permanecen en la racha
+                entidad_temp = filtrar_recompensas_validas_entidad(entidad_temp)
+                entregado = entidad_temp.get(clave, {})
+    
+            elif accion == "activar_plugins":
+                pass
+            
+            elif accion == "seguir":
+                pass
+            
         aplicar_recompensas(
             sistema,
             preparar_recompensa_para_aplicar(sistema, entregado)

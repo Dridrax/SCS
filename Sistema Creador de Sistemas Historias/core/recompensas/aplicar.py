@@ -4,10 +4,11 @@ from core.estado_global import estado
 from core.utils.funciones_utiles import modificar_progreso
 from .tipos import cargar_recursos_desde_sistema
 from core.utils.hooks import ejecutar_hook_si_existe
-from core.recompensas.tipos import (
-    RECURSOS_REGISTRADOS,
-    es_tipo_recompensa_valido
-)
+from core.recompensas.tipos import (RECURSOS_REGISTRADOS,
+                                    es_tipo_recompensa_valido)
+from core.recompensas.validacion import (validar_recompensas_entidad,
+                                         manejar_conflictos,
+                                         filtrar_recompensas_validas_entidad)
 
 from plugins.inventario.inventario import agregar_item, eliminar_item
 from plugins.niveles.helpers_niveles import revisar_y_subir_nivel_destino
@@ -34,6 +35,26 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
     """
 
     cargar_recursos_desde_sistema(sistema)
+
+    # ─────────────────────────────
+    # VALIDAR RECOMPENSAS / PENALIZACIONES
+    # ─────────────────────────────
+    entidad_dummy = {"recompensas": recompensas, "penalizaciones": {}}  # si la entidad tiene penalizaciones, pásalas aquí
+    resultado_validacion = validar_recompensas_entidad(entidad_dummy)
+    
+    if resultado_validacion["invalidas"]:
+        accion = manejar_conflictos("Recompensas actuales", resultado_validacion)
+    
+        if accion == "cancelar":
+            return {"aplicadas": {}, "ignoradas": {}}
+        elif accion == "eliminar_recompensas":
+            entidad_dummy = filtrar_recompensas_validas_entidad(entidad_dummy)
+            recompensas = entidad_dummy["recompensas"]
+        elif accion == "eliminar_entidad":
+            # aquí si quieres eliminar toda la misión/racha/entidad en otro nivel, habría que llamarlo desde el sistema principal
+            return {"aplicadas": {}, "ignoradas": {}}
+        elif accion == "activar_plugins":
+            pass  # los plugins ya se activaron dentro del menú
 
     resultado = {
         "aplicadas": {},

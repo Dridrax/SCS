@@ -19,7 +19,6 @@ from plugins.misiones.helpers_misiones import (
 
 from plugins.misiones.modelos import crear_modelo_objetivo
 
-
 # --------------------------
 # Selección de misión
 # --------------------------
@@ -180,7 +179,6 @@ def menu_editar_objetivos(mision):
             else:
                 break
 
-
 def menu_modificar_progreso(mision):
     """
     Permite al usuario cambiar progreso de objetivos manualmente y gestionar recompensas.
@@ -212,7 +210,7 @@ def menu_modificar_progreso(mision):
         prog = obj.get("progreso", 0)  # actualizar después de cambio
 
         # Detectar objetivo completado
-        if prog >= base and estado != "entregado":
+        if prog >= base and estado_obj != "entregado":
             print(f"\n🎯 Objetivo '{obj['descripcion']}' completado!")
             while True:
                 print("¿Qué deseas hacer con este objetivo?")
@@ -220,9 +218,10 @@ def menu_modificar_progreso(mision):
                 print("2. Dejar como pendiente de entrega")
                 print("3. Modificar progreso manualmente")
                 opcion = input("Elige opción (1/2/3): ").strip()
-                
+        
                 if opcion == "1":
-                    # Entregar recompensas y marcar como entregado
+                    # Entregar recompensas con validación de plugins y tipos
+                    from plugins.misiones.helpers_misiones import procesar_recompensas_objetivo
                     procesar_recompensas_objetivo(estado.sistema_actual, obj)
                     obj["estado_objetivo"] = "entregado"
                     print("✅ Recompensas entregadas.")
@@ -234,7 +233,6 @@ def menu_modificar_progreso(mision):
                     guardar_sistema(print_msg=False)
                     break
                 elif opcion == "3":
-                    # Permite modificar progreso de nuevo, deja estado pendiente
                     obj["estado_objetivo"] = "pendiente"
                     print("✏ Puedes seguir modificando el progreso de este objetivo.")
                     break

@@ -149,3 +149,35 @@ def obtener_tipos_recompensa_validos():
 
 def es_tipo_recompensa_valido(tipo: str) -> bool:
     return tipo in obtener_tipos_recompensa_validos()
+
+
+def obtener_definicion_tipo(tipo: str) -> dict:
+    """
+    Devuelve la definición completa de un tipo de recompensa.
+    Esto evita tener lógica duplicada en validadores y aplicadores.
+    """
+
+    # 1️⃣ Tipo base
+    if tipo in TIPOS_RECOMPENSA:
+
+        return {
+            "tipo": tipo,
+            "plugin": TIPOS_RECOMPENSA.get(tipo),
+            "destino": tipo,
+            "modo": "base"
+        }
+
+    # 2️⃣ Recurso dinámico
+    if tipo in RECURSOS_REGISTRADOS:
+
+        config = RECURSOS_REGISTRADOS[tipo]
+
+        return {
+            "tipo": tipo,
+            "plugin": config.get("requiere_plugin"),
+            "destino": config.get("destino"),
+            "modo": config.get("modo", "contenedor")
+        }
+
+    # 3️⃣ Tipo desconocido
+    return None

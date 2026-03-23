@@ -129,6 +129,60 @@ def menu_modificar_item():
         if cantidad <= 0:
             print(f"\nItem '{item_sel['nombre']}' eliminado por tener cantidad 0.")
             items.remove(item_sel)
+
+
+
+# =========================
+# SELECCIONAR ITEMS DE INVENTARIO
+# =========================
+def seleccionar_item_inventario(sistema):
+    inventario = sistema.get("inventario", {})
+
+    if not inventario:
+        print("❌ No hay items.")
+        return None
+
+    items_lista = list(inventario.items())
+
+    print("\n--- ITEMS DISPONIBLES ---")
+    for i, (item_id, item) in enumerate(items_lista, 1):
+        print(f"{i}. {item['nombre']} (x{item.get('cantidad',1)})")
+
+    entrada = input("\nElige número o escribe nombre (Enter cancelar): ").strip()
+
+    if entrada == "":
+        return None
+
+    if entrada.isdigit():
+        indice = int(entrada)
+        if 1 <= indice <= len(items_lista):
+            return items_lista[indice-1][0]
+        return None
+
+    coincidencias = [
+        (iid, item)
+        for iid, item in inventario.items()
+        if entrada.lower() in item["nombre"].lower()
+    ]
+
+    if not coincidencias:
+        return None
+
+    if len(coincidencias) == 1:
+        return coincidencias[0][0]
+
+    for i,(iid,item) in enumerate(coincidencias,1):
+        print(f"{i}. {item['nombre']}")
+
+    indice = pedir_int("Elegir número (0 cancelar): ", default=0, minimo=0, maximo=len(coincidencias))
+
+    if indice == 0:
+        return None
+
+    return coincidencias[indice-1][0]
+
+
+
 # _________________________
 # MENU ELIMINAR ITEM
 # _________________________

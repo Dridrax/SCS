@@ -236,5 +236,17 @@ def cargar_sistema(nombre_archivo):
     from core.plugins.registry import inicializar_todos_los_plugins_activos
     inicializar_todos_los_plugins_activos(sistema)
 
+    # =========================
+    # 7️⃣ Registrar recursos dinámicos del sistema
+    # =========================
+    from core.recompensas.tipos import cargar_recursos_desde_sistema
+    cargar_recursos_desde_sistema(sistema)
+
+    # =========================
+    # [8] Cargar tipos_recompensa_actios (recompensas base)
+    # =========================
+    from core.recompensas.tipos import inicializar_tipos_recompensa_activos
+    inicializar_tipos_recompensa_activos()
+
     print(f"\n✅ Sistema cargado correctamente desde '{nombre_archivo}.json'.")
     return sistema

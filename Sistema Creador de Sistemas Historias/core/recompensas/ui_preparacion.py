@@ -259,28 +259,12 @@ def seleccionar_modo(modo_actual=None):
         else:
             print("Opción inválida.")
 
+
 # ─────────────────────────────
-# MENÚ CONFIGURAR RECURSOS
+# MENÚ MODIFICAR TIPOS DINAMICOS
 # ─────────────────────────────
-def menu_configurar_recursos():
-    while True:
-        print("\n=== CONFIGURACIÓN DE RECURSOS ===")
-        print("1. Modificar tipos base de recompensa")
-        print("2. Configurar recursos dinámicos")
-        print("Volver: Enter")
-
-        opcion = pedir_int("\nSelecciona opción:")
-
-        if opcion == 1:
-            menu_modificar_recursos_base()
-        elif opcion == 2:
-            menu_configurar_recurso_dinamicos()
-        else:
-            break
-
-
-def menu_configurar_recurso_dinamicos():
-    sistema = estado.sistema_actual
+def menu_configurar_recurso_dinamicos(sistema=None):
+    sistema = sistema or estado.sistema_actual 
 
     if not sistema:
         print("❌ No hay sistema cargado.")
@@ -289,7 +273,7 @@ def menu_configurar_recurso_dinamicos():
     sistema.setdefault("recursos_definidos", {})
 
     while True:
-        print("\n=== CONFIGURACIÓN DE RECURSOS ===")
+        print("\n=== CONFIGURACIÓN DE RECURSOS DINAMICOS===")
         print("1. Ver recursos")
         print("2. Crear recurso")
         print("3. Editar recurso")
@@ -435,14 +419,14 @@ def menu_configurar_recurso_dinamicos():
 # ─────────────────────────────
 # MENÚ MODIFICAR TIPOS BASE
 # ─────────────────────────────
-def menu_modificar_recursos_base():
-    sistema = estado.sistema_actual
+def menu_modificar_recursos_base(sistema=None):
+    sistema = sistema or estado.sistema_actual
     if not sistema:
         print("❌ No hay sistema cargado.")
         return
 
     while True:
-        print("\n=== MODIFICAR TIPOS BASE DE RECOMPENSA ===")
+        print("\n=== ACTIVAR/DESACTOVAR RECURSOS ===")
         for i, (tipo, plugin) in enumerate(TIPOS_RECOMPENSA.items(), start=1):
             estado_activo = "✅ Activo" if esta_tipo_base_activo(tipo) else "❌ Desactivado"
             plugin_str = plugin if plugin else "Sin plugin"

@@ -80,16 +80,20 @@ def mostrar_recursos_existentes(sistema: dict, tipo: str):
     # ─────────────
     # RESTO DE TIPOS
     # ─────────────
-    for i, (clave, info) in enumerate(existentes.items(), 1):
-
-        if isinstance(info, dict):
-            valor = info.get("valor_base",
-                     info.get("cantidad",
-                     info.get("valor", "")))
-            print(f"{i}. {clave} ({valor})")
-        else:
-            print(f"{i}. {clave}")
-            
+    if isinstance(existentes, dict):
+        for i, (clave, info) in enumerate(existentes.items(), 1):
+            if isinstance(info, dict):
+                valor = info.get("valor_base",
+                         info.get("cantidad",
+                         info.get("valor", "")))
+                print(f"{i}. {clave} ({valor})")
+            else:
+                print(f"{i}. {clave}")
+    elif isinstance(existentes, int):
+        # Caso xp_niveles u otros enteros
+        print(f"Cantidad: {existentes}")
+    else:
+        print(existentes)
 
 # ─────────────────────────────
 # SELECTOR INTERACTIVO

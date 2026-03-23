@@ -1,6 +1,10 @@
 from core.estado_global import estado
 from core.utils.funciones_utiles import pedir_int, pedir_si_no
 from core.guardado.archivos import guardar_sistema
+from .sistema_temporal import (
+    crear_sistema_temporal_config,
+    configurar_tipos_base_interactivo
+)
 
 
 
@@ -32,7 +36,34 @@ def crear_nuevo_sistema(plugins_activos=None):
     # 5️⃣ Restauramos el sistema real
     estado.sistema_actual = sistema_anterior
 
+    
 
+    # --- SELECCIÓN DE RECURSOS ---
+    print("\n=== SELECCIÓN DE RECURSOS ===")
+
+    # 1️⃣ Preguntar recursos base
+    tipos_recompensa = configurar_tipos_base_interactivo()
+
+    # 2️⃣ Crear sistema temporal para recursos dinámicos
+    sistema_temp = crear_sistema_temporal_config(plugins_activos)
+    sistema_temp["tipos_recompensa_activos"] = tipos_recompensa
+
+    # 3️⃣ Crear recursos personalizados si el usuario quiere
+    from core.recompensas.ui_preparacion import menu_configurar_recurso_dinamicos
+
+    if pedir_si_no("\n¿Quieres crear recursos personalizados? (s/n): "):
+
+        sistema_anterior = estado.sistema_actual
+        estado.sistema_actual = sistema_temp
+
+        menu_configurar_recurso_dinamicos()
+
+        estado.sistema_actual = sistema_anterior
+
+    # Guardamos los recursos creados
+    recursos_dinamicos = sistema_temp.get("recursos_definidos", {})
+
+    
 
 
     print("\n=== CREAR NUEVO SISTEMA / PERSONAJE ===\n")
@@ -92,8 +123,6 @@ def crear_nuevo_sistema(plugins_activos=None):
                 "factor_escalado": factor
             }
 
-    
-
     # --- HISTORIA ---
     historia = {}
 
@@ -116,8 +145,52 @@ def crear_nuevo_sistema(plugins_activos=None):
         historia["personajes"] = input("Personajes: ")
         historia["parejas"] = input("Parejas: ")
 
-        
-        """======================== SCS - SISTEMA DE STATS ========================
+    # --- SISTEMA FINAL ---
+    sistema = {
+        "personaje": {
+            "nombre": personaje_nombre,
+            "edad": edad,
+        },
+        "nombre_sistema": nombre_sistema,
+
+        "stats": stats,
+        "progress_stats": progress_stats,
+
+        "historia": historia,
+
+        "plugins_activos": plugins_activos or {},
+
+        # 🔹 NUEVO
+        "tipos_recompensa_activos": tipos_recompensa,
+
+        # 🔹 NUEVO
+        "recursos_definidos": recursos_dinamicos
+    }
+
+    # Si el plugin inventario está activo, inicializamos el inventario como diccionario vacío
+    if sistema["plugins_activos"].get("inventario"):
+        sistema["inventario"] = {}
+
+    estado.sistema_actual = sistema
+
+    # Inicializar plugin_cache para este sistema
+    estado.plugin_cache = {
+        "plugins": {},
+        "stats": sistema.get("stats", {}),
+        "progress_stats": sistema.get("progress_stats", {})
+    }
+
+    
+
+    estado.cambios_no_guardados = True
+
+    nombre_mostrar = nombre_sistema if nombre_sistema else "Sin nombre"
+    print(f"\n✅ Sistema '{nombre_mostrar}' creado para '{personaje_nombre}'.\n")
+
+    return sistema
+
+
+"""======================== SCS - SISTEMA DE STATS ========================
         
 
         ========================
@@ -210,39 +283,3 @@ def crear_nuevo_sistema(plugins_activos=None):
 
         Esto mantiene SCS limpio, mantenible y escalable.
         """
-
-
-    # --- SISTEMA FINAL ---
-    sistema = {
-        "personaje": {
-            "nombre": personaje_nombre,
-            "edad": edad,
-        },
-        "nombre_sistema": nombre_sistema,
-        "stats": stats,
-        "progress_stats": progress_stats,
-        "historia": historia,
-        "plugins_activos": plugins_activos or {},
-    }
-
-    # Si el plugin inventario está activo, inicializamos el inventario como diccionario vacío
-    if sistema["plugins_activos"].get("inventario"):
-        sistema["inventario"] = {}
-
-    estado.sistema_actual = sistema
-
-    # Inicializar plugin_cache para este sistema
-    estado.plugin_cache = {
-        "plugins": {},
-        "stats": sistema.get("stats", {}),
-        "progress_stats": sistema.get("progress_stats", {})
-    }
-
-    
-
-    estado.cambios_no_guardados = True
-
-    nombre_mostrar = nombre_sistema if nombre_sistema else "Sin nombre"
-    print(f"\n✅ Sistema '{nombre_mostrar}' creado para '{personaje_nombre}'.\n")
-
-    return sistema
