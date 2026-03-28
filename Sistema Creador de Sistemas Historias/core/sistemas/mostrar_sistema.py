@@ -1,12 +1,31 @@
 from core.estado_global import estado
 from core.stats.stats import mostrar_stats, mostrar_progress_stats_bar
 
-def mostrar_ficha(sistema):
+def que_ficha_queres(sistema):
+        
+    if not sistema:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    opcion = input("\n¿Mostrar Ficha [S]imple o [C]ompleta?: ").lower()
+
+    if opcion == "s":
+        mostrar_ficha_simple(sistema)
+    elif opcion == "c":
+        mostrar_ficha_completo(sistema)
+    else:
+        print("n❌ Opcion no valida.")
+
+
+def mostrar_ficha_simple(sistema):
     """
-    Muestra la ficha completa de un sistema.
+    Muestra la ficha simple de un sistema.
     Incluye:
-    - Personaje
-    - Nombre del sistema
+    - Nombre del Personaje y Nombre del sistema
+    - Nivel (Si esta activado Plugin: Niveles)
+    - Stats simple
+    - Stats Progress
+    - Puntos de Stats
     - Historia
     """
 
@@ -20,38 +39,67 @@ def mostrar_ficha(sistema):
     personaje = sistema.get("personaje", {})
     nombre_personaje = personaje.get("nombre", "Sin nombre")
     nombre_sistema = sistema.get("nombre_sistema", "Sin nombre")
+    puntos_stats = sistema.get("puntos_stats")
 
-    print(f"Personaje: {nombre_personaje}")
-    print(f"Sistema: {nombre_sistema}")
+    print(f"    > Personaje: {nombre_personaje} | Sistema: {nombre_sistema}")
 
-    """# --- STATS SIMPLES ---
+    # --- STATS SIMPLES ---
     mostrar_stats(sistema)  # muestra stats simples y de progreso juntos
 
     # --- PROGRESS STATS (opcional si quieres usar función modular) ---
     # mostrar_progress_stats(sistema.get("progress_stats", {}))
-    mostrar_progress_stats_bar(sistema.get("progress_stats", {}))"""
+    mostrar_progress_stats_bar(sistema.get("progress_stats", {}))
 
-
+    print(f"\nPuntos Stats: {puntos_stats}")
+    
     # --- HISTORIA ---
     historia = sistema.get("historia", {})
     if historia:
-        print("\n--- TIPO DE HISTORIA ---")
+        print("\n-- TIPO DE HISTORIA --\n")
         tipo = historia.get("tipo")
         if tipo == "original":  # original
-            print(f"Tipo: Original")
-            print(f"Sinopsis: {historia.get('sinopsis', 'Sin sinopsis')}")
-            print(f"Personajes principales: {historia.get('personajes_principales', 'N/A')}")
-            print(f"Parejas: {historia.get('parejas', 'N/A')}")
+            print(f"    > Tipo: Original")
+            print(f"    > Protagonista: {historia.get('protagonista', 'N/A')}")
+            print(f"    > Personajes principales: {historia.get('personajes_principales', 'N/A')}")
+            print(f"    > Parejas: {historia.get('parejas', 'N/A')}")
+            print(f"\n    > Sinopsis: {historia.get('sinopsis', 'N/A')}")
+
         elif tipo == "fanfiction":  # fanfiction
-            print(f"Tipo: Fanfiction")
-            print(f"Fandom: {historia.get('fandom', 'N/A')}")
-            print(f"Sinopsis: {historia.get('sinopsis', 'Sin sinopsis')}")
-            print(f"Personajes: {historia.get('personajes', 'N/A')}")
-            print(f"Parejas: {historia.get('parejas', 'N/A')}")
+            print(f"    > Tipo: Fanfiction")
+            print(f"    > Fandom: {historia.get('fandom', 'N/A')}")
+            print(f"    > Protagonista: {historia.get('protagonista', 'N/A')}")
+            print(f"    > Personajes principales: {historia.get('personajes_principales', 'N/A')}")
+            print(f"    > Personajes: {historia.get('personajes', 'N/A')}")
+            print(f"    > Parejas: {historia.get('parejas', 'N/A')}")
+            print(f"\n    > Sinopsis: {historia.get('sinopsis', 'N/A')}")
+
         else:
             print("Tipo de historia no definido")
     else:
         print("\nNo hay historia registrada para este sistema.")
+
+def mostrar_ficha_completo(sistema):
+    """
+    Muestra la ficha simple de un sistema.
+    Incluye:
+    - Nombre del Personaje y Nombre del sistema
+    - Stats simple
+    - Stats Progress
+    - Puntos de Stats
+    - Inventario (Si esta activado Plugin: Inventario)
+    - Misiones (Si esta activado Plugin: Misiones)
+    - Rachas (Si esta activado Plugin: Racha)
+    - Nivel (Si esta activado Plugin: Niveles)
+    - Historia
+    """
+    
+    if not sistema:
+        print("\n❌ No hay sistema cargado.")
+        return
+
+    mostrar_ficha_simple(sistema)
+
+    print("\n¡¡¡¡¡¡AUN EN CREACION!!!!!!!")
 
 
 """def mostrar_stats_completos(sistema):

@@ -2,12 +2,16 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.utils.funciones_utiles import pedir_int
+from core.recompensas.tipos import seleccionar_rareza
 from plugins.inventario.inventario import agregar_item, modificar_item, eliminar_item
 
 
 # _________________________
 # MENU AGREGAR ITEM
 # _________________________
+# ─────────────────────────────
+# MENU AGREGAR ITEM
+# ─────────────────────────────
 def menu_agregar_item():
     sistema = estado.sistema_actual
     if not sistema:
@@ -18,16 +22,19 @@ def menu_agregar_item():
         print("❌ El plugin inventario no está activo.")
         return
 
-    # Aseguramos que exista el inventario
     sistema.setdefault("inventario", {})
 
     print("\n=== AÑADIR ITEM ===")
     nombre = input("Nombre del item: ").strip()
-    rareza = input("Rareza: ").strip()
+
+    # Selección de rareza
+    rareza = seleccionar_rareza(default=None)
+
     tipo = input("Tipo: ").strip()
     descripcion = input("Descripción: ").strip()
     cantidad = pedir_int("Cantidad: ")
 
+    # Efectos
     efectos = {}
     if input("¿Tiene efectos? (s/n): ").lower() == "s":
         while True:
@@ -37,16 +44,18 @@ def menu_agregar_item():
             valor = pedir_int(f"Valor de {key}: ")
             efectos[key] = valor
 
-    item_id = agregar_item(sistema, {
+    # Construimos el item
+    item_data = {
         "nombre": nombre,
         "rareza": rareza,
         "tipo": tipo,
         "descripcion": descripcion,
         "cantidad": cantidad,
         "efectos": efectos
-    })
+    }
 
-    print(f"\n✅ Item '{nombre}' añadido con ID {item_id}.\n")
+    item_id = agregar_item(sistema, item_data)
+    print(f"\n✅ Item '{item_data['nombre']}' añadido con ID {item_id} (Rareza: {item_data['rareza']}).\n")
     guardar_sistema()
     estado.cambios_no_guardados = True
     
@@ -76,13 +85,11 @@ def menu_modificar_item():
         if entrada == str(len(items)+1) or entrada.lower() == "volver":
             break
 
-        # Selección por número
         item_sel = None
         if entrada.isdigit():
             idx = int(entrada) - 1
             if 0 <= idx < len(items):
                 item_sel = items[idx]
-        # Selección por nombre
         else:
             for item in items:
                 if item['nombre'].lower() == entrada.lower():
@@ -93,18 +100,17 @@ def menu_modificar_item():
             print("❌ Item no encontrado.")
             continue
 
-        # Pedir nuevos valores (enter para mantener valor actual)
         print(f"\nModificando '{item_sel['nombre']}' (enter para mantener el valor actual)")
         nombre = input(f"Nombre [{item_sel['nombre']}]: ").strip() or item_sel['nombre']
-        rareza = input(f"Rareza [{item_sel['rareza']}]: ").strip() or item_sel['rareza']
+        
+        # Selección de rareza
+        rareza = seleccionar_rareza(default=item_sel['rareza'])
+        
         tipo = input(f"Tipo [{item_sel['tipo']}]: ").strip() or item_sel['tipo']
         descripcion = input(f"Descripción [{item_sel['descripcion']}]: ").strip() or item_sel['descripcion']
-
-        # NUEVO: manejar cantidad como int y permitir eliminar si <=0
         cantidad_input = input(f"Cantidad [{item_sel['cantidad']}]: ").strip()
         cantidad = int(cantidad_input) if cantidad_input.isdigit() else item_sel['cantidad']
-
-        # Modificar efectos
+        
         efectos = item_sel.get("efectos", {}).copy()
         if input("¿Modificar efectos? (s/n): ").lower() == "s":
             efectos.clear()
@@ -114,18 +120,19 @@ def menu_modificar_item():
                     break
                 v = pedir_int("Valor del efecto: ")
                 efectos[k] = v
-
-        # Llamar a la función principal
-        modificar_item(sistema, item_sel['id'], {
+        
+        # Modificar item
+        nuevos_datos = {
             "nombre": nombre,
             "rareza": rareza,
             "tipo": tipo,
             "descripcion": descripcion,
             "cantidad": cantidad,
             "efectos": efectos
-        })
+        }
+        
+        modificar_item(sistema, item_sel['id'], nuevos_datos)
 
-        # Si la cantidad quedó ≤0, quitamos el item de la lista del menú
         if cantidad <= 0:
             print(f"\nItem '{item_sel['nombre']}' eliminado por tener cantidad 0.")
             items.remove(item_sel)

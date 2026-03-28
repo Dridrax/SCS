@@ -95,14 +95,14 @@ def mostrar_stats(sistema):
         print("❌ No hay sistema cargado.")
         return
 
-    print("\n=== STATS DEL SISTEMA ===")
+    #print("\n=== STATS DEL SISTEMA ===")
 
     # Stats simples
     stats = sistema.get("stats", {})
     if stats:
         print("\n-- Stats Simples --")
         for nombre, valor in stats.items():
-            print(f"{nombre}: {valor}")
+            print(f"    > {nombre}: {valor}")
     else:
         print("\n-- Stats Simples --\nNo hay stats simples")
 
@@ -142,7 +142,7 @@ def mostrar_progress_stats_bar(progress_stats, ancho_barra=20):
         # crear barra
         barra = "#" * bloques_llenos + "-" * bloques_vacios
 
-        print(f"{nombre}: [{barra}] {actual}/{maximo} Nivel {nivel}")
+        print(f"    > {nombre}: [{barra}] {actual}/{maximo} Nivel {nivel}")
 
 
 # =========================

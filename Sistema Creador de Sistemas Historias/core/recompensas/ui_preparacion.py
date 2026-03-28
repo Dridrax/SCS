@@ -3,13 +3,13 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.utils.funciones_utiles import pedir_int
-from .tipos import (TIPOS_RECOMPENSA, RECURSOS_REGISTRADOS, registrar_recurso, 
-                    esta_tipo_base_activo, activar_tipo_base, desactivar_tipo_base)
+from .tipos import (TIPOS_RECOMPENSA, RECURSOS_REGISTRADOS, TIPOS_RAREZAS, RAREZAS_REGISTRADAS, 
+                    registrar_recurso, esta_tipo_base_activo, activar_tipo_base, desactivar_tipo_base,
+                    registrar_rareza, esta_rareza_base_activa, activar_rareza_base, desactivar_rareza_base)
 
 # ─────────────────────────────────────────────
 # VALIDACIÓN DE SOPORTE DE RECOMPENSAS
 # ─────────────────────────────────────────────
-
 def sistema_soporta_recompensa(sistema, tipo):
     """
     Comprueba si el sistema soporta un tipo de recompensa.
@@ -46,15 +46,12 @@ def sistema_soporta_recompensa(sistema, tipo):
 
     return False
 
-
 # ─────────────────────────────────────────────
 # Helpers internos
 # ─────────────────────────────────────────────
-
 def _preguntar_creacion(texto):
     resp = input(f"❗ {texto} ¿Deseas crearlo? (s/n): ").lower()
     return resp == "s"
-
 
 def _convertir_a_dinero_si_posible(sistema, recomp, cantidad):
     if cantidad <= 0:
@@ -69,11 +66,9 @@ def _convertir_a_dinero_si_posible(sistema, recomp, cantidad):
     recomp.setdefault("dinero", {})
     recomp["dinero"]["oro"] = recomp["dinero"].get("oro", 0) + cantidad
 
-
 # ─────────────────────────────────────────────
 # PREPARAR RECOMPENSA
 # ─────────────────────────────────────────────
-
 def preparar_recompensa_para_aplicar(sistema, recompensas: dict):
     """
     Valida y prepara recompensas antes de aplicarlas.
@@ -182,7 +177,6 @@ def preparar_recompensa_para_aplicar(sistema, recompensas: dict):
 
     return recomp
 
-
 # ─────────────────────────────
 # FUNCIONES AUXILIARES
 # ─────────────────────────────
@@ -207,8 +201,6 @@ def destinos_disponibles(plugin):
     }
 
     return plugins_destinos.get(plugin, plugins_destinos[None])
-
-
 
 def seleccionar_destino(plugin, destino_actual=None):
     """
@@ -241,7 +233,6 @@ def seleccionar_destino(plugin, destino_actual=None):
         except ValueError:
             print("Entrada inválida. Ingresa un número.")
 
-
 def seleccionar_modo(modo_actual=None):
     while True:
         print("\nModo del recurso:")
@@ -258,7 +249,6 @@ def seleccionar_modo(modo_actual=None):
             return modo_actual
         else:
             print("Opción inválida.")
-
 
 # ─────────────────────────────
 # MENÚ MODIFICAR TIPOS DINAMICOS
@@ -411,7 +401,7 @@ def menu_configurar_recurso_dinamicos(sistema=None):
                 print("Recurso eliminado.")
 
         elif opcion == "0":
-            guardar_sistema(print_msg=False)
+            #guardar_sistema(print_msg=False)
             break
         else:
             print("Opción inválida.")
@@ -459,5 +449,233 @@ def menu_modificar_recursos_base(sistema=None):
             # 🔹 Guardado automático de cambios en sistema
             guardar_sistema(print_msg=False)
             break
+        else:
+            print("Opción inválida.")
+
+
+# ─────────────────────────────
+# MENÚ MODIFICAR RAREZAS BASE
+# ─────────────────────────────
+def menu_modificar_rarezas_base(sistema=None):
+    sistema = sistema or estado.sistema_actual
+
+    if not sistema:
+        print("❌ No hay sistema cargado.")
+        return
+
+    while True:
+        print("\n=== ACTIVAR/DESACTIVAR RAREZAS ===")
+
+        for i, tipo in enumerate(TIPOS_RAREZAS, start=1):
+            estado_activo = "✅ Activo" if esta_rareza_base_activa(tipo) else "❌ Desactivado"
+            print(f"{i}. {tipo} ({estado_activo})")
+
+        print("\nOpciones:")
+        print("A. Activar rareza")
+        print("D. Desactivar rareza")
+        print("0. Volver")
+
+        opcion = input("Selecciona opción: ").strip().upper()
+
+        # ───────────────
+        # ACTIVAR
+        # ───────────────
+        if opcion == "A":
+            tipo = input("Nombre de la rareza a activar: ").strip()
+
+            if tipo not in TIPOS_RAREZAS:
+                print("❌ Rareza no válida.")
+                continue
+
+            activar_rareza_base(tipo)
+            print(f"✅ {tipo} activada.")
+
+        # ───────────────
+        # DESACTIVAR
+        # ───────────────
+        elif opcion == "D":
+            tipo = input("Nombre de la rareza a desactivar: ").strip()
+
+            if tipo not in TIPOS_RAREZAS:
+                print("❌ Rareza no válida.")
+                continue
+
+            desactivar_rareza_base(tipo)
+            print(f"❌ {tipo} desactivada.")
+
+        # ───────────────
+        # SALIR
+        # ───────────────
+        elif opcion == "0":
+            guardar_sistema(print_msg=False)
+            break
+
+        else:
+            print("Opción inválida.")
+
+
+# ─────────────────────────────
+# MENÚ MODIFICAR RAREZAS DINAMICOS
+# ─────────────────────────────
+def menu_configurar_rarezas_dinamicas(sistema=None):
+    sistema = sistema or estado.sistema_actual
+
+    if not sistema:
+        print("❌ No hay sistema cargado.")
+        return
+
+    sistema.setdefault("rarezas_definidas", {})
+
+    while True:
+        print("\n=== CONFIGURACIÓN DE RAREZAS DINÁMICAS ===")
+        print("1. Ver rarezas")
+        print("2. Crear rareza")
+        print("3. Editar rareza")
+        print("4. Eliminar rareza")
+        print("0. Volver")
+
+        opcion = input("Selecciona opción: ").strip()
+
+        # ───────────────
+        # VER
+        # ───────────────
+        if opcion == "1":
+            if not sistema["rarezas_definidas"]:
+                print("No hay rarezas definidas.")
+            else:
+                for nombre, config in sistema["rarezas_definidas"].items():
+                    print(f"\n• {nombre}")
+                    print(f"  Descripción: {config.get('descripcion', '')}")
+                    print(f"  Color: {config.get('color')}")
+                    print(f"  Icono: {config.get('icono')}")
+                    print(f"  Peso: {config.get('peso')}")
+                    print(f"  Requiere plugin: {config.get('requiere_plugin')}")
+
+        # ───────────────
+        # CREAR
+        # ───────────────
+        elif opcion == "2":
+            nombre = input("Nombre de la rareza: ").strip()
+
+            if not nombre:
+                print("Nombre inválido.")
+                continue
+
+            if nombre in TIPOS_RAREZAS:
+                print("❌ Ya existe como rareza base.")
+                continue
+
+            if nombre in sistema["rarezas_definidas"]:
+                print("Esa rareza ya existe.")
+                continue
+
+            descripcion = input("Descripción (opcional): ").strip()
+            color = input("Color (hex, opcional): ").strip() or "#ffffff"
+            icono = input("Icono (opcional): ").strip()
+
+            try:
+                peso = float(input("Peso (default 1.0): ") or 1.0)
+            except ValueError:
+                print("Peso inválido.")
+                continue
+
+            requiere_plugin = input("Requiere plugin (opcional): ").strip() or None
+
+            sistema["rarezas_definidas"][nombre] = {
+                "descripcion": descripcion,
+                "color": color,
+                "icono": icono,
+                "peso": peso,
+                "requiere_plugin": requiere_plugin
+            }
+
+            registrar_rareza(
+                nombre,
+                descripcion,
+                color,
+                icono,
+                peso,
+                requiere_plugin
+            )
+
+            estado.cambios_no_guardados = True
+            print("Rareza creada correctamente.")
+
+        # ───────────────
+        # EDITAR
+        # ───────────────
+        elif opcion == "3":
+            nombre = input("Nombre de la rareza a editar: ").strip()
+
+            if nombre not in sistema["rarezas_definidas"]:
+                print("No existe esa rareza.")
+                continue
+
+            rareza_actual = sistema["rarezas_definidas"][nombre]
+
+            descripcion = input("Nueva descripción (vacío para mantener): ").strip()
+            color = input("Nuevo color (vacío para mantener): ").strip()
+            icono = input("Nuevo icono (vacío para mantener): ").strip()
+
+            peso_input = input("Nuevo peso (vacío para mantener): ").strip()
+            requiere_plugin = input("Nuevo plugin requerido (vacío para mantener): ").strip()
+
+            if descripcion:
+                rareza_actual["descripcion"] = descripcion
+
+            if color:
+                rareza_actual["color"] = color
+
+            if icono:
+                rareza_actual["icono"] = icono
+
+            if peso_input:
+                try:
+                    rareza_actual["peso"] = float(peso_input)
+                except ValueError:
+                    print("Peso inválido.")
+                    continue
+
+            if requiere_plugin:
+                rareza_actual["requiere_plugin"] = requiere_plugin
+
+            # 🔥 Re-registrar en memoria
+            registrar_rareza(
+                nombre,
+                rareza_actual.get("descripcion", ""),
+                rareza_actual.get("color", "#ffffff"),
+                rareza_actual.get("icono", ""),
+                rareza_actual.get("peso", 1.0),
+                rareza_actual.get("requiere_plugin")
+            )
+
+            estado.cambios_no_guardados = True
+            print("Rareza actualizada.")
+
+        # ───────────────
+        # ELIMINAR
+        # ───────────────
+        elif opcion == "4":
+            nombre = input("Nombre de la rareza a eliminar: ").strip()
+
+            if nombre not in sistema["rarezas_definidas"]:
+                print("No existe esa rareza.")
+                continue
+
+            confirm = input("¿Seguro? (s/n): ").lower()
+            if confirm == "s":
+                sistema["rarezas_definidas"].pop(nombre)
+                RAREZAS_REGISTRADAS.pop(nombre, None)
+
+                estado.cambios_no_guardados = True
+                print("Rareza eliminada.")
+
+        # ───────────────
+        # SALIR
+        # ───────────────
+        elif opcion == "0":
+            #guardar_sistema(print_msg=False)
+            break
+
         else:
             print("Opción inválida.")

@@ -1,10 +1,10 @@
 #core/recompensas/tipos.py
+import random
 from core.estado_global import estado
 
 # ─────────────────────────────
 # Tipos base de recompensa
 # ─────────────────────────────
-
 TIPOS_RECOMPENSA = {
     "stats": None,
     "progress_stats": None,
@@ -37,7 +37,6 @@ def inicializar_tipos_recompensa_activos():
 # ─────────────────────────────
 # Recursos abstractos dinámicos
 # ─────────────────────────────
-
 RECURSOS_REGISTRADOS = {}
 
 def registrar_recurso(
@@ -45,7 +44,7 @@ def registrar_recurso(
     descripcion: str = "",
     requiere_plugin: str = None,
     destino: str = "recursos",
-    modo: str = "contenedor"  # 👈 NUEVO
+    modo: str = "contenedor"
 ):
     """
     Registra un recurso dinámico y su destino dentro del sistema.
@@ -73,9 +72,8 @@ def registrar_recurso(
         "descripcion": descripcion,
         "requiere_plugin": requiere_plugin,
         "destino": destino,
-        "modo": modo  # 👈 NUEVO
+        "modo": modo
     }
-
 
 def cargar_recursos_desde_sistema(sistema: dict):
     """
@@ -91,8 +89,6 @@ def cargar_recursos_desde_sistema(sistema: dict):
             config.get("destino", "recursos"),
             config.get("modo", "contenedor")
         )
-
-
 
 # ─────────────────────────────
 # Activar/Desactivar Recursos Base (guardando en sistema)
@@ -125,7 +121,6 @@ def esta_tipo_base_activo(tipo: str) -> bool:
 # ─────────────────────────────
 # API pública SCS
 # ─────────────────────────────
-
 def obtener_tipos_recompensa_validos():
     sistema = estado.sistema_actual or {}
     plugins_activos = sistema.get("plugins_activos", {})
@@ -149,7 +144,6 @@ def obtener_tipos_recompensa_validos():
 
 def es_tipo_recompensa_valido(tipo: str) -> bool:
     return tipo in obtener_tipos_recompensa_validos()
-
 
 def obtener_definicion_tipo(tipo: str) -> dict:
     """
@@ -181,3 +175,213 @@ def obtener_definicion_tipo(tipo: str) -> dict:
 
     # 3️⃣ Tipo desconocido
     return None
+
+# ─────────────────────────────
+# Tipos base de rarezas
+# ─────────────────────────────
+TIPOS_RAREZAS = {
+    "Muy Comun",
+    "Común",
+    "Poco Común",
+    "Raro",
+    "Muy Raro",
+    "Épico",
+    "Legendario"
+}
+
+# ─────────────────────────────
+# Inicialización de tipos base
+# ─────────────────────────────
+TIPOS_RAREZAS_ACTIVAS = { tipo: True for tipo in TIPOS_RAREZAS }
+
+def inicializar_tipos_rarezas_activos():
+    """
+    Inicializa TIPOS_RAREZAS_ACTIVOS desde el sistema cargado,
+    o deja todo activo por defecto.
+    """
+    sistema = estado.sistema_actual
+    if sistema and "tipos_rarezas_activos" in sistema:
+        for tipo, activo in sistema["tipos_rarezas_activos"].items():
+            TIPOS_RAREZAS_ACTIVAS[tipo] = activo
+    else:
+        for tipo in TIPOS_RAREZAS:
+            TIPOS_RAREZAS_ACTIVAS[tipo] = True
+
+# ─────────────────────────────
+# Rarezas dinámicas
+# ─────────────────────────────
+RAREZAS_REGISTRADAS = {}
+
+def registrar_rareza(
+    nombre: str,
+    descripcion: str = "",
+    color: str = "#ffffff",
+    icono: str = "",
+    peso: float = 1.0,
+    requiere_plugin: str = None
+):
+    """
+    Registra una rareza dinámica.
+    """
+
+    if not isinstance(nombre, str) or not nombre.strip():
+        raise ValueError("El nombre de la rareza debe ser un string válido")
+
+    nombre = nombre.strip()
+
+    RAREZAS_REGISTRADAS[nombre] = {
+        "descripcion": descripcion,
+        "color": color,
+        "icono": icono,
+        "peso": peso,
+        "requiere_plugin": requiere_plugin
+    }
+
+def cargar_rarezas_desde_sistema(sistema: dict):
+    RAREZAS_REGISTRADAS.clear()
+
+    for nombre, config in sistema.get("rarezas_definidas", {}).items():
+        registrar_rareza(
+            nombre,
+            config.get("descripcion", ""),
+            config.get("color", "#ffffff"),
+            config.get("icono", ""),
+            config.get("peso", 1.0),
+            config.get("requiere_plugin")
+        )
+
+# ─────────────────────────────
+# API pública SCS
+# ─────────────────────────────
+def esta_rareza_base_activa(tipo: str) -> bool:
+    sistema = estado.sistema_actual
+    if sistema and "tipos_rarezas_activos" in sistema:
+        return sistema["tipos_rarezas_activos"].get(tipo, True)
+    return TIPOS_RAREZAS_ACTIVAS.get(tipo, True)
+
+def obtener_rarezas_validas():
+    sistema = estado.sistema_actual or {}
+    plugins_activos = sistema.get("plugins_activos", {})
+
+    rarezas_validas = set()
+
+    # 1️⃣ Rarezas base (con activación)
+    for tipo in TIPOS_RAREZAS:
+        if not esta_rareza_base_activa(tipo):
+            continue
+        rarezas_validas.add(tipo)
+
+    # 2️⃣ Rarezas dinámicas
+    for nombre, config in RAREZAS_REGISTRADAS.items():
+        plugin = config.get("requiere_plugin")
+        if plugin is None or plugins_activos.get(plugin, False):
+            rarezas_validas.add(nombre)
+
+    return rarezas_validas
+
+def es_rareza_valida(nombre: str) -> bool:
+    return nombre in obtener_rarezas_validas()
+
+def obtener_definicion_rareza(nombre: str) -> dict:
+    return RAREZAS_REGISTRADAS.get(nombre)
+
+def elegir_rareza_aleatoria():
+    sistema = estado.sistema_actual or {}
+    plugins_activos = sistema.get("plugins_activos", {})
+
+    rarezas = [
+        (nombre, config)
+        for nombre, config in RAREZAS_REGISTRADAS.items()
+        if config.get("requiere_plugin") is None
+        or plugins_activos.get(config.get("requiere_plugin"), False)
+    ]
+
+    total_peso = sum(r[1]["peso"] for r in rarezas)
+
+    if total_peso <= 0:
+        return None
+
+    r = random.uniform(0, total_peso)
+    acumulado = 0
+
+    for nombre, config in rarezas:
+        acumulado += config["peso"]
+        if r <= acumulado:
+            return nombre
+        
+# ─────────────────────────────
+# Activar/Desactivar Rarezas Base (guardando en sistema)
+# ─────────────────────────────
+def activar_rareza_base(tipo: str):
+    sistema = estado.sistema_actual
+    if tipo not in TIPOS_RAREZAS:
+        raise ValueError(f"'{tipo}' no es una rareza base válida")
+
+    TIPOS_RAREZAS_ACTIVAS[tipo] = True
+
+    if sistema is not None:
+        sistema.setdefault("tipos_rarezas_activos", {})[tipo] = True
+        estado.cambios_no_guardados = True
+
+def desactivar_rareza_base(tipo: str):
+    sistema = estado.sistema_actual
+    if tipo not in TIPOS_RAREZAS:
+        raise ValueError(f"'{tipo}' no es una rareza base válida")
+
+    TIPOS_RAREZAS_ACTIVAS[tipo] = False
+
+    if sistema is not None:
+        sistema.setdefault("tipos_rarezas_activos", {})[tipo] = False
+        estado.cambios_no_guardados = True
+
+
+# ─────────────────────────────
+# Asignar rareza a un objeto
+# ─────────────────────────────
+def asignar_rareza(objeto, preferida=None):
+    """
+    Asigna una rareza válida a un objeto.
+    - Si 'preferida' es válida, se usa.
+    - Si no tiene rareza definida, se asigna la más común de las disponibles.
+    """
+    if "rareza" not in objeto or not objeto["rareza"].strip():
+        rarezas_validas = list(obtener_rarezas_validas())
+        # Prioridad: rareza preferida si es válida
+        if preferida and preferida in rarezas_validas:
+            objeto["rareza"] = preferida
+        elif rarezas_validas:
+            # Usamos la primera (más común) disponible
+            objeto["rareza"] = rarezas_validas[0]
+        else:
+            objeto["rareza"] = "Común"  # fallback seguro
+
+    # Normalizamos: minúsculas y sin espacios extra
+    objeto["rareza"] = objeto["rareza"].strip().lower()
+    return objeto
+
+# ─────────────────────────────
+# Función auxiliar para elegir rareza
+# ─────────────────────────────
+def seleccionar_rareza(default=None, prompt=None):
+    rarezas_validas = sorted(obtener_rarezas_validas())
+    if not rarezas_validas:
+        print("❌ No hay rarezas válidas disponibles, usando 'común'.")
+        return "común"
+
+    while True:
+        print("\nRarezas disponibles:")
+        for i, r in enumerate(rarezas_validas, 1):
+            print(f"{i}. {r}")
+
+        msg = f"{prompt} [{default}]: " if prompt else f"Selecciona rareza [{default}]: "
+        entrada = input(msg).strip()
+        if not entrada and default:
+            return default.lower()
+        elif entrada.isdigit():
+            idx = int(entrada) - 1
+            if 0 <= idx < len(rarezas_validas):
+                return rarezas_validas[idx].lower()
+        elif entrada in rarezas_validas:
+            return entrada.lower()
+
+        print("❌ Entrada inválida. Intenta de nuevo.")

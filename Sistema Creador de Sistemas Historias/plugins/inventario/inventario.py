@@ -1,7 +1,7 @@
 #plugins/inventario/inventario.py
 from core.estado_global import estado
 from core.utils.busqueda import buscar
-from core.guardado.archivos import guardar_sistema
+from core.recompensas.tipos import asignar_rareza
 
 import uuid
 
@@ -35,7 +35,6 @@ def buscar_inventario(sistema=None):
     for obj in resultados:
         print(f"- {obj['nombre']} ({obj['clase']}) | {obj['categoria']} | {obj['efectos']}")
 
-
 # =========================
 # GENERAR FIRMA DEL OBJETO
 # =========================
@@ -54,14 +53,17 @@ def generar_firma_objeto(item_data):
 
     return (nombre, rareza, tipo, descripcion, efectos_firma)
 
-
 # =========================
 # AGREGAR ITEM CORREGIDO
+# =========================
+# =========================
+# AGREGAR ITEM REHECHO
 # =========================
 def agregar_item(sistema, item_data):
     """
     Agrega un item al inventario del sistema.
     Si un objeto idéntico ya existe, incrementa su cantidad en lugar de crear uno nuevo.
+    La rareza se respeta desde item_data o se asigna automáticamente si no existe.
     """
     if "inventario" not in sistema or sistema["inventario"] is None:
         sistema["inventario"] = {}
@@ -69,14 +71,17 @@ def agregar_item(sistema, item_data):
     inventario = sistema["inventario"]
     cantidad_nueva = max(1, item_data.get("cantidad", 1))
 
-    # Generar la firma del objeto
+    # Generar la firma del objeto (ignora cantidad)
     firma_nueva = generar_firma_objeto(item_data)
 
     # Buscar objeto idéntico
     for obj_id, obj in inventario.items():
         if generar_firma_objeto(obj) == firma_nueva:
-            # Sumar cantidad correctamente
+            # Sumar cantidad
             obj["cantidad"] = obj.get("cantidad", 0) + cantidad_nueva
+
+            # Solo aseguramos rareza válida (sin interacción)
+            asignar_rareza(obj, item_data.get("rareza"))
 
             # Actualizar plugin_cache
             estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})[obj_id] = obj
@@ -90,14 +95,17 @@ def agregar_item(sistema, item_data):
         **item_data,
         "cantidad": cantidad_nueva
     }
-    inventario[item_id] = item_nuevo
 
+    # Asignar rareza si no viene en item_data
+    asignar_rareza(item_nuevo, item_data.get("rareza"))
+
+    inventario[item_id] = item_nuevo
     estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})[item_id] = item_nuevo
     estado.cambios_no_guardados = True
     return item_id
 
 # =========================
-# MODIFICAR OBJETO
+# MODIFICAR ITEM REHECHO
 # =========================
 def modificar_item(sistema, item_id, nuevos_datos):
     """
@@ -107,6 +115,7 @@ def modificar_item(sistema, item_id, nuevos_datos):
     - nuevos_datos: dict con campos a actualizar
 
     Si la cantidad final es <= 0, elimina el item automáticamente.
+    La rareza se respeta desde nuevos_datos o se mantiene la existente.
     """
     inventario = sistema.setdefault("inventario", {})
 
@@ -123,9 +132,11 @@ def modificar_item(sistema, item_id, nuevos_datos):
     # Actualizar campos
     item.update(nuevos_datos)
 
+    # Asignar rareza solo para validar o completar si no existe
+    asignar_rareza(item, nuevos_datos.get("rareza"))
+
     # Actualizar plugin_cache
-    if "plugins" in estado.plugin_cache:
-        estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})[item_id] = item
+    estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})[item_id] = item
 
     estado.cambios_no_guardados = True
     print(f"✅ Item '{item.get('nombre', item_id)}' modificado correctamente.")

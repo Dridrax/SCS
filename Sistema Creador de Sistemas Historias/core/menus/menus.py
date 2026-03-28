@@ -6,10 +6,10 @@ from core.administrar_puntos.menu_admin_puntos import menu_distribuir_puntos
 
 from core.sistemas.crear_sistema import crear_nuevo_sistema
 from core.utils.funciones_utiles import pedir_int
-from core.sistemas.mostrar_sistema import mostrar_ficha
+from core.sistemas.mostrar_sistema import que_ficha_queres
 from core.plugins.registry import PLUGINS
 
-from core.recompensas.ui_preparacion import menu_configurar_recurso_dinamicos, menu_modificar_recursos_base
+from core.recompensas.ui_preparacion import menu_configurar_recurso_dinamicos, menu_modificar_recursos_base, menu_configurar_rarezas_dinamicas, menu_modificar_rarezas_base
 
 #plugins
 from plugins.inventario.menus_inv import (menu_agregar_item, mostrar_items,
@@ -101,7 +101,7 @@ def menu_mostrar(sistema):
             mostrar_stats(sistema),
             mostrar_progress_stats_bar(sistema.get("progress_stats", {}))
         )))
-        opciones.append(("Mostrar Ficha", lambda: mostrar_ficha(sistema)))
+        opciones.append(("Mostrar Ficha", lambda: que_ficha_queres(sistema)))
 
         # Inventario
         if plugins.get("inventario", False):
@@ -197,6 +197,8 @@ def configuracion(sistema):
         opciones.append(("Configurar Sistema", lambda:configurar_sistema(sistema)))
         
         opciones.append(("Recursos", menu_configurar_recursos))
+
+        opciones.append(("Rarezas", menu_configurar_rarezas))
         
         opciones.append(("Plugins", menu_plugins))
 
@@ -441,7 +443,7 @@ def configurar_sistema(sistema):
         print(f"3. Nombre del sistema: {sistema.get('nombre_sistema')}")
         historia = sistema.get("historia", {})
         print(f"4. Tipo de historia: {historia.get('tipo')}")
-        print("5. Modificar historia (sinopsis, personajes, parejas, fandom)")
+        print("5. Modificar historia (sinopsis, personajes, parejas...)")
         print("6. Salir\n")
 
         opcion = input("Selecciona una opción (Enter para salir): ").strip()
@@ -500,6 +502,7 @@ def configurar_sistema(sistema):
                 parejas = input(f"Parejas (Enter para mantener): ").strip()
                 if parejas:
                     historia["parejas"] = parejas
+
             elif historia.get("tipo") == "fanfiction":
                 fandom = input(f"Fandom (Enter para mantener): ").strip()
                 if fandom:
@@ -538,6 +541,22 @@ def menu_configurar_recursos():
             menu_modificar_recursos_base()
         elif opcion == 2:
             menu_configurar_recurso_dinamicos()
+        else:
+            break
+
+def menu_configurar_rarezas():
+    while True:
+        print("\n=== CONFIGURACIÓN DE RAREZAS ===")
+        print("1. Activar/Desactivar Rarezas Base")
+        print("2. Configurar rarezas dinámicas")
+        print("0. Volver")
+
+        opcion = pedir_int("\nSelecciona opción:")
+
+        if opcion == 1:
+            menu_modificar_rarezas_base()
+        elif opcion == 2:
+            menu_configurar_rarezas_dinamicas()
         else:
             break
 

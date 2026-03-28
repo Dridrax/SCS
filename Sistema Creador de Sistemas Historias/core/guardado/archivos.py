@@ -239,14 +239,16 @@ def cargar_sistema(nombre_archivo):
     # =========================
     # 7️⃣ Registrar recursos dinámicos del sistema
     # =========================
-    from core.recompensas.tipos import cargar_recursos_desde_sistema
+    from core.recompensas.tipos import cargar_recursos_desde_sistema, cargar_rarezas_desde_sistema
     cargar_recursos_desde_sistema(sistema)
+    cargar_rarezas_desde_sistema(sistema)
 
     # =========================
     # [8] Cargar tipos_recompensa_actios (recompensas base)
     # =========================
-    from core.recompensas.tipos import inicializar_tipos_recompensa_activos
+    from core.recompensas.tipos import inicializar_tipos_recompensa_activos, inicializar_tipos_rarezas_activos
     inicializar_tipos_recompensa_activos()
+    inicializar_tipos_rarezas_activos()
 
     print(f"\n✅ Sistema cargado correctamente desde '{nombre_archivo}.json'.")
     return sistema

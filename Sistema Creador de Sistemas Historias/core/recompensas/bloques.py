@@ -2,7 +2,7 @@
 
 from core.estado_global import estado
 from core.utils.funciones_utiles import pedir_int, safe_int_input, safe_float_input
-from core.recompensas.tipos import obtener_tipos_recompensa_validos, cargar_recursos_desde_sistema, RECURSOS_REGISTRADOS
+from core.recompensas.tipos import obtener_tipos_recompensa_validos, cargar_recursos_desde_sistema, RECURSOS_REGISTRADOS, seleccionar_rareza
 from core.utils.selector_recursos_existentes import mostrar_recursos_existentes
 
 def obtener_bloque(objeto, clave="recompensas"):
@@ -154,10 +154,10 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
                 continue
 
             # ─────────────────────────────
-            # OBJETOS (lista)
+            # OBJETOS (lista) REHECHO
             # ─────────────────────────────
             if tipo == "objetos":
-                
+
                 mostrar_recursos_existentes(estado.sistema_actual, "objetos")
 
                 nombre = input("Nombre del objeto: ").strip()
@@ -167,12 +167,15 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
                 # Calcular cantidad final
                 cantidad_total = int(base * factor)
 
+                # Seleccionar rareza usando menú controlado
+                rareza = seleccionar_rareza(prompt="Rareza del objeto (enter = aleatoria): ")
+
                 item = {
                     "nombre": nombre,
                     "cantidad": cantidad_total,
                     "factor_escalado": factor,
                     "tipo": input("Tipo del objeto (opcional): ").strip(),
-                    "rareza": input("Rareza (opcional): ").strip(),
+                    "rareza": rareza,  # ahora seguro y validado
                     "descripcion": "",
                     "efectos": {}
                 }
@@ -247,31 +250,34 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
                     print("❌ Index inválido.")
                     continue
                 obj_item = bloque["objetos"][index]
-
-
+            
                 obj_item["nombre"] = input(
                     f"Nombre ({obj_item.get('nombre','')}): "
                 ).strip() or obj_item.get("nombre","")
-
+            
                 cantidad_actual = obj_item.get("cantidad", 1)
                 obj_item["cantidad"] = safe_int_input(
                     f"Cantidad ({cantidad_actual}): ",
                     default=cantidad_actual
                 )
-
+            
                 factor_actual = obj_item.get("factor_escalado", 1.0)
                 obj_item["factor_escalado"] = safe_float_input(
                     f"Factor ({factor_actual}): ",
                     default=factor_actual
                 )
-
+            
                 obj_item["tipo"] = input(
                     f"Tipo ({obj_item.get('tipo','')}): "
                 ).strip() or obj_item.get("tipo","")
-
-                obj_item["rareza"] = input(
-                    f"Rareza ({obj_item.get('rareza','comun')}): "
-                ).strip() or obj_item.get("rareza","comun")
+            
+                # ─────────────────────────────
+                # Rareza controlada
+                # ─────────────────────────────
+                obj_item["rareza"] = seleccionar_rareza(
+                    prompt=f"Rareza ({obj_item.get('rareza','comun')}): ",
+                    default=obj_item.get("rareza","comun")
+                )
 
             else:
                 claves = list(bloque[tipo].keys())
@@ -401,25 +407,25 @@ def menu_editar_bloque(objeto, clave):
         # AGREGAR
         # ─────────────────────────────
         if opcion == 1:
-
+        
             if tipo == "objetos":
             
                 mostrar_recursos_existentes(estado.sistema_actual, "objetos")
-
+        
                 nombre = input("Nombre del objeto: ").strip()
                 base = pedir_int("Cantidad: ", default=1)
-
+        
                 item = {
                     "nombre": nombre,
                     "cantidad": base,
                     "tipo": input("Tipo del objeto (opcional): ").strip(),
-                    "rareza": input("Rareza (opcional): ").strip(),
+                    "rareza": seleccionar_rareza(prompt="Rareza (opcional): "),
                     "descripcion": "",
                     "efectos": {}
                 }
-
+        
                 bloque.setdefault("objetos", []).append(item)
-
+        
             else:
                 # 🔥 Detectar si es recurso dinámico
                 if tipo in RECURSOS_REGISTRADOS:
@@ -427,42 +433,43 @@ def menu_editar_bloque(objeto, clave):
                     modo = config.get("modo", "contenedor")
                     mostrar_recursos_existentes(estado.sistema_actual, tipo)
                     valor = pedir_int("Valor: ", default=0)
-
+        
                     if modo == "simple":
                         # Guardar directamente sin subclave
                         bloque[tipo] = {
                             "valor_base": valor
                         }
-
+        
                     else:
                         # Contenedor (comportamiento antiguo)
                         nombre = input("Subtipo / nombre interno: ").strip()
                         bloque.setdefault(tipo, {})[nombre] = {
                             "valor_base": valor
                         }
-
+        
                 else:
                     # Tipos clásicos (stats, dinero, etc.)
                     nombre = input("Nombre del recurso/stat/dinero/puntos: ").strip()
                     valor = pedir_int("Valor: ", default=0)
-
+        
                     bloque.setdefault(tipo, {})[nombre] = {
                         "valor_base": valor
                     }
-
+        
             estado.cambios_no_guardados = True
             print("✅ Agregado correctamente.")
+
         # ─────────────────────────────
         # EDITAR
         # ─────────────────────────────
         elif opcion == 2:
-
+        
             if tipo == "objetos":
-
+            
                 if "objetos" not in bloque or not bloque["objetos"]:
                     print("❌ No hay objetos para editar.")
                     continue
-
+                
                 objetos = bloque.get("objetos", {})
                 if not objetos:
                     print("❌ No hay objetos para editar.")
@@ -478,14 +485,14 @@ def menu_editar_bloque(objeto, clave):
                 
                 obj_item = objetos[nombre_seleccionado]
 
-
-
+                # ─────────────
+                # Campos editables
+                # ─────────────
                 obj_item["nombre"] = input(
                     f"Nombre ({obj_item.get('nombre','')}): "
                 ).strip() or obj_item.get("nombre", "")
 
                 cantidad_actual = obj_item.get("cantidad_base", obj_item.get("cantidad", 1))
-
                 obj_item["cantidad_base"] = pedir_int(
                     f"Cantidad base ({cantidad_actual}): ",
                     default=cantidad_actual
@@ -495,12 +502,20 @@ def menu_editar_bloque(objeto, clave):
                     f"Tipo ({obj_item.get('tipo','')}): "
                 ).strip() or obj_item.get("tipo", "")
 
-            else:
+                # ─────────────
+                # Rareza controlada
+                # ─────────────
+                obj_item["rareza"] = seleccionar_rareza(
+                    prompt=f"Rareza ({obj_item.get('rareza','comun')}): ",
+                    default=obj_item.get("rareza","comun")
+                )
 
+            else:
+            
                 if tipo not in bloque or not bloque[tipo]:
                     print("❌ No hay entradas para editar.")
                     continue
-
+                
                 claves = list(bloque[tipo].keys())
 
                 for i, k in enumerate(claves, 1):
@@ -511,7 +526,7 @@ def menu_editar_bloque(objeto, clave):
                 if nombre not in bloque[tipo]:
                     print("❌ Clave no encontrada.")
                     continue
-
+                
                 valor_actual = bloque[tipo][nombre].get("valor_base", 0)
 
                 nuevo_valor = pedir_int(

@@ -1,4 +1,6 @@
-from core.recompensas.tipos import TIPOS_RECOMPENSA
+#Core/sistemas/sistema_temporal.py
+
+from core.recompensas.tipos import TIPOS_RECOMPENSA, TIPOS_RAREZAS
 from core.utils.funciones_utiles import pedir_si_no
 
 def crear_sistema_temporal_config(plugins_activos=None):
@@ -10,7 +12,9 @@ def crear_sistema_temporal_config(plugins_activos=None):
     return {
         "plugins_activos": plugins_activos or {},
         "tipos_recompensa_activos": {},
+        "tipos_rarezas_activos": {},
         "recursos_definidos": {},
+        "rarezas_definidas": {}, 
         "recursos": {}
     }
 
@@ -37,3 +41,19 @@ def configurar_tipos_base_interactivo():
         tipos_config[tipo] = usar
 
     return tipos_config
+
+def configurar_rarezas_base_interactivo():
+    """
+    Pregunta al usuario qué rarezas base quiere activar
+    al crear el sistema.
+    """
+
+    print("\n=== CONFIGURACIÓN DE RAREZAS BASE ===\n")
+
+    rarezas_config = {}
+
+    for tipo in TIPOS_RAREZAS:
+        usar = pedir_si_no(f"¿Quieres activar '{tipo}'? (s/n): ")
+        rarezas_config[tipo] = usar
+
+    return rarezas_config

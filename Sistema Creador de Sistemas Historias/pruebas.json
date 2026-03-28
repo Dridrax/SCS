@@ -1,105 +1,52 @@
 {
     "personaje": {
-        "nombre": "pruebas",
-        "edad": 10
+        "nombre": "Noa",
+        "edad": 1
     },
-    "nombre_sistema": "pruebas",
-    "stats": {
-        "vida": 0,
-        "mana": 0
-    },
-    "progress_stats": {
-        "cabeza": {
-            "actual": 0,
-            "max": 10,
-            "nivel": 1,
-            "factor_escalado": 1.2
-        }
-    },
+    "nombre_sistema": "Yue",
+    "stats": {},
+    "progress_stats": {},
     "historia": {
         "tipo": "original",
-        "sinopsis": "",
+        "protagonista": "",
         "personajes_principales": "",
-        "parejas": ""
+        "parejas": "",
+        "sinopsis": ""
     },
     "plugins_activos": {
         "inventario": false,
         "misiones": false,
-        "niveles": true,
-        "rachas": true
+        "niveles": false,
+        "rachas": false
     },
-    "configuracion": {
-        "racha_tipo_escalado": "lineal"
+    "tipos_recompensa_activos": {
+        "stats": false,
+        "progress_stats": false,
+        "objetos": true,
+        "puntos_stats": false,
+        "puntos_habilidad": false,
+        "dinero": false,
+        "nivel": false,
+        "tiradas": false
     },
-    "nivel": 1,
-    "xp_actual": 0,
-    "xp_para_siguiente": 100,
-    "niveles_config": {
-        "modo_subida": "auto_stats_y_puntos",
-        "puntos_por_nivel": 5,
-        "stats_automaticos": 5,
-        "factor_escalado": 2.0
+    "recursos_definidos": {},
+    "tipos_rarezas_activos": {
+        "Muy Comun": true,
+        "Poco Común": true,
+        "Común": true,
+        "Épico": false,
+        "Raro": false,
+        "Legendario": false,
+        "Muy Raro": false
     },
-    "recompensas_por_nivel": [],
-    "recursos_definidos": {
-        "xp_niveles": {
+    "rarezas_definidas": {
+        "Blanco": {
             "descripcion": "",
-            "requiere_plugin": "niveles",
-            "destino": "xp_actual",
-            "modo": "simple"
-        },
-        "Cristales": {
-            "descripcion": "",
-            "requiere_plugin": null,
-            "destino": "recursos",
-            "modo": "simple"
+            "color": "ffffff",
+            "icono": "",
+            "peso": 1.0,
+            "requiere_plugin": null
         }
     },
-    "recursos": {
-        "Cristales": 1
-    },
-    "puntos_stats": 0,
-    "dinero": {
-        "oro": 1220,
-        "platino": 40
-    },
-    "misiones_completadas": {},
-    "tipos_recompensa_activos": {
-        "progress_stats": true,
-        "objetos": true,
-        "puntos_stats": true,
-        "nivel": true,
-        "tiradas": false,
-        "stats": true,
-        "puntos_habilidad": false,
-        "dinero": true
-    },
-    "rachas": {
-        "activas": {
-            "prueber": {
-                "id": "prueber",
-                "nombre": "R",
-                "descripcion": "",
-                "objetivos": [],
-                "recompensas": {
-                    "dinero": {
-                        "oro": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0
-                        },
-                        "platino": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0
-                        }
-                    }
-                },
-                "penalizaciones": {},
-                "veces_completada": 10,
-                "fallos_consecutivos": 0
-            }
-        },
-        "historial": {}
-    }
+    "misiones_completadas": {}
 }
