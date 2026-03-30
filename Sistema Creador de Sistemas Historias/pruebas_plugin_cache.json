@@ -10,17 +10,17 @@
                         {
                             "descripcion": "b",
                             "cantidad_base": 1,
-                            "factor_escalado": 1.0,
+                            "factor_escalado": 1.5,
                             "tope": 0,
-                            "nivel": 0,
+                            "nivel": 90,
                             "progreso": 0
                         },
                         {
                             "descripcion": "n",
                             "cantidad_base": 3,
-                            "factor_escalado": 1.0,
+                            "factor_escalado": 1.2,
                             "tope": 0,
-                            "nivel": 0,
+                            "nivel": 48,
                             "progreso": 0
                         }
                     ],
@@ -34,10 +34,24 @@
                                 "efectos": {},
                                 "cantidad_base": 1
                             }
-                        ]
+                        ],
+                        "dinero": {
+                            "Oro": {
+                                "valor_base": 3,
+                                "factor_escalado": 1.3,
+                                "tope": 0
+                            }
+                        },
+                        "xp_subir": {
+                            "xp_subir": {
+                                "valor_base": 10,
+                                "factor_escalado": 1.5,
+                                "tope": 0
+                            }
+                        }
                     },
                     "penalizaciones": {},
-                    "veces_completada": 0,
+                    "veces_completada": 39,
                     "fallos_consecutivos": 0
                 }
             },
@@ -50,7 +64,7 @@
                 "rareza": "común",
                 "tipo": "arma",
                 "descripcion": "",
-                "cantidad": 3,
+                "cantidad": 42,
                 "efectos": {}
             }
         },
@@ -89,15 +103,15 @@
             }
         },
         "niveles": {
-            "nivel": 55,
-            "xp_actual": 15,
-            "xp_para_siguiente": 155,
+            "nivel": 25,
+            "xp_actual": 40,
+            "xp_para_siguiente": 124,
             "niveles_config": {
                 "modo_subida": "solo_puntos",
-                "puntos_por_nivel": 0,
+                "puntos_por_nivel": 2,
                 "stats_automaticos": 0,
-                "factor_escalado": 0.0,
-                "tipo_recompensas": "rango_con_especial",
+                "factor_escalado": 1.0,
+                "tipo_recompensas": "cada_nivel",
                 "cada": 10,
                 "nivel_objetivo": 64
             },
@@ -113,17 +127,6 @@
                         },
                         "puntos_stats": {
                             "puntos stats": {
-                                "valor_base": 1,
-                                "factor_escalado": 1.0,
-                                "tope": 0
-                            }
-                        }
-                    }
-                },
-                {
-                    "bloque_especial": {
-                        "dinero": {
-                            "Platino": {
                                 "valor_base": 1,
                                 "factor_escalado": 1.0,
                                 "tope": 0

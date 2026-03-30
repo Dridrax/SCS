@@ -17,7 +17,7 @@
         "inventario": true,
         "misiones": false,
         "niveles": true,
-        "rachas": false
+        "rachas": true
     },
     "tipos_recompensa_activos": {
         "stats": false,
@@ -41,31 +41,23 @@
         "Muy Comun": true,
         "Poco Común": true,
         "Común": true,
-        "Épico": false,
-        "Raro": false,
-        "Legendario": false,
-        "Muy Raro": false
+        "Épico": true,
+        "Raro": true,
+        "Legendario": true,
+        "Muy Raro": true
     },
-    "rarezas_definidas": {
-        "Blanco": {
-            "descripcion": "",
-            "color": "ffffff",
-            "icono": "",
-            "peso": 1.0,
-            "requiere_plugin": null
-        }
-    },
+    "rarezas_definidas": {},
     "misiones_completadas": {},
     "niveles": {
-        "nivel": 55,
-        "xp_actual": 15,
-        "xp_para_siguiente": 155,
+        "nivel": 25,
+        "xp_actual": 40,
+        "xp_para_siguiente": 124,
         "niveles_config": {
             "modo_subida": "solo_puntos",
-            "puntos_por_nivel": 0,
+            "puntos_por_nivel": 2,
             "stats_automaticos": 0,
-            "factor_escalado": 0.0,
-            "tipo_recompensas": "rango_con_especial",
+            "factor_escalado": 1.0,
+            "tipo_recompensas": "cada_nivel",
             "cada": 10,
             "nivel_objetivo": 64
         },
@@ -87,17 +79,6 @@
                         }
                     }
                 }
-            },
-            {
-                "bloque_especial": {
-                    "dinero": {
-                        "Platino": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0
-                        }
-                    }
-                }
             }
         ]
     },
@@ -108,13 +89,73 @@
             "rareza": "común",
             "tipo": "arma",
             "descripcion": "",
-            "cantidad": 3,
+            "cantidad": 42,
             "efectos": {}
         }
     },
-    "puntos_stats": 75,
+    "puntos_stats": 147,
     "dinero": {
-        "Oro": 750,
+        "Oro": 1504,
         "Platino": 7
+    },
+    "rachas": {
+        "activas": {
+            "prueba": {
+                "id": "prueba",
+                "nombre": "racha",
+                "descripcion": "a",
+                "objetivos": [
+                    {
+                        "descripcion": "b",
+                        "cantidad_base": 1,
+                        "factor_escalado": 1.5,
+                        "tope": 0,
+                        "nivel": 90,
+                        "progreso": 0
+                    },
+                    {
+                        "descripcion": "n",
+                        "cantidad_base": 3,
+                        "factor_escalado": 1.2,
+                        "tope": 0,
+                        "nivel": 48,
+                        "progreso": 0
+                    }
+                ],
+                "recompensas": {
+                    "objetos": [
+                        {
+                            "nombre": "palo",
+                            "tipo": "arma",
+                            "rareza": "común",
+                            "descripcion": "",
+                            "efectos": {},
+                            "cantidad_base": 1
+                        }
+                    ],
+                    "dinero": {
+                        "Oro": {
+                            "valor_base": 3,
+                            "factor_escalado": 1.3,
+                            "tope": 0
+                        }
+                    },
+                    "xp_subir": {
+                        "xp_subir": {
+                            "valor_base": 10,
+                            "factor_escalado": 1.5,
+                            "tope": 0
+                        }
+                    }
+                },
+                "penalizaciones": {},
+                "veces_completada": 39,
+                "fallos_consecutivos": 0
+            }
+        },
+        "historial": {}
+    },
+    "configuracion": {
+        "racha_tipo_escalado": "lineal"
     }
 }

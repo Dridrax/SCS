@@ -111,6 +111,46 @@ def crear_racha(
     return True
 
 # --------------------------------------------------
+# Calcular escalado
+# --------------------------------------------------
+def calcular_escalado(base, factor, nivel, modo="exponencial", tope=None):
+    """
+    Calcula un valor escalado según el tipo configurado.
+
+    Args:
+        base (float/int): Valor base.
+        factor (float): Factor de escalado.
+        nivel (int): Número de veces completadas / nivel actual (empezando desde 0).
+        modo (str): Tipo de escalado: "exponencial", "lineal", "lineal_tope", 
+                    "lineal_porcentaje", "lineal_suavizado".
+        tope (float/int, opcional): Límite máximo para lineal_tope. Default None.
+
+    Returns:
+        int: Valor escalado.
+    """
+    if modo == "exponencial":
+        valor = base * (factor ** nivel)
+
+    elif modo == "lineal":
+        valor = base + (factor - 1) * base * nivel
+
+    elif modo == "lineal_tope":
+        val = base + (factor - 1) * base * nivel
+        valor = min(val, tope) if tope is not None else val
+
+    elif modo == "lineal_porcentaje":
+        valor = base * (1 + (factor - 1) * nivel)
+
+    elif modo == "lineal_suavizado":
+        incremento = (factor - 1) * base
+        valor = base + incremento * (1 - 0.5 ** nivel)
+
+    else:
+        valor = base
+
+    return int(valor)
+
+# --------------------------------------------------
 # Modificar racha
 # --------------------------------------------------
 """def menu_editar_bloque_racha(racha, clave):
@@ -150,8 +190,19 @@ def modificar_racha(sistema, racha_id):
     # -----------------------
     while True:
         print("\n--- OBJETIVOS ---")
+
+        # 🔥 NUEVO: obtener tipo escalado
+        tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
+
         for i, obj in enumerate(racha.get("objetivos", []), 1):
-            objetivo_actual = obj["cantidad_base"] * (obj["factor_escalado"] ** obj.get("nivel", 0))
+            objetivo_actual = calcular_escalado(
+                obj["cantidad_base"],
+                obj["factor_escalado"],
+                obj.get("nivel", 0),
+                tipo_escalado,
+                obj.get("tope")
+            )
+
             print(f"{i}. {obj['descripcion']} {obj.get('progreso', 0)}/{int(objetivo_actual)} [FE: {obj['factor_escalado']}]")
 
         print("[A] Añadir   [E] Editar   [D] Eliminar   [Enter] Volver")
@@ -225,20 +276,32 @@ def modificar_racha(sistema, racha_id):
 # PROCESAR RACHA (OPCIÓN A - BASE FIJA)
 # --------------------------------------------------
 def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
+    """
+    Procesa una racha, calculando recompensas o penalizaciones escaladas.
+    - clave: "recompensas" o "penalizaciones"
+    - forzar: omitir verificación de objetivos para recompensas
+    """
     inicializar_rachas(sistema)
 
     racha = sistema["rachas"]["activas"].get(racha_id)
     if not racha:
         return False
 
-    # Verificación (solo recompensas)
+    tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
+
+    # ----------------------------
+    # Verificación solo para recompensas
+    # ----------------------------
     if clave == "recompensas" and not forzar:
-        objetivos = racha.get("objetivos", [])
         todos_completos = all(
-            obj.get("progreso", 0) >=
-            obj.get("cantidad_base", 1) *
-            (obj.get("factor_escalado", 1.0) ** obj.get("nivel", 0))
-            for obj in objetivos
+            obj.get("progreso", 0) >= calcular_escalado(
+                obj.get("cantidad_base", 1),
+                obj.get("factor_escalado", 1.0),
+                obj.get("nivel", 0),
+                tipo_escalado,
+                obj.get("tope")
+            )
+            for obj in racha.get("objetivos", [])
         )
         if not todos_completos:
             return None
@@ -248,53 +311,22 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
         return False
 
     entregado = {}
+    multiplicador = (racha.get("veces_completada", 0) + 1) if clave == "recompensas" else (racha.get("fallos_consecutivos", 0) + 1)
 
-    # Escalado correcto
-    if clave == "recompensas":
-        multiplicador = racha.get("veces_completada", 0) + 1
-    else:
-        multiplicador = racha.get("fallos_consecutivos", 0) + 1
-
+    # ----------------------------
+    # Calcular cantidades escaladas
+    # ----------------------------
     for tipo, items in datos.items():
-        if tipo != "objetos" and not isinstance(items, dict):
-            continue
-
-        if tipo == "objetos":
+        if tipo == "objetos" and isinstance(items, list):
             objetos_dict = {}
-            tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
-        
             for obj in items:
                 nombre = obj.get("nombre")
                 if not nombre:
                     continue
-                
                 base = obj.get("cantidad", obj.get("cantidad_base", 1))
                 factor = obj.get("factor_escalado", 1.0)
-        
-                # 🔥 IMPORTANTE: usar multiplicador - 1 (veces completada)
-                if tipo_escalado == "exponencial":
-                    cantidad_total = int(base * (factor ** (multiplicador - 1)))
-        
-                elif tipo_escalado == "lineal":
-                    cantidad_total = int(base + (factor - 1) * base * (multiplicador - 1))
-        
-                elif tipo_escalado == "lineal_tope":
-                    tope = obj.get("tope")
-                    val = int(base + (factor - 1) * base * (multiplicador - 1))
-                    cantidad_total = min(val, tope) if tope is not None else val
-        
-                elif tipo_escalado == "lineal_porcentaje":
-                    cantidad_total = int(base * (1 + (factor - 1) * (multiplicador - 1)))
-        
-                elif tipo_escalado == "lineal_suavizado":
-                    incremento = (factor - 1) * base
-                    cantidad_total = int(base + incremento * (1 - 0.5 ** (multiplicador - 1)))
-        
-                else:
-                    cantidad_total = base
-        
-                #cantidad_total = max(cantidad_total, 1)
-        
+                tope = obj.get("tope")
+                cantidad_total = calcular_escalado(base, factor, multiplicador - 1, tipo_escalado, tope)
                 objetos_dict[nombre] = {
                     "cantidad": cantidad_total,
                     "tipo": obj.get("tipo", "general"),
@@ -302,93 +334,65 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
                     "descripcion": obj.get("descripcion", ""),
                     "efectos": obj.get("efectos", {})
                 }
-        
-            entregado[tipo] = objetos_dict
-            continue
+            if objetos_dict:
+                entregado[tipo] = objetos_dict
 
-        # Para recursos que no son objetos
-        entregado[tipo] = {}
-        for nombre, info in items.items():
-            if not isinstance(info, dict):
-                continue
-
-            base = info.get("valor_base")
-            if base is None:
-                continue
-
-            tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
-            factor = info.get("factor_escalado", 1.0)
-
-            if tipo_escalado == "exponencial":
-                nuevo_valor = int(base * (factor ** (multiplicador - 1)))
-            elif tipo_escalado == "lineal":
-                nuevo_valor = int(base + (factor - 1) * base * (multiplicador - 1))
-            elif tipo_escalado == "lineal_tope":
+        elif isinstance(items, dict):
+            recursos_dict = {}
+            for nombre, info in items.items():
+                if not isinstance(info, dict):
+                    continue
+                base = info.get("valor_base")
+                if base is None:
+                    continue
+                factor = info.get("factor_escalado", 1.0)
                 tope = info.get("tope")
-                val = int(base + (factor - 1) * base * (multiplicador - 1))
-                nuevo_valor = min(val, tope) if tope is not None else val
-            elif tipo_escalado == "lineal_porcentaje":
-                nuevo_valor = int(base * (1 + (factor - 1) * (multiplicador - 1)))
-            elif tipo_escalado == "lineal_suavizado":
-                incremento = (factor - 1) * base
-                nuevo_valor = int(base + incremento * (1 - 0.5**(multiplicador - 1)))
+                valor = calcular_escalado(base, factor, multiplicador - 1, tipo_escalado, tope)
+                recursos_dict[nombre] = valor
+            if recursos_dict:
+                entregado[tipo] = recursos_dict
 
-            entregado[tipo][nombre] = nuevo_valor
-
-    # Limpiar tipos vacíos
-    entregado = {k: v for k, v in entregado.items() if v}
-
+    # ----------------------------
+    # Validaciones y conflictos
+    # ----------------------------
     if entregado:
-    
         entidad_temp = {
             "recompensas": entregado if clave == "recompensas" else {},
             "penalizaciones": entregado if clave == "penalizaciones" else {}
         }
-    
         resultado_validacion = validar_recompensas_entidad(entidad_temp)
-    
+
         if resultado_validacion["invalidas"]:
-        
             accion = manejar_conflictos(
-                racha["nombre"], 
-                resultado_validacion, 
-                sistema.get("plugins_activos", {}),   # 🔹 agrega plugins activos
-                estado.plugin_cache,   # 🔹 agrega plugins cache
+                racha["nombre"],
+                resultado_validacion,
+                sistema.get("plugins_activos", {}),
+                estado.plugin_cache,
                 id_racha=racha["id"]
-                )
-    
+            )
+
             if accion == "cancelar":
                 return False
-    
             elif accion == "eliminar_entidad":
                 eliminar_racha(sistema, racha["id"])
                 return False
-    
-            elif accion == "eliminar_recompensas":
+            elif accion in ["eliminar_recompensas", "ignorar_recompensas"]:
                 entidad_temp = filtrar_recompensas_validas_entidad(entidad_temp)
                 entregado = entidad_temp.get(clave, {})
 
-            elif accion == "ignorar_recompensas":
-                # no se entregan las inválidas esta vez, pero permanecen en la racha
-                entidad_temp = filtrar_recompensas_validas_entidad(entidad_temp)
-                entregado = entidad_temp.get(clave, {})
-    
-            elif accion == "activar_plugins":
-                pass
-            
-            elif accion == "seguir":
-                pass
-            
-        aplicar_recompensas(
-            sistema,
-            preparar_recompensa_para_aplicar(sistema, entregado)
-        )
+    # ----------------------------
+    # Aplicar recompensas o penalizaciones
+    # ----------------------------
+    if entregado:
+        aplicar_recompensas(sistema, preparar_recompensa_para_aplicar(sistema, entregado))
 
-    # Actualizar contadores
+    # ----------------------------
+    # Actualizar contadores y reinicios
+    # ----------------------------
     if clave == "recompensas":
         racha["veces_completada"] = racha.get("veces_completada", 0) + 1
         racha["fallos_consecutivos"] = 0
-    elif clave == "penalizaciones":
+    else:  # penalizaciones
         racha["fallos_consecutivos"] = racha.get("fallos_consecutivos", 0) + 1
         racha["veces_completada"] = 0
         for obj in racha.get("objetivos", []):
@@ -404,51 +408,169 @@ def procesar_racha(sistema, racha_id, clave="recompensas", forzar=False):
 # COMPLETAR RACHA
 # --------------------------------------------------
 def completar_racha(sistema, racha_id, forzar=False):
+    """
+    Completa una racha:
+    - Si forzar=True: incrementa todos los niveles de los objetivos y aplica recompensas.
+    - Si forzar=False: solicita progreso para cada objetivo y solo completa racha si todos los objetivos alcanzan su meta.
+    """
     inicializar_rachas(sistema)
-
     racha = sistema["rachas"]["activas"].get(racha_id)
     if not racha:
         return False
+
+    tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
+    todos_completados = True
 
     # ----------------------
     # FORZADO
     # ----------------------
     if forzar:
         for obj in racha.get("objetivos", []):
-            obj["progreso"] = 0
             obj["nivel"] = obj.get("nivel", 0) + 1
-
+            obj["progreso"] = 0
         return procesar_racha(sistema, racha_id, "recompensas", forzar=True)
 
     # ----------------------
     # PROGRESO NORMAL
     # ----------------------
-    todos_completados = True
-
     for obj in racha.get("objetivos", []):
-        objetivo_actual = obj["cantidad_base"] * (
-            obj["factor_escalado"] ** obj.get("nivel", 0)
+        meta_actual = calcular_escalado(
+            obj["cantidad_base"],
+            obj.get("factor_escalado", 1.0),
+            obj.get("nivel", 0),
+            tipo_escalado,
+            obj.get("tope")
         )
+
         progreso_actual = obj.get("progreso", 0)
-
-        print(f"\nObjetivo: {obj['descripcion']} {progreso_actual}/{int(objetivo_actual)}")
-
-        cantidad = safe_int_input(
-            f"Ingrese avance desde {progreso_actual}: ", default=0
-        )
+        tope = obj.get("tope")
+        print(f"\nObjetivo: {obj['descripcion']} {progreso_actual}/{int(meta_actual)}")
+        
+        # Solicitar avance
+        cantidad = safe_int_input(f"Ingrese avance desde {progreso_actual}: ", default=0)
         cantidad = max(0, cantidad)
 
-        completado = marcar_progreso_objetivo(obj, cantidad)
-        if not completado:
+        # Incrementar progreso sin pasarse del tope
+        obj["progreso"] = min(progreso_actual + cantidad, meta_actual if tope in (None, 0) else tope)
+
+        # Verificar si este objetivo alcanzó la meta para la racha
+        if obj["progreso"] < meta_actual:
             todos_completados = False
 
+    # Guardar cambios
     estado.cambios_no_guardados = True
     guardar_sistema(print_msg=False)
 
+    # ----------------------
+    # Si todos los objetivos completaron la meta, subir niveles y aplicar recompensas
+    # ----------------------
     if todos_completados:
+        for obj in racha.get("objetivos", []):
+            obj["nivel"] = obj.get("nivel", 0) + 1
+            obj["progreso"] = 0
         return procesar_racha(sistema, racha_id, "recompensas", forzar=True)
 
     return None
+
+# --------------------------------------------------
+# Gestion racha
+# --------------------------------------------------
+def gestion_racha(sistema, racha, rachas_list):
+    """
+    Menu interno para administrar una racha:
+    - Completar por progreso
+    - Forzar completado
+    - Fallar (penalizaciones escaladas)
+    - Eliminar
+    - Muestra número de fallos consecutivos y cuánto falta para reinicio
+    """
+    tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
+
+    while True:
+        print(f"\n--- DETALLES DE {racha['nombre']} ---")
+        print(f"ID: {racha['id']}")
+        print(f"Descripción: {racha['descripcion']}")
+        print(f"Tipo escalado: {tipo_escalado}")
+
+        # ----------------------------
+        # Objetivos
+        # ----------------------------
+        print("\nObjetivos:")
+        for i, obj in enumerate(racha.get("objetivos", []), 1):
+            meta_actual = calcular_escalado(
+                obj["cantidad_base"],
+                obj.get("factor_escalado", 1.0),
+                obj.get("nivel", 0),
+                tipo_escalado,
+                obj.get("tope")
+            )
+            tope_str = f" | Tope: {obj.get('tope')}" if obj.get("tope") is not None else ""
+            print(f"  {i}. {obj['descripcion']} {obj.get('progreso',0)}/{int(meta_actual)} [Nivel: {obj.get('nivel',0)} | FE: {obj.get('factor_escalado',1.0)}{tope_str}]")
+
+        # ----------------------------
+        # Recompensas y penalizaciones (unificadas)
+        # ----------------------------
+        def mostrar_items(items, veces_o_fallos, titulo):
+            print(f"\n{titulo}:")
+            for t, elementos in items.items():
+                if isinstance(elementos, list):
+                    for obj in elementos:
+                        nombre = obj.get("nombre", "objeto")
+                        base = obj.get("cantidad_base", obj.get("cantidad", 0))
+                        factor = obj.get("factor_escalado", 1.0)
+                        tope = obj.get("tope", None)
+                        valor = calcular_escalado(base, factor, veces_o_fallos, tipo_escalado, tope)
+                        tope_str = f" | Tope: {tope}" if tope is not None else ""
+                        print(f"  {nombre} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
+                elif isinstance(elementos, dict):
+                    for k, v in elementos.items():
+                        base = v.get("valor_base", 0)
+                        factor = v.get("factor_escalado", 1.0)
+                        tope = v.get("tope", None)
+                        valor = calcular_escalado(base, factor, veces_o_fallos, tipo_escalado, tope)
+                        tope_str = f" | Tope: {tope}" if tope is not None else ""
+                        print(f"  {k} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
+
+        mostrar_items(racha.get("recompensas", {}), racha.get("veces_completada",0), "Recompensas actuales (escaladas)")
+        mostrar_items(racha.get("penalizaciones", {}), racha.get("fallos_consecutivos",0), "Penalizaciones actuales")
+
+        # ----------------------------
+        # Menú
+        # ----------------------------
+        print("\n[P] Completar por progreso   [F] Forzar completado   [E] Fallar   [D] Eliminar   [Enter] Volver")
+        accion = input("> ").strip().lower()
+
+        if accion == "p":
+            recompensas = completar_racha(sistema, racha["id"], forzar=False)
+            if recompensas:
+                print("\n✅ Racha completada. Recompensas entregadas:")
+                print(recompensas)
+            else:
+                print("\n⚠ Racha no completada. Algunos objetivos aún no alcanzaron su meta.")
+            break
+
+        elif accion == "f":
+            recompensas = completar_racha(sistema, racha["id"], forzar=True)
+            print("\n✅ Racha completada forzadamente. Recompensas entregadas:")
+            print(recompensas)
+            break
+
+        elif accion == "e":
+            penalizaciones = fallar_racha(sistema, racha["id"])
+            print("\n❌ Racha fallada. Penalizaciones aplicadas:")
+            print(penalizaciones)
+            break
+
+        elif accion == "d":
+            confirmar = input("Confirmar eliminación (s/n): ").lower()
+            if confirmar == "s":
+                eliminar_racha(sistema, racha["id"])
+                rachas_list.remove(racha)
+                print("✅ Racha eliminada.")
+            break
+
+        else:
+            break
 
 # --------------------------------------------------
 # FALLAR RACHA
@@ -496,188 +618,6 @@ def eliminar_racha(sistema, racha_id):
     return True
 
 # --------------------------------------------------
-# Gestion racha
-# --------------------------------------------------
-def gestion_racha(sistema, racha, rachas_list):
-    """
-    Menu interno para administrar una racha:
-    - Completar por progreso
-    - Forzar completado
-    - Fallar (penalizaciones escaladas)
-    - Eliminar
-    - Muestra número de fallos consecutivos y cuánto falta para reinicio
-    """
-    while True:
-        print(f"\n--- DETALLES DE {racha['nombre']} ---")
-        print(f"ID: {racha['id']}")
-        print(f"Descripción: {racha['descripcion']}")
-
-        # ----------------------------
-        # Objetivos
-        # ----------------------------
-        print("\nObjetivos:")
-        for i, obj in enumerate(racha.get("objetivos", []), 1):
-            objetivo_actual = obj["cantidad_base"] * (obj["factor_escalado"] ** obj["nivel"])
-            tope = obj.get("tope", None)
-            tope_str = f" | Tope: {tope}" if tope is not None else ""
-            print(f"  {i}. {obj['descripcion']} {obj['progreso']}/{int(objetivo_actual)} [FE: {obj['factor_escalado']}{tope_str}]")
-
-        # ----------------------------
-        # Recompensas
-        # ----------------------------
-        print("Recompensa actual (escalada):")
-        veces = racha.get("veces_completada", 0)
-        tipo_escalado = sistema.get("configuracion", {}).get("racha_tipo_escalado", "exponencial")
-
-        for t, items in racha.get("recompensas", {}).items():
-
-            # OBJETOS
-            if isinstance(items, list):
-                for obj in items:
-                    nombre = obj.get("nombre", "objeto")
-
-                    # 🔥 CAMBIO AQUÍ
-                    base = obj.get("cantidad_base", obj.get("cantidad", 0))
-
-                    factor = obj.get("factor_escalado", 1.0)
-                    tope = obj.get("tope", None)
-
-                    if tipo_escalado == "exponencial":
-                        valor = int(base * (factor ** veces))
-                    elif tipo_escalado == "lineal":
-                        valor = int(base + (factor - 1) * base * veces)
-                    elif tipo_escalado == "lineal_tope":
-                        val = int(base + (factor - 1) * base * veces)
-                        valor = min(val, tope) if tope is not None else val
-                    elif tipo_escalado == "lineal_porcentaje":
-                        valor = int(base * (1 + (factor - 1) * veces))
-                    elif tipo_escalado == "lineal_suavizado":
-                        incremento = (factor - 1) * base
-                        valor = int(base + incremento * (1 - 0.5 ** veces))
-
-                    tope_str = f" | Tope: {tope}" if tope is not None else ""
-                    print(f"  {nombre} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
-
-            # RECURSOS (stats, xp, dinero...)
-            elif isinstance(items, dict):
-                for k, v in items.items():
-                    base = v.get("valor_base", 0)
-                    factor = v.get("factor_escalado", 1.0)
-                    tope = v.get("tope", None)
-
-                    if tipo_escalado == "exponencial":
-                        valor = int(base * (factor ** veces))
-                    elif tipo_escalado == "lineal":
-                        valor = int(base + (factor - 1) * base * veces)
-                    elif tipo_escalado == "lineal_tope":
-                        val = int(base + (factor - 1) * base * veces)
-                        valor = min(val, tope) if tope is not None else val
-                    elif tipo_escalado == "lineal_porcentaje":
-                        valor = int(base * (1 + (factor - 1) * veces))
-                    elif tipo_escalado == "lineal_suavizado":
-                        incremento = (factor - 1) * base
-                        valor = int(base + incremento * (1 - 0.5 ** veces))
-
-                    tope_str = f" | Tope: {tope}" if tope is not None else ""
-                    print(f"  {k} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
-
-        # ----------------------------
-        # Penalizaciones
-        # ----------------------------
-        print("Penalizaciones actuales:")
-        fallos = racha.get("fallos_consecutivos", 0)
-
-        for t, items in racha.get("penalizaciones", {}).items():
-
-            # OBJETOS
-            if isinstance(items, list):
-                for obj in items:
-                    nombre = obj.get("nombre", "objeto")
-
-                    # 🔥 CAMBIO AQUÍ
-                    base = obj.get("cantidad_base", obj.get("cantidad", 0))
-
-                    factor = obj.get("factor_escalado", 1.0)
-                    tope = obj.get("tope", None)
-
-                    if tipo_escalado == "exponencial":
-                        valor = int(base * (factor ** fallos))
-                    elif tipo_escalado == "lineal":
-                        valor = int(base + (factor - 1) * base * fallos)
-                    elif tipo_escalado == "lineal_tope":
-                        val = int(base + (factor - 1) * base * fallos)
-                        valor = min(val, tope) if tope is not None else val
-                    elif tipo_escalado == "lineal_porcentaje":
-                        valor = int(base * (1 + (factor - 1) * fallos))
-                    elif tipo_escalado == "lineal_suavizado":
-                        incremento = (factor - 1) * base
-                        valor = int(base + incremento * (1 - 0.5 ** fallos))
-
-                    tope_str = f" | Tope: {tope}" if tope is not None else ""
-                    print(f"  {nombre} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
-
-            # RECURSOS
-            elif isinstance(items, dict):
-                for k, v in items.items():
-                    base = v.get("valor_base", 0)
-                    factor = v.get("factor_escalado", 1.0)
-                    tope = v.get("tope", None)
-
-                    if tipo_escalado == "exponencial":
-                        valor = int(base * (factor ** fallos))
-                    elif tipo_escalado == "lineal":
-                        valor = int(base + (factor - 1) * base * fallos)
-                    elif tipo_escalado == "lineal_tope":
-                        val = int(base + (factor - 1) * base * fallos)
-                        valor = min(val, tope) if tope is not None else val
-                    elif tipo_escalado == "lineal_porcentaje":
-                        valor = int(base * (1 + (factor - 1) * fallos))
-                    elif tipo_escalado == "lineal_suavizado":
-                        incremento = (factor - 1) * base
-                        valor = int(base + incremento * (1 - 0.5 ** fallos))
-
-                    tope_str = f" | Tope: {tope}" if tope is not None else ""
-                    print(f"  {k} ({t}): {valor}  [Base: {base} | Factor: {factor}{tope_str}]")
-
-        # ----------------------------
-        # Menú
-        # ----------------------------
-        print("\n[P] Completar por progreso   [F] Forzar completado   [E] Fallar   [D] Eliminar   [Enter] Volver")
-        accion = input("> ").strip().lower()
-
-        if accion == "p":
-            recompensas = completar_racha(sistema, racha["id"], forzar=False)
-            if recompensas:
-                print("\n✅ Racha completada. Recompensas entregadas:")
-                print(recompensas)
-            else:
-                print("\n⚠ Racha no completada. Algunos objetivos aún no alcanzaron su meta.")
-            break
-
-        elif accion == "f":
-            recompensas = completar_racha(sistema, racha["id"], forzar=True)
-            print("\n✅ Racha completada forzadamente. Recompensas entregadas:")
-            print(recompensas)
-            break
-
-        elif accion == "e":
-            penalizaciones = fallar_racha(sistema, racha["id"])
-            print("\n❌ Racha fallada. Penalizaciones aplicadas:")
-            print(penalizaciones)
-            break
-
-        elif accion == "d":
-            confirmar = input("Confirmar eliminación (s/n): ").lower()
-            if confirmar == "s":
-                eliminar_racha(sistema, racha["id"])
-                rachas_list.remove(racha)
-                print("✅ Racha eliminada.")
-                break
-
-        else:
-            break
-
-# --------------------------------------------------
 # Seleccionar racha
 # --------------------------------------------------
 def seleccionar_racha(sistema, accion="modificar"):
@@ -712,21 +652,32 @@ def seleccionar_racha(sistema, accion="modificar"):
     print("❌ Racha no encontrada.")
     return None
 
-def marcar_progreso_objetivo(objetivo, cantidad):
+def marcar_progreso_objetivo(objetivo, cantidad, tipo_escalado="exponencial"):
     """
-    Incrementa progreso de un objetivo y marca nivel si se cumple.
-    Retorna True si objetivo completado en este paso.
-    Mantiene exceso de progreso acumulado para siguiente nivel.
+    Incrementa progreso de un objetivo respetando el tope.
+    Retorna True si el objetivo alcanzó su meta (para este nivel).
     """
-    objetivo["progreso"] += cantidad
-    objetivo_actual = objetivo["cantidad_base"] * (objetivo["factor_escalado"] ** objetivo.get("nivel", 0))
+    objetivo_actual = calcular_escalado(
+        base=objetivo["cantidad_base"],
+        factor=objetivo.get("factor_escalado", 1.0),
+        nivel=objetivo.get("nivel", 0),
+        modo=tipo_escalado,
+        tope=objetivo.get("tope")
+    )
 
-    completado = False
-    while objetivo["progreso"] >= objetivo_actual:
-        objetivo["progreso"] -= objetivo_actual
-        objetivo["nivel"] += 1
-        objetivo_actual = objetivo["cantidad_base"] * (objetivo["factor_escalado"] ** objetivo["nivel"])
-        completado = True
+    progreso_actual = objetivo.get("progreso", 0)
+    progreso_nuevo = progreso_actual + cantidad
+
+    # Si hay tope, no permitir excederlo
+    if objetivo.get("tope") is not None:
+        max_objetivo = objetivo["tope"]
+        if progreso_nuevo > max_objetivo:
+            progreso_nuevo = max_objetivo
+
+    objetivo["progreso"] = progreso_nuevo
+
+    # Completado solo si llegó al objetivo actual
+    completado = objetivo["progreso"] >= objetivo_actual
 
     return completado
 
