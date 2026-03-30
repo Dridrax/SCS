@@ -14,22 +14,29 @@
         "sinopsis": ""
     },
     "plugins_activos": {
-        "inventario": false,
+        "inventario": true,
         "misiones": false,
-        "niveles": false,
+        "niveles": true,
         "rachas": false
     },
     "tipos_recompensa_activos": {
         "stats": false,
         "progress_stats": false,
         "objetos": true,
-        "puntos_stats": false,
+        "puntos_stats": true,
         "puntos_habilidad": false,
-        "dinero": false,
-        "nivel": false,
-        "tiradas": false
+        "dinero": true,
+        "nivel": true,
+        "tiradas": true
     },
-    "recursos_definidos": {},
+    "recursos_definidos": {
+        "xp_subir": {
+            "descripcion": "",
+            "requiere_plugin": "niveles",
+            "destino": "xp_actual",
+            "modo": "simple"
+        }
+    },
     "tipos_rarezas_activos": {
         "Muy Comun": true,
         "Poco Común": true,
@@ -48,5 +55,66 @@
             "requiere_plugin": null
         }
     },
-    "misiones_completadas": {}
+    "misiones_completadas": {},
+    "niveles": {
+        "nivel": 55,
+        "xp_actual": 15,
+        "xp_para_siguiente": 155,
+        "niveles_config": {
+            "modo_subida": "solo_puntos",
+            "puntos_por_nivel": 0,
+            "stats_automaticos": 0,
+            "factor_escalado": 0.0,
+            "tipo_recompensas": "rango_con_especial",
+            "cada": 10,
+            "nivel_objetivo": 64
+        },
+        "recompensas_por_nivel": [
+            {
+                "bloque": {
+                    "dinero": {
+                        "Oro": {
+                            "valor_base": 10,
+                            "factor_escalado": 1.0,
+                            "tope": 0
+                        }
+                    },
+                    "puntos_stats": {
+                        "puntos stats": {
+                            "valor_base": 1,
+                            "factor_escalado": 1.0,
+                            "tope": 0
+                        }
+                    }
+                }
+            },
+            {
+                "bloque_especial": {
+                    "dinero": {
+                        "Platino": {
+                            "valor_base": 1,
+                            "factor_escalado": 1.0,
+                            "tope": 0
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "inventario": {
+        "0b70031a-f058-46fa-a1ca-58852ab1d7e4": {
+            "id": "0b70031a-f058-46fa-a1ca-58852ab1d7e4",
+            "nombre": "palo",
+            "rareza": "común",
+            "tipo": "arma",
+            "descripcion": "",
+            "cantidad": 3,
+            "efectos": {}
+        }
+    },
+    "puntos_stats": 75,
+    "dinero": {
+        "Oro": 750,
+        "Platino": 7
+    }
 }

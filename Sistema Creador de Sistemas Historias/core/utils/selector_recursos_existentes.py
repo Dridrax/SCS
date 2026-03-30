@@ -51,16 +51,32 @@ def obtener_recursos_existentes(sistema: dict, tipo: str):
 # ─────────────────────────────
 # MOSTRAR RECURSOS EXISTENTES
 # ─────────────────────────────
-def mostrar_recursos_existentes(sistema: dict, tipo: str):
+def mostrar_recursos_existentes(sistema: dict, tipo: str, bloque_actual: dict = None):
     """
     Muestra en pantalla los recursos existentes según el tipo.
-    No devuelve nada. Solo imprime.
+    Incluye recursos recién agregados en el bloque actual.
+    ⚡ No muestra advertencia si el bloque está vacío recién creado.
     """
-
     existentes = obtener_recursos_existentes(sistema, tipo)
 
+    # ⚡ Combinar con bloque_actual si existe
+    if bloque_actual:
+        bloque_tipo = bloque_actual.get(tipo)
+        if bloque_tipo:
+            if isinstance(existentes, dict) and isinstance(bloque_tipo, dict):
+                existentes = {**existentes, **bloque_tipo}
+            elif isinstance(existentes, dict) and isinstance(bloque_tipo, list):
+                existentes = list(existentes.values()) + bloque_tipo
+            elif isinstance(existentes, list) and isinstance(bloque_tipo, list):
+                existentes = existentes + bloque_tipo
+
+    # ⚡ Detectar si el bloque es nuevo y vacío
+    bloque_vacio = bloque_actual is not None and not bool(bloque_actual)
+
     if not existentes:
-        print("\n⚠️ No existen recursos creados aún para este tipo.")
+        # Mostrar advertencia solo si NO es bloque recién creado
+        if not bloque_vacio:
+            print("\n⚠️ No existen recursos creados aún para este tipo.")
         return
 
     print("\n=== RECURSOS EXISTENTES ===")
@@ -69,12 +85,12 @@ def mostrar_recursos_existentes(sistema: dict, tipo: str):
     # OBJETOS
     # ─────────────
     if tipo == "objetos":
-        for i, item in enumerate(existentes.values(), 1):
-            print(
-                f"{i}. {item.get('nombre')} | "
-                f"Rareza: {item.get('rareza')} | "
-                f"Cantidad: {item.get('cantidad')}"
-            )
+        lista_items = existentes if isinstance(existentes, list) else list(existentes.values())
+        for i, item in enumerate(lista_items, 1):
+            nombre = item.get("nombre", "???")
+            cantidad = item.get("cantidad", item.get("cantidad_base", 0))
+            rareza = item.get("rareza", "")
+            print(f"{i}. {nombre} | Cantidad: {cantidad} | Rareza: {rareza}")
         return
 
     # ─────────────
@@ -90,7 +106,6 @@ def mostrar_recursos_existentes(sistema: dict, tipo: str):
             else:
                 print(f"{i}. {clave}")
     elif isinstance(existentes, int):
-        # Caso xp_niveles u otros enteros
         print(f"Cantidad: {existentes}")
     else:
         print(existentes)

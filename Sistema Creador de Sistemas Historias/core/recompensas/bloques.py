@@ -13,11 +13,9 @@ def obtener_bloque(objeto, clave="recompensas"):
     return objeto.setdefault(clave, {})
 
 
-
 # ----------------------------------------
 # FUNCIONES CRUD PARA BLOQUES
 # ----------------------------------------
-
 def agregar_recompensa(bloque, tipo, datos):
     """
     Agrega un elemento al bloque.
@@ -47,7 +45,6 @@ def agregar_recompensa(bloque, tipo, datos):
     estado.cambios_no_guardados = True
     return True
 
-
 def editar_recompensa(bloque, tipo, clave=None, valor=None, index=None):
     """
     Edita un elemento dentro del bloque.
@@ -76,7 +73,6 @@ def editar_recompensa(bloque, tipo, clave=None, valor=None, index=None):
     estado.cambios_no_guardados = True
     return True
 
-
 def eliminar_recompensa(bloque, tipo=None, clave=None, index=None):
     """
     Elimina elementos del bloque:
@@ -93,7 +89,6 @@ def eliminar_recompensa(bloque, tipo=None, clave=None, index=None):
 
     estado.cambios_no_guardados = True
     return True
-
 
 # ─────────────────────────────
 # MENÚ INTERACTIVO GENÉRICO
@@ -158,7 +153,7 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
             # ─────────────────────────────
             if tipo == "objetos":
 
-                mostrar_recursos_existentes(estado.sistema_actual, "objetos")
+                mostrar_recursos_existentes(estado.sistema_actual, "objetos", bloque_actual=bloque)
 
                 nombre = input("Nombre del objeto: ").strip()
                 base = safe_int_input("Cantidad base: ", default=0)
@@ -186,7 +181,7 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
 
 
             else:
-                mostrar_recursos_existentes(estado.sistema_actual, tipo)
+                mostrar_recursos_existentes(estado.sistema_actual, tipo, bloque_actual=bloque)
 
                 base = safe_int_input("Valor base: ", default=0)
                 factor = safe_float_input("Factor de escalado (1.0 = fijo): ", default=1.0)
@@ -227,8 +222,6 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
 
             estado.cambios_no_guardados = True
             print("✅ Agregado correctamente.")
-
-
 
         # ------------------------------
         # EDITAR
@@ -410,7 +403,7 @@ def menu_editar_bloque(objeto, clave):
         
             if tipo == "objetos":
             
-                mostrar_recursos_existentes(estado.sistema_actual, "objetos")
+                mostrar_recursos_existentes(estado.sistema_actual, "objetos", bloque_actual=bloque)
         
                 nombre = input("Nombre del objeto: ").strip()
                 base = pedir_int("Cantidad: ", default=1)
@@ -431,7 +424,7 @@ def menu_editar_bloque(objeto, clave):
                 if tipo in RECURSOS_REGISTRADOS:
                     config = RECURSOS_REGISTRADOS[tipo]
                     modo = config.get("modo", "contenedor")
-                    mostrar_recursos_existentes(estado.sistema_actual, tipo)
+                    mostrar_recursos_existentes(estado.sistema_actual, tipo, bloque_actual=bloque)
                     valor = pedir_int("Valor: ", default=0)
         
                     if modo == "simple":

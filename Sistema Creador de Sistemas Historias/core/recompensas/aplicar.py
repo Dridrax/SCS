@@ -126,8 +126,6 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
                 resultado["aplicadas"].setdefault(tipo, {})
                 resultado["aplicadas"][tipo][nombre_stat] = total
 
-
-
         # ─────────────────────────────
         # PUNTOS STATS
         # ─────────────────────────────
@@ -314,16 +312,16 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
 
             continue
 
-
         # ─────────────────────────────
         # NIVEL
         # ─────────────────────────────
         if tipo == "nivel":
-            if not sistema.get("usa_niveles", False):
+            if "niveles" not in sistema:
                 resultado["ignoradas"][tipo] = "Sistema no usa niveles"
                 continue
-
-            sistema["nivel"] = sistema.get("nivel", 1) + int(valor)
+            
+            niveles = sistema["niveles"]
+            niveles["nivel"] = niveles.get("nivel", 1) + int(valor)
             resultado["aplicadas"][tipo] = valor
             continue
 
@@ -338,7 +336,6 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
             sistema["tiradas"] += int(valor)
             resultado["aplicadas"][tipo] = valor
             continue
-
 
         # ─────────────────────────────
         # RECURSOS DINÁMICOS
@@ -377,16 +374,17 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
             # ==========================================================
             # 🔥 BLINDAJE ABSOLUTO PARA XP
             # ==========================================================
-            if destino == "xp_actual":
+            if destino == "xp_actual" and "niveles" in sistema:
+            
+                niveles = sistema["niveles"]
 
-                # Asegurar que xp_actual sea SIEMPRE int
-                if not isinstance(sistema.get("xp_actual"), int):
-                    sistema["xp_actual"] = 0
+                if not isinstance(niveles.get("xp_actual"), int):
+                    niveles["xp_actual"] = 0
 
-                sistema["xp_actual"] += total
+                niveles["xp_actual"] += total
 
-                # Ejecutar subida de nivel automática
-                revisar_y_subir_nivel_destino(sistema, destino="xp_actual")
+                # Ejecutar hooks, que dispararán revisar_y_subir_nivel_destino
+                ejecutar_hook_si_existe(destino, sistema)
 
                 resultado["aplicadas"][tipo] = total
                 continue
@@ -452,8 +450,6 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
 
                 resultado["aplicadas"][tipo] = total
                 continue
-
-
 
     # ─────────────────────────────
     # Marcar cambios
