@@ -1,5 +1,139 @@
 {
-    "plugins": {},
+    "plugins": {
+        "rachas": {
+            "activas": {
+                "prueba": {
+                    "id": "prueba",
+                    "nombre": "racha",
+                    "descripcion": "a",
+                    "objetivos": [
+                        {
+                            "descripcion": "b",
+                            "cantidad_base": 1,
+                            "factor_escalado": 1.0,
+                            "tope": 0,
+                            "nivel": 0,
+                            "progreso": 0
+                        },
+                        {
+                            "descripcion": "n",
+                            "cantidad_base": 3,
+                            "factor_escalado": 1.0,
+                            "tope": 0,
+                            "nivel": 0,
+                            "progreso": 0
+                        }
+                    ],
+                    "recompensas": {
+                        "objetos": [
+                            {
+                                "nombre": "palo",
+                                "tipo": "arma",
+                                "rareza": "común",
+                                "descripcion": "",
+                                "efectos": {},
+                                "cantidad_base": 1
+                            }
+                        ]
+                    },
+                    "penalizaciones": {},
+                    "veces_completada": 0,
+                    "fallos_consecutivos": 0
+                }
+            },
+            "historial": {}
+        },
+        "inventario": {
+            "0b70031a-f058-46fa-a1ca-58852ab1d7e4": {
+                "id": "0b70031a-f058-46fa-a1ca-58852ab1d7e4",
+                "nombre": "palo",
+                "rareza": "común",
+                "tipo": "arma",
+                "descripcion": "",
+                "cantidad": 3,
+                "efectos": {}
+            }
+        },
+        "misiones": {
+            "activas": {
+                "prueba": {
+                    "id": "prueba",
+                    "nombre": "mision",
+                    "descripcion": "1",
+                    "objetivos": [
+                        {
+                            "id": "a70dc26b-2844-4e19-a143-9e5ba87de297",
+                            "descripcion": "a",
+                            "cantidad_base": 1,
+                            "progreso": 0,
+                            "interno": false,
+                            "recompensas": {
+                                "objetos": [
+                                    {
+                                        "nombre": "gema",
+                                        "cantidad": 1,
+                                        "tipo": "reliquia",
+                                        "rareza": "poco común",
+                                        "descripcion": "",
+                                        "efectos": {}
+                                    }
+                                ]
+                            },
+                            "penalizaciones": {
+                                "objetos": []
+                            },
+                            "estado_objetivo": "pendiente"
+                        }
+                    ]
+                }
+            }
+        },
+        "niveles": {
+            "nivel": 55,
+            "xp_actual": 15,
+            "xp_para_siguiente": 155,
+            "niveles_config": {
+                "modo_subida": "solo_puntos",
+                "puntos_por_nivel": 0,
+                "stats_automaticos": 0,
+                "factor_escalado": 0.0,
+                "tipo_recompensas": "rango_con_especial",
+                "cada": 10,
+                "nivel_objetivo": 64
+            },
+            "recompensas_por_nivel": [
+                {
+                    "bloque": {
+                        "dinero": {
+                            "Oro": {
+                                "valor_base": 10,
+                                "factor_escalado": 1.0,
+                                "tope": 0
+                            }
+                        },
+                        "puntos_stats": {
+                            "puntos stats": {
+                                "valor_base": 1,
+                                "factor_escalado": 1.0,
+                                "tope": 0
+                            }
+                        }
+                    }
+                },
+                {
+                    "bloque_especial": {
+                        "dinero": {
+                            "Platino": {
+                                "valor_base": 1,
+                                "factor_escalado": 1.0,
+                                "tope": 0
+                            }
+                        }
+                    }
+                }
+            ]
+        }
+    },
     "stats": {},
     "progress_stats": {}
 }

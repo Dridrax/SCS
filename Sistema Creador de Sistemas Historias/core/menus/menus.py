@@ -9,7 +9,14 @@ from core.utils.funciones_utiles import pedir_int
 from core.sistemas.mostrar_sistema import que_ficha_queres
 from core.plugins.registry import PLUGINS
 
-from core.recompensas.ui_preparacion import menu_configurar_recurso_dinamicos, menu_modificar_recursos_base, menu_configurar_rarezas_dinamicas, menu_modificar_rarezas_base
+from core.recompensas.ui_preparacion import (menu_configurar_recurso_dinamicos, menu_modificar_recursos_base, 
+                                             menu_configurar_rarezas_dinamicas, menu_modificar_rarezas_base)
+
+#Stats
+from core.stats.stats import (mostrar_stats, mostrar_progress_stats_bar, 
+                              modificar_stat_simples, modificar_stat_progress, 
+                              agregar_stat_simple, agregar_progress_stat,
+                              eliminar_stat_simple, eliminar_progress_stat)
 
 #plugins
 from plugins.inventario.menus_inv import (menu_agregar_item, mostrar_items,
@@ -23,11 +30,6 @@ from plugins.niveles.menu_niveles import menu_configurar_niveles
 from plugins.rachas.menus_rachas import mostrar_rachas, menu_administrar_rachas, configurar_rachas
 
 
-#Stats
-from core.stats.stats import (mostrar_stats, mostrar_progress_stats_bar, 
-                              modificar_stat_simples, modificar_stat_progress, 
-                              agregar_stat_simple, agregar_progress_stat,
-                              eliminar_stat_simple, eliminar_progress_stat)
 
 
 # ------------------- CREAR / CARGAR -------------------
