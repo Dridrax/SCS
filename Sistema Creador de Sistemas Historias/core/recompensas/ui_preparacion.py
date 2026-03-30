@@ -3,9 +3,10 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.utils.funciones_utiles import pedir_int
-from .tipos import (TIPOS_RECOMPENSA, RECURSOS_REGISTRADOS, TIPOS_RAREZAS, RAREZAS_REGISTRADAS, 
+from .tipos import (TIPOS_RECOMPENSA, RECURSOS_REGISTRADOS, RAREZAS_BASE, RAREZAS_REGISTRADAS, 
                     registrar_recurso, esta_tipo_base_activo, activar_tipo_base, desactivar_tipo_base,
-                    registrar_rareza, esta_rareza_base_activa, activar_rareza_base, desactivar_rareza_base)
+                    registrar_rareza, esta_rareza_base_activa, activar_rareza_base, desactivar_rareza_base,
+                    obtener_definicion_rareza)
 
 # ─────────────────────────────────────────────
 # VALIDACIÓN DE SOPORTE DE RECOMPENSAS
@@ -466,9 +467,14 @@ def menu_modificar_rarezas_base(sistema=None):
     while True:
         print("\n=== ACTIVAR/DESACTIVAR RAREZAS ===")
 
-        for i, tipo in enumerate(TIPOS_RAREZAS, start=1):
+        for i, tipo in enumerate(RAREZAS_BASE, start=1):
             estado_activo = "✅ Activo" if esta_rareza_base_activa(tipo) else "❌ Desactivado"
-            print(f"{i}. {tipo} ({estado_activo})")
+            config = obtener_definicion_rareza(tipo)
+            print(f"{tipo} ({estado_activo}):")
+            if config and config.get("descripcion"):
+                print(f"    - {config['descripcion']}")
+            if config and "peso" in config:
+                print(f"    - Peso: {config['peso']}")
 
         print("\nOpciones:")
         print("A. Activar rareza")
@@ -483,7 +489,7 @@ def menu_modificar_rarezas_base(sistema=None):
         if opcion == "A":
             tipo = input("Nombre de la rareza a activar: ").strip()
 
-            if tipo not in TIPOS_RAREZAS:
+            if tipo not in RAREZAS_BASE:
                 print("❌ Rareza no válida.")
                 continue
 
@@ -496,7 +502,7 @@ def menu_modificar_rarezas_base(sistema=None):
         elif opcion == "D":
             tipo = input("Nombre de la rareza a desactivar: ").strip()
 
-            if tipo not in TIPOS_RAREZAS:
+            if tipo not in RAREZAS_BASE:
                 print("❌ Rareza no válida.")
                 continue
 
@@ -543,13 +549,15 @@ def menu_configurar_rarezas_dinamicas(sistema=None):
             if not sistema["rarezas_definidas"]:
                 print("No hay rarezas definidas.")
             else:
-                for nombre, config in sistema["rarezas_definidas"].items():
-                    print(f"\n• {nombre}")
-                    print(f"  Descripción: {config.get('descripcion', '')}")
-                    print(f"  Color: {config.get('color')}")
-                    print(f"  Icono: {config.get('icono')}")
-                    print(f"  Peso: {config.get('peso')}")
-                    print(f"  Requiere plugin: {config.get('requiere_plugin')}")
+                for nombre in sistema["rarezas_definidas"]:
+                    config = obtener_definicion_rareza(nombre)
+                    print(f"{nombre}:")
+                    if config and config.get("descripcion"):
+                        print(f"    - {config['descripcion']}")
+                    if config and "peso" in config:
+                        print(f"    - Peso: {config['peso']}")
+                    if config and config.get("requiere_plugin"):
+                        print(f"    - Requiere plugin: {config['requiere_plugin']}")
 
         # ───────────────
         # CREAR
@@ -561,7 +569,7 @@ def menu_configurar_rarezas_dinamicas(sistema=None):
                 print("Nombre inválido.")
                 continue
 
-            if nombre in TIPOS_RAREZAS:
+            if nombre in RAREZAS_BASE:
                 print("❌ Ya existe como rareza base.")
                 continue
 
@@ -570,8 +578,6 @@ def menu_configurar_rarezas_dinamicas(sistema=None):
                 continue
 
             descripcion = input("Descripción (opcional): ").strip()
-            color = input("Color (hex, opcional): ").strip() or "#ffffff"
-            icono = input("Icono (opcional): ").strip()
 
             try:
                 peso = float(input("Peso (default 1.0): ") or 1.0)
@@ -583,8 +589,6 @@ def menu_configurar_rarezas_dinamicas(sistema=None):
 
             sistema["rarezas_definidas"][nombre] = {
                 "descripcion": descripcion,
-                "color": color,
-                "icono": icono,
                 "peso": peso,
                 "requiere_plugin": requiere_plugin
             }
@@ -592,8 +596,6 @@ def menu_configurar_rarezas_dinamicas(sistema=None):
             registrar_rareza(
                 nombre,
                 descripcion,
-                color,
-                icono,
                 peso,
                 requiere_plugin
             )
@@ -614,20 +616,12 @@ def menu_configurar_rarezas_dinamicas(sistema=None):
             rareza_actual = sistema["rarezas_definidas"][nombre]
 
             descripcion = input("Nueva descripción (vacío para mantener): ").strip()
-            color = input("Nuevo color (vacío para mantener): ").strip()
-            icono = input("Nuevo icono (vacío para mantener): ").strip()
 
             peso_input = input("Nuevo peso (vacío para mantener): ").strip()
             requiere_plugin = input("Nuevo plugin requerido (vacío para mantener): ").strip()
 
             if descripcion:
                 rareza_actual["descripcion"] = descripcion
-
-            if color:
-                rareza_actual["color"] = color
-
-            if icono:
-                rareza_actual["icono"] = icono
 
             if peso_input:
                 try:
@@ -643,8 +637,6 @@ def menu_configurar_rarezas_dinamicas(sistema=None):
             registrar_rareza(
                 nombre,
                 rareza_actual.get("descripcion", ""),
-                rareza_actual.get("color", "#ffffff"),
-                rareza_actual.get("icono", ""),
                 rareza_actual.get("peso", 1.0),
                 rareza_actual.get("requiere_plugin")
             )

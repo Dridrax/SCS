@@ -2,6 +2,12 @@
 import random
 from core.estado_global import estado
 
+# ──────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────
+# TODO DE LOS RECURSOS
+# ──────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────
+
 # ─────────────────────────────
 # Tipos base de recompensa
 # ─────────────────────────────
@@ -176,36 +182,43 @@ def obtener_definicion_tipo(tipo: str) -> dict:
     # 3️⃣ Tipo desconocido
     return None
 
+# ──────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────
+# TODO DE LAS RAREZAS
+# ──────────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────
+
 # ─────────────────────────────
 # Tipos base de rarezas
 # ─────────────────────────────
-TIPOS_RAREZAS = {
-    "Muy Comun",
-    "Común",
-    "Poco Común",
-    "Raro",
-    "Muy Raro",
-    "Épico",
-    "Legendario"
+# Rarezas base con peso
+RAREZAS_BASE = {
+    "Muy Comun": {"descripcion": "Muy fácil de encontrar", "peso": 5.0},
+    "Común": {"descripcion": "Frecuente", "peso": 4.0},
+    "Poco Común": {"descripcion": "No tan frecuente", "peso": 3.0},
+    "Raro": {"descripcion": "Difícil de encontrar", "peso": 2.0},
+    "Muy Raro": {"descripcion": "Muy difícil de encontrar", "peso": 1.0},
+    "Épico": {"descripcion": "Extraordinario", "peso": 0.5},
+    "Legendario": {"descripcion": "Único y mítico", "peso": 0.1},
 }
 
 # ─────────────────────────────
 # Inicialización de tipos base
 # ─────────────────────────────
-TIPOS_RAREZAS_ACTIVAS = { tipo: True for tipo in TIPOS_RAREZAS }
+RAREZAS_BASE_ACTIVAS = { tipo: True for tipo in RAREZAS_BASE }
 
-def inicializar_tipos_rarezas_activos():
+def inicializar_rarezas_base_activos():
     """
-    Inicializa TIPOS_RAREZAS_ACTIVOS desde el sistema cargado,
+    Inicializa RAREZAS_BASE_ACTIVOS desde el sistema cargado,
     o deja todo activo por defecto.
     """
     sistema = estado.sistema_actual
-    if sistema and "tipos_rarezas_activos" in sistema:
-        for tipo, activo in sistema["tipos_rarezas_activos"].items():
-            TIPOS_RAREZAS_ACTIVAS[tipo] = activo
+    if sistema and "rarezas_base_activos" in sistema:
+        for tipo, activo in sistema["rarezas_base_activos"].items():
+            RAREZAS_BASE_ACTIVAS[tipo] = activo
     else:
-        for tipo in TIPOS_RAREZAS:
-            TIPOS_RAREZAS_ACTIVAS[tipo] = True
+        for tipo in RAREZAS_BASE:
+            RAREZAS_BASE_ACTIVAS[tipo] = True
 
 # ─────────────────────────────
 # Rarezas dinámicas
@@ -215,8 +228,6 @@ RAREZAS_REGISTRADAS = {}
 def registrar_rareza(
     nombre: str,
     descripcion: str = "",
-    color: str = "#ffffff",
-    icono: str = "",
     peso: float = 1.0,
     requiere_plugin: str = None
 ):
@@ -231,8 +242,6 @@ def registrar_rareza(
 
     RAREZAS_REGISTRADAS[nombre] = {
         "descripcion": descripcion,
-        "color": color,
-        "icono": icono,
         "peso": peso,
         "requiere_plugin": requiere_plugin
     }
@@ -244,8 +253,6 @@ def cargar_rarezas_desde_sistema(sistema: dict):
         registrar_rareza(
             nombre,
             config.get("descripcion", ""),
-            config.get("color", "#ffffff"),
-            config.get("icono", ""),
             config.get("peso", 1.0),
             config.get("requiere_plugin")
         )
@@ -255,9 +262,9 @@ def cargar_rarezas_desde_sistema(sistema: dict):
 # ─────────────────────────────
 def esta_rareza_base_activa(tipo: str) -> bool:
     sistema = estado.sistema_actual
-    if sistema and "tipos_rarezas_activos" in sistema:
-        return sistema["tipos_rarezas_activos"].get(tipo, True)
-    return TIPOS_RAREZAS_ACTIVAS.get(tipo, True)
+    if sistema and "rarezas_base_activos" in sistema:
+        return sistema["rarezas_base_activos"].get(tipo, True)
+    return RAREZAS_BASE_ACTIVAS.get(tipo, True)
 
 def obtener_rarezas_validas():
     sistema = estado.sistema_actual or {}
@@ -266,7 +273,7 @@ def obtener_rarezas_validas():
     rarezas_validas = set()
 
     # 1️⃣ Rarezas base (con activación)
-    for tipo in TIPOS_RAREZAS:
+    for tipo in RAREZAS_BASE:
         if not esta_rareza_base_activa(tipo):
             continue
         rarezas_validas.add(tipo)
@@ -283,55 +290,66 @@ def es_rareza_valida(nombre: str) -> bool:
     return nombre in obtener_rarezas_validas()
 
 def obtener_definicion_rareza(nombre: str) -> dict:
-    return RAREZAS_REGISTRADAS.get(nombre)
+    if nombre in RAREZAS_REGISTRADAS:
+        return RAREZAS_REGISTRADAS[nombre]
+    return RAREZAS_BASE.get(nombre)
 
+# ─────────────────────────────
+# Función para elegir rareza aleatoria (bases + dinámicas)
+# ─────────────────────────────
 def elegir_rareza_aleatoria():
     sistema = estado.sistema_actual or {}
     plugins_activos = sistema.get("plugins_activos", {})
 
-    rarezas = [
-        (nombre, config)
-        for nombre, config in RAREZAS_REGISTRADAS.items()
-        if config.get("requiere_plugin") is None
-        or plugins_activos.get(config.get("requiere_plugin"), False)
-    ]
+    rarezas = []
 
+    # 1️⃣ Añadir rarezas base activas
+    for nombre, config in RAREZAS_BASE.items():
+        if esta_rareza_base_activa(nombre):
+            rarezas.append((nombre, config))
+
+    # 2️⃣ Añadir rarezas dinámicas válidas
+    for nombre, config in RAREZAS_REGISTRADAS.items():
+        plugin = config.get("requiere_plugin")
+        if plugin is None or plugins_activos.get(plugin, False):
+            rarezas.append((nombre, config))
+
+    # 3️⃣ Calcular el peso total
     total_peso = sum(r[1]["peso"] for r in rarezas)
 
     if total_peso <= 0:
         return None
 
+    # 4️⃣ Elegir una rareza aleatoriamente según el peso
     r = random.uniform(0, total_peso)
     acumulado = 0
-
     for nombre, config in rarezas:
         acumulado += config["peso"]
         if r <= acumulado:
             return nombre
-        
 # ─────────────────────────────
 # Activar/Desactivar Rarezas Base (guardando en sistema)
 # ─────────────────────────────
 def activar_rareza_base(tipo: str):
     sistema = estado.sistema_actual
-    if tipo not in TIPOS_RAREZAS:
+    if tipo not in RAREZAS_BASE:
         raise ValueError(f"'{tipo}' no es una rareza base válida")
 
-    TIPOS_RAREZAS_ACTIVAS[tipo] = True
+    RAREZAS_BASE_ACTIVAS[tipo] = True
 
     if sistema is not None:
-        sistema.setdefault("tipos_rarezas_activos", {})[tipo] = True
+        sistema.setdefault("rarezas_base_activos", {})[tipo] = True
         estado.cambios_no_guardados = True
 
 def desactivar_rareza_base(tipo: str):
     sistema = estado.sistema_actual
-    if tipo not in TIPOS_RAREZAS:
+    if tipo not in RAREZAS_BASE:
         raise ValueError(f"'{tipo}' no es una rareza base válida")
 
-    TIPOS_RAREZAS_ACTIVAS[tipo] = False
+    RAREZAS_BASE_ACTIVAS[tipo] = False
 
     if sistema is not None:
-        sistema.setdefault("tipos_rarezas_activos", {})[tipo] = False
+        sistema.setdefault("rarezas_base_activos", {})[tipo] = False
         estado.cambios_no_guardados = True
 
 
@@ -360,18 +378,25 @@ def asignar_rareza(objeto, preferida=None):
     return objeto
 
 # ─────────────────────────────
-# Función auxiliar para elegir rareza
+# Función auxiliar para elegir rareza con estética mejorada
 # ─────────────────────────────
 def seleccionar_rareza(default=None, prompt=None):
-    rarezas_validas = sorted(obtener_rarezas_validas())
+    rarezas_validas = sorted(obtener_rarezas_validas(), key=lambda x: x.lower())
     if not rarezas_validas:
         print("❌ No hay rarezas válidas disponibles, usando 'común'.")
         return "común"
 
     while True:
         print("\nRarezas disponibles:")
-        for i, r in enumerate(rarezas_validas, 1):
-            print(f"{i}. {r}")
+        for i, nombre in enumerate(rarezas_validas, 1):
+            config = obtener_definicion_rareza(nombre)
+            print(f"{nombre}:")
+            if config and config.get("descripcion"):
+                print(f"    - {config['descripcion']}")
+            if config and "peso" in config:
+                print(f"    - Peso: {config['peso']}")
+            else:
+                print(f"    - Peso: 1.0")  # fallback si no tiene peso
 
         msg = f"{prompt} [{default}]: " if prompt else f"Selecciona rareza [{default}]: "
         entrada = input(msg).strip()

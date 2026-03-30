@@ -71,10 +71,10 @@ def crear_nuevo_sistema(plugins_activos=None):
     print("\n=== SELECCIÓN DE RAREZAS ===")
     
     # 1️⃣ Preguntar rarezas base
-    tipos_rarezas = configurar_rarezas_base_interactivo()
+    rareza_base = configurar_rarezas_base_interactivo()
 
     # 2️⃣ Usar sistema temporal
-    sistema_temp["tipos_rarezas_activos"] = tipos_rarezas
+    sistema_temp["rarezas_base_activos"] = rareza_base
 
     # 3️⃣ Crear rarezas dinámicas
     from core.recompensas.ui_preparacion import menu_configurar_rarezas_dinamicas
@@ -194,7 +194,7 @@ def crear_nuevo_sistema(plugins_activos=None):
 
         "recursos_definidos": recursos_dinamicos,
 
-        "tipos_rarezas_activos": tipos_rarezas,
+        "rarezas_base_activos": rareza_base,
 
         "rarezas_definidas": rarezas_dinamicas,
         

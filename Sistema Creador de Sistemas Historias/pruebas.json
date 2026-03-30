@@ -7,81 +7,41 @@
     "stats": {},
     "progress_stats": {},
     "historia": {
-        "tipo": "original",
+        "tipo": "fanfiction",
+        "fandom": "a",
         "protagonista": "",
         "personajes_principales": "",
+        "personajes": "",
         "parejas": "",
         "sinopsis": ""
     },
     "plugins_activos": {
         "inventario": true,
         "misiones": false,
-        "niveles": true,
-        "rachas": true
+        "niveles": false,
+        "rachas": false
     },
     "tipos_recompensa_activos": {
         "stats": false,
         "progress_stats": false,
-        "objetos": true,
-        "puntos_stats": true,
+        "objetos": false,
+        "puntos_stats": false,
         "puntos_habilidad": false,
-        "dinero": true,
-        "nivel": true,
-        "tiradas": true
+        "dinero": false,
+        "nivel": false,
+        "tiradas": false
     },
-    "recursos_definidos": {
-        "xp_subir": {
-            "descripcion": "",
-            "requiere_plugin": "niveles",
-            "destino": "xp_actual",
-            "modo": "simple"
-        }
-    },
-    "tipos_rarezas_activos": {
+    "recursos_definidos": {},
+    "rarezas_base_activos": {
         "Muy Comun": true,
-        "Poco Común": true,
         "Común": true,
-        "Épico": true,
+        "Poco Común": true,
         "Raro": true,
-        "Legendario": true,
-        "Muy Raro": true
+        "Muy Raro": true,
+        "Épico": true,
+        "Legendario": true
     },
     "rarezas_definidas": {},
-    "misiones_completadas": {},
-    "niveles": {
-        "nivel": 25,
-        "xp_actual": 40,
-        "xp_para_siguiente": 124,
-        "niveles_config": {
-            "modo_subida": "solo_puntos",
-            "puntos_por_nivel": 2,
-            "stats_automaticos": 0,
-            "factor_escalado": 1.0,
-            "tipo_recompensas": "cada_nivel",
-            "cada": 10,
-            "nivel_objetivo": 64
-        },
-        "recompensas_por_nivel": [
-            {
-                "bloque": {
-                    "dinero": {
-                        "Oro": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.0,
-                            "tope": 0
-                        }
-                    },
-                    "puntos_stats": {
-                        "puntos stats": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0
-                        }
-                    }
-                }
-            }
-        ]
-    },
     "inventario": {
         "0b70031a-f058-46fa-a1ca-58852ab1d7e4": {
             "id": "0b70031a-f058-46fa-a1ca-58852ab1d7e4",
@@ -92,70 +52,5 @@
             "cantidad": 42,
             "efectos": {}
         }
-    },
-    "puntos_stats": 147,
-    "dinero": {
-        "Oro": 1504,
-        "Platino": 7
-    },
-    "rachas": {
-        "activas": {
-            "prueba": {
-                "id": "prueba",
-                "nombre": "racha",
-                "descripcion": "a",
-                "objetivos": [
-                    {
-                        "descripcion": "b",
-                        "cantidad_base": 1,
-                        "factor_escalado": 1.5,
-                        "tope": 0,
-                        "nivel": 90,
-                        "progreso": 0
-                    },
-                    {
-                        "descripcion": "n",
-                        "cantidad_base": 3,
-                        "factor_escalado": 1.2,
-                        "tope": 0,
-                        "nivel": 48,
-                        "progreso": 0
-                    }
-                ],
-                "recompensas": {
-                    "objetos": [
-                        {
-                            "nombre": "palo",
-                            "tipo": "arma",
-                            "rareza": "común",
-                            "descripcion": "",
-                            "efectos": {},
-                            "cantidad_base": 1
-                        }
-                    ],
-                    "dinero": {
-                        "Oro": {
-                            "valor_base": 3,
-                            "factor_escalado": 1.3,
-                            "tope": 0
-                        }
-                    },
-                    "xp_subir": {
-                        "xp_subir": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.5,
-                            "tope": 0
-                        }
-                    }
-                },
-                "penalizaciones": {},
-                "veces_completada": 39,
-                "fallos_consecutivos": 0
-            }
-        },
-        "historial": {}
-    },
-    "configuracion": {
-        "racha_tipo_escalado": "lineal"
     }
 }
