@@ -16,6 +16,8 @@ from plugins.niveles import PLUGIN as PLUGIN_NIVELES
 
 from plugins.rachas import PLUGIN as PLUGIN_RACHAS
 
+from plugins.ruleta import PLUGIN as PLUGIN_RULETA
+
 PLUGINS = {
     "inventario": {
         "nombre": "Inventario",
@@ -31,7 +33,9 @@ PLUGINS = {
 
     "niveles": PLUGIN_NIVELES,
     
-    "rachas": PLUGIN_RACHAS
+    "rachas": PLUGIN_RACHAS,
+
+    "ruleta": PLUGIN_RULETA
     
 }
 

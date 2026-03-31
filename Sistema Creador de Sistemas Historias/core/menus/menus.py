@@ -29,6 +29,8 @@ from plugins.niveles.menu_niveles import menu_configurar_niveles
 
 from plugins.rachas.menus_rachas import mostrar_rachas, menu_administrar_rachas, configurar_rachas
 
+from plugins.ruleta.menu_ruleta import mostrar_ruletas_interactivo, menu_modificar_ruletas
+
 
 
 
@@ -117,6 +119,10 @@ def menu_mostrar(sistema):
         if plugins.get("rachas", False):
             opciones.append(("Mostrar Rachas", lambda: mostrar_rachas(sistema)))
 
+        # Ruleta
+        if plugins.get("ruleta", False):
+            opciones.append(("Mostrar Ruletas", lambda: mostrar_ruletas_interactivo(sistema)))
+
         # Menú numerado
         for i, (nombre, _) in enumerate(opciones, start=1):
             print(f"{i}. {nombre}")
@@ -163,6 +169,10 @@ def menu_modificar(sistema):
         # Rachas
         if plugins.get("rachas", False):
             opciones.append(("Modificar Rachas", lambda: menu_administrar_rachas(sistema)))
+
+        # Ruleta
+        if plugins.get("ruleta", False):
+            opciones.append(("Modificar Ruletas", lambda: menu_modificar_ruletas(sistema)))
 
         # Menú numerado
         for i, (nombre, _) in enumerate(opciones, start=1):

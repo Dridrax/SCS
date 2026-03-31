@@ -10,11 +10,6 @@ from core.menus.menus import (menu_crear_cargar, menu_mostrar,
                               menu_modificar, configuracion)
 
 
-
-#Temporal solo prueba
-
-
-
 # ------------------- MENÚ PRINCIPAL -------------------
 def menu_principal():
     while True:

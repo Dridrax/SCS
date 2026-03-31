@@ -135,6 +135,53 @@
                     }
                 }
             ]
+        },
+        "ruleta": {
+            "activas": {
+                "ruleta_prueba": {
+                    "id": "ruleta_prueba",
+                    "nombre": "prueba",
+                    "descripcion": "no hay presupuesto para una descripcion",
+                    "premios": {
+                        "dinero": {
+                            "Bronce": {
+                                "valor_base": 2,
+                                "factor_escalado": 1.0,
+                                "tope": 0,
+                                "rareza": "común"
+                            }
+                        },
+                        "tiradas": {
+                            "Boleto": {
+                                "valor_base": 1,
+                                "factor_escalado": 1.0,
+                                "tope": 0,
+                                "rareza": "épico"
+                            }
+                        }
+                    },
+                    "eventos_narrativos": [],
+                    "tiradas_realizadas": 6
+                },
+                "ruleta_duplicada": {
+                    "id": "ruleta_duplicada",
+                    "nombre": "ruleta duplica",
+                    "descripcion": "prueba de duplicacion de ruletas",
+                    "premios": {
+                        "tiradas": {
+                            "Boleto": {
+                                "valor_base": 1,
+                                "factor_escalado": 1.0,
+                                "tope": 0,
+                                "rareza": "épico"
+                            }
+                        }
+                    },
+                    "eventos_narrativos": [],
+                    "tiradas_realizadas": 6
+                }
+            },
+            "historial": []
         }
     },
     "stats": {},

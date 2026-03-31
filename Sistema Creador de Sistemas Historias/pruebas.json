@@ -16,20 +16,21 @@
         "sinopsis": ""
     },
     "plugins_activos": {
-        "inventario": true,
+        "inventario": false,
         "misiones": false,
         "niveles": false,
-        "rachas": false
+        "rachas": false,
+        "ruleta": true
     },
     "tipos_recompensa_activos": {
-        "stats": false,
-        "progress_stats": false,
+        "stats": true,
+        "progress_stats": true,
         "objetos": false,
-        "puntos_stats": false,
+        "puntos_stats": true,
         "puntos_habilidad": false,
-        "dinero": false,
+        "dinero": true,
         "nivel": false,
-        "tiradas": false
+        "tiradas": true
     },
     "recursos_definidos": {},
     "rarezas_base_activos": {
@@ -42,15 +43,59 @@
         "Legendario": true
     },
     "rarezas_definidas": {},
-    "inventario": {
-        "0b70031a-f058-46fa-a1ca-58852ab1d7e4": {
-            "id": "0b70031a-f058-46fa-a1ca-58852ab1d7e4",
-            "nombre": "palo",
-            "rareza": "común",
-            "tipo": "arma",
-            "descripcion": "",
-            "cantidad": 42,
-            "efectos": {}
-        }
-    }
+    "ruleta": {
+        "activas": {
+            "ruleta_prueba": {
+                "id": "ruleta_prueba",
+                "nombre": "prueba",
+                "descripcion": "no hay presupuesto para una descripcion",
+                "premios": {
+                    "dinero": {
+                        "Bronce": {
+                            "valor_base": 2,
+                            "factor_escalado": 1.0,
+                            "tope": 0,
+                            "rareza": "común"
+                        }
+                    },
+                    "tiradas": {
+                        "Boleto": {
+                            "valor_base": 1,
+                            "factor_escalado": 1.0,
+                            "tope": 0,
+                            "rareza": "épico"
+                        }
+                    }
+                },
+                "eventos_narrativos": [],
+                "tiradas_realizadas": 6
+            },
+            "ruleta_duplicada": {
+                "id": "ruleta_duplicada",
+                "nombre": "ruleta duplica",
+                "descripcion": "prueba de duplicacion de ruletas",
+                "premios": {
+                    "tiradas": {
+                        "Boleto": {
+                            "valor_base": 1,
+                            "factor_escalado": 1.0,
+                            "tope": 0,
+                            "rareza": "épico"
+                        }
+                    }
+                },
+                "eventos_narrativos": [],
+                "tiradas_realizadas": 6
+            }
+        },
+        "historial": []
+    },
+    "puntos_stats": 5,
+    "dinero": {
+        "Bronce": 15
+    },
+    "tiradas": {
+        "Boleto": 2
+    },
+    "ruletas": {}
 }

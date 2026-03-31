@@ -174,6 +174,16 @@ def preparar_recompensa_para_aplicar(sistema, recompensas: dict):
             # ✅ Objetos activos: dejarlos tal como vienen (ya vienen con cantidad, tipo, rareza, etc.)
             pass  # nada que hacer
 
+    # ───────────────
+    # TIRADAS
+    # ───────────────
+    if "tiradas" in recomp and "tiradas" not in sistema:
+        if _preguntar_creacion("Este sistema no tiene tiradas."):
+            sistema["tiradas"] = {}
+
+        else:
+            recomp.pop("tiradas")
+
 
 
     return recomp

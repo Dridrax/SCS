@@ -326,17 +326,25 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
             continue
 
         # ─────────────────────────────
-        # TIRADAS
+        # TIRADAS (copia de DINERO)
         # ─────────────────────────────
         if tipo == "tiradas":
-            if "tiradas" not in sistema:
-                resultado["ignoradas"][tipo] = "Sistema no usa tiradas"
-                continue
+            if "tiradas" not in sistema or not isinstance(sistema["tiradas"], dict):
+                sistema["tiradas"] = {}
 
-            sistema["tiradas"] += int(valor)
+            for subclave, datos in valor.items() if isinstance(valor, dict) else {"default": valor}.items():
+                if isinstance(datos, dict):
+                    cantidad = datos.get("valor_base", 0)
+                    factor = datos.get("factor_escalado", 1.0)
+                    total = int(cantidad * factor)
+                else:
+                    total = int(datos)
+
+                sistema["tiradas"][subclave] = sistema["tiradas"].get(subclave, 0) + total
+
             resultado["aplicadas"][tipo] = valor
             continue
-
+        
         # ─────────────────────────────
         # RECURSOS DINÁMICOS
         # ─────────────────────────────

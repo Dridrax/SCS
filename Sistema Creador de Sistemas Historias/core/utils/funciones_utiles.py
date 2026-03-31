@@ -2,8 +2,6 @@
 
 from core.estado_global import estado
 
-
-
 def pedir_int(mensaje, default=None, minimo=None, maximo=None):
     """
     Pide un número entero al usuario.
@@ -31,9 +29,46 @@ def pedir_int(mensaje, default=None, minimo=None, maximo=None):
 
         return valor
 
+def pedir_str(mensaje: str, obligatorio: bool = True) -> str:
+    """
+    Pide al usuario que ingrese un texto.
 
+    Args:
+        mensaje (str): Mensaje que se muestra al usuario.
+        obligatorio (bool): Si True, no permite que se ingrese vacío.
 
+    Returns:
+        str: Texto ingresado por el usuario.
+    """
+    while True:
+        valor = input(f"{mensaje} ").strip()
+        if valor or not obligatorio:
+            return valor
+        print("El valor no puede estar vacío. Intenta de nuevo.")
 
+def seleccionar_opcion(opciones: list[str], mensaje: str = "Selecciona una opción") -> str:
+    """
+    Muestra una lista de opciones numeradas y devuelve la seleccionada.
+
+    Args:
+        opciones (list[str]): Lista de opciones a mostrar.
+        mensaje (str): Mensaje a mostrar antes de las opciones.
+
+    Returns:
+        str: Opción seleccionada (texto).
+    """
+    if not opciones:
+        return ""
+    while True:
+        print(mensaje + ":")
+        for i, op in enumerate(opciones, 1):
+            print(f"{i}. {op}")
+        eleccion = input("Ingresa el número de la opción: ").strip()
+        if eleccion.isdigit():
+            indice = int(eleccion) - 1
+            if 0 <= indice < len(opciones):
+                return opciones[indice]
+        print("Opción inválida. Intenta de nuevo.")
 
 def pedir_si_no(texto):
     while True:
@@ -83,7 +118,6 @@ def modificar_progreso(stat, cambio):
     if stat["nivel"] == 1 and stat["actual"] < 0:
         stat["actual"] = 0
 
-
 def modificar_factor_escalado(stat):
     """
     Permite al autor cambiar el factor de escalado de un progress stat.
@@ -100,7 +134,6 @@ def modificar_factor_escalado(stat):
 
     stat["factor_escalado"] = nuevo_factor
     print(f"\n✅ Factor de escalado actualizado a {nuevo_factor}")
-
 
 def safe_int_input(prompt, min_val=None, max_val=None, default=None):
     while True:
