@@ -10,7 +10,8 @@ from core.sistemas.mostrar_sistema import que_ficha_queres
 from core.plugins.registry import PLUGINS
 
 from core.recompensas.ui_preparacion import (menu_configurar_recurso_dinamicos, menu_modificar_recursos_base, 
-                                             menu_configurar_rarezas_dinamicas, menu_modificar_rarezas_base)
+                                             menu_configurar_rarezas_dinamicas, menu_modificar_rarezas_base,
+                                             menu_creador_recursos_base)
 
 #Stats
 from core.stats.stats import (mostrar_stats, mostrar_progress_stats_bar, 
@@ -545,6 +546,7 @@ def menu_configurar_recursos():
         print("\n=== CONFIGURACIÓN DE RECURSOS ===")
         print("1. Activar/Desactivar Recursos")
         print("2. Configurar recursos dinámicos")
+        print("3. Añadir Recurso Base al Sistema.")
         print("0. Volver")
 
         opcion = pedir_int("\nSelecciona opción:")
@@ -553,6 +555,11 @@ def menu_configurar_recursos():
             menu_modificar_recursos_base()
         elif opcion == 2:
             menu_configurar_recurso_dinamicos()
+        elif opcion == 3:
+            print("\n(No se pueden crear nuevos recursos base, esto sirve solamente para añadir dinero, tiradas, puntos_stats y puntos_habilidades")
+            print("sin tener que crear una racha, mision etc con una recompensa de ese tipo.)\n")
+            menu_creador_recursos_base(estado.sistema_actual)
+        
         else:
             break
 

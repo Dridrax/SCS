@@ -2,11 +2,12 @@
 
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
-from core.utils.funciones_utiles import pedir_int
+from core.utils.funciones_utiles import pedir_int, safe_int_input
+from core.utils.selector_recursos_existentes import mostrar_recursos_existentes
 from .tipos import (RECURSOS_BASE, RECURSOS_REGISTRADOS, RAREZAS_BASE, RAREZAS_REGISTRADAS, 
                     registrar_recurso, esta_tipo_base_activo, activar_tipo_base, desactivar_tipo_base,
                     registrar_rareza, esta_rareza_base_activa, activar_rareza_base, desactivar_rareza_base,
-                    obtener_definicion_rareza)
+                    obtener_definicion_rareza, obtener_tipos_recursos_validos)
 
 # ─────────────────────────────────────────────
 # VALIDACIÓN DE SOPORTE DE RECOMPENSAS
@@ -691,3 +692,174 @@ def menu_configurar_rarezas_dinamicas(sistema=None):
 
         else:
             print("Opción inválida.")
+
+
+
+# ─────────────────────────────
+# MENÚ RECURSOS
+# ─────────────────────────────
+def menu_creador_recursos_base(sistema):
+
+    sistema = estado.sistema_actual
+
+    if not sistema:
+        print("❌ No hay sistema cargado")
+        return
+
+    TIPOS_PERMITIDOS = {
+        "puntos_stats",
+        "puntos_habilidad",
+        "dinero",
+        "tiradas"
+    }
+
+    # 🔥 DEFINICIÓN CLAVE
+    RECURSOS_INT = {"puntos_stats", "puntos_habilidad"}
+
+    tipos_validos = obtener_tipos_recursos_validos()
+
+    tipos_usables = [t for t in tipos_validos if t in TIPOS_PERMITIDOS]
+
+    while True:
+        print("\n" + "=" * 40)
+        print("📦 RECURSOS BASE")
+        print("=" * 40)
+
+        hay_algo = False
+
+        for tipo in sorted(tipos_usables):
+
+            if tipo not in sistema:
+                continue
+
+            valor = sistema[tipo]
+            hay_algo = True
+
+            print(f"\n📦 {tipo}:")
+
+            if isinstance(valor, dict):
+                if not valor:
+                    print("   (vacío)")
+                else:
+                    for k, v in valor.items():
+                        print(f"   - {k}: {v}")
+            else:
+                print(f"   {valor}")
+
+        if not hay_algo:
+            print("\n(vacío)")
+
+        print("\n1. Seleccionar recurso")
+        print("2. Volver")
+
+        opcion = safe_int_input("Opción: ", default=2)
+
+        if opcion == 2:
+            guardar_sistema()
+            break
+
+        print("\nTipos disponibles:")
+        for t in sorted(tipos_usables):
+            print(f" - {t}")
+
+        tipo = input("Tipo: ").strip()
+
+        if tipo not in tipos_usables:
+            print("❌ Tipo no permitido")
+            continue
+
+        # 🔥 FIX CLAVE AQUÍ
+        if tipo not in sistema:
+            if tipo in RECURSOS_INT:
+                sistema[tipo] = 0
+            else:
+                sistema[tipo] = {}
+
+        while True:
+            print(f"\n--- {tipo.upper()} ---")
+
+            valor = sistema[tipo]
+
+            if isinstance(valor, dict):
+                if valor:
+                    for k, v in valor.items():
+                        print(f" - {k}: {v}")
+                else:
+                    print("(vacío)")
+            else:
+                print(f"Valor actual: {valor}")
+
+            print("\n1. Añadir")
+            print("2. Editar")
+            print("3. Eliminar subtipo")
+            print("4. Limpiar recurso")
+            print("5. Volver")
+
+            sub_op = safe_int_input("Opción: ", default=5)
+
+            if sub_op == 5:
+                guardar_sistema(print_msg=False)
+                break
+
+            # ─────────────
+            # INT
+            # ─────────────
+            if tipo in RECURSOS_INT:
+
+                if sub_op == 1:
+                    cantidad = safe_int_input("Cantidad a añadir: ", default=0)
+                    sistema[tipo] += cantidad
+
+                elif sub_op == 2:
+                    nueva = safe_int_input("Nuevo valor: ", default=sistema[tipo])
+                    sistema[tipo] = nueva
+
+                elif sub_op == 4:
+                    sistema[tipo] = 0
+
+                else:
+                    print("❌ No válido para este tipo")
+
+            # ─────────────
+            # DICT
+            # ─────────────
+            else:
+
+                if sub_op == 1:
+                    mostrar_recursos_existentes(sistema, tipo)
+
+                    nombre = input("Nombre: ").strip()
+                    if not nombre:
+                        print("❌ Nombre inválido")
+                        continue
+
+                    cantidad = safe_int_input("Cantidad: ", default=0)
+
+                    sistema[tipo][nombre] = sistema[tipo].get(nombre, 0) + cantidad
+
+                elif sub_op == 2:
+                    nombre = input("Subtipo: ").strip()
+
+                    if nombre not in sistema[tipo]:
+                        print("❌ No existe")
+                        continue
+
+                    nueva = safe_int_input(
+                        f"Nuevo valor ({sistema[tipo][nombre]}): ",
+                        default=sistema[tipo][nombre]
+                    )
+
+                    sistema[tipo][nombre] = nueva
+
+                elif sub_op == 3:
+                    nombre = input("Subtipo: ").strip()
+
+                    if nombre in sistema[tipo]:
+                        del sistema[tipo][nombre]
+                    else:
+                        print("❌ No existe")
+
+                elif sub_op == 4:
+                    sistema[tipo] = {}
+
+            print("✅ Hecho")
