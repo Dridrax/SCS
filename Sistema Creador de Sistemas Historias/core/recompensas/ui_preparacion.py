@@ -3,7 +3,7 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.utils.funciones_utiles import pedir_int
-from .tipos import (TIPOS_RECOMPENSA, RECURSOS_REGISTRADOS, RAREZAS_BASE, RAREZAS_REGISTRADAS, 
+from .tipos import (RECURSOS_BASE, RECURSOS_REGISTRADOS, RAREZAS_BASE, RAREZAS_REGISTRADAS, 
                     registrar_recurso, esta_tipo_base_activo, activar_tipo_base, desactivar_tipo_base,
                     registrar_rareza, esta_rareza_base_activa, activar_rareza_base, desactivar_rareza_base,
                     obtener_definicion_rareza)
@@ -127,6 +127,16 @@ def preparar_recompensa_para_aplicar(sistema, recompensas: dict):
             sistema["puntos_stats"] = 0
         else:
             cantidad = recomp.pop("puntos_stats")
+            _convertir_a_dinero_si_posible(sistema, recomp, cantidad)
+
+    # ───────────────
+    # PUNTOS DE HABILIDAD
+    # ───────────────
+    if "puntos_habilidad" in recomp and "puntos_habilidad" not in sistema:
+        if _preguntar_creacion("Este sistema no tiene puntos de habilidad."):
+            sistema["puntos_habilidad"] = 0
+        else:
+            cantidad = recomp.pop("puntos_habilidad")
             _convertir_a_dinero_si_posible(sistema, recomp, cantidad)
 
     # ───────────────
@@ -428,7 +438,7 @@ def menu_modificar_recursos_base(sistema=None):
 
     while True:
         print("\n=== ACTIVAR/DESACTOVAR RECURSOS ===")
-        for i, (tipo, plugin) in enumerate(TIPOS_RECOMPENSA.items(), start=1):
+        for i, (tipo, plugin) in enumerate(RECURSOS_BASE.items(), start=1):
             estado_activo = "✅ Activo" if esta_tipo_base_activo(tipo) else "❌ Desactivado"
             plugin_str = plugin if plugin else "Sin plugin"
             print(f"{i}. {tipo} ({estado_activo}) - Plugin: {plugin_str}")
@@ -442,7 +452,7 @@ def menu_modificar_recursos_base(sistema=None):
 
         if opcion == "A":
             tipo_sel = input("Nombre del tipo a activar: ").strip()
-            if tipo_sel not in TIPOS_RECOMPENSA:
+            if tipo_sel not in RECURSOS_BASE:
                 print("❌ Tipo no válido.")
                 continue
             activar_tipo_base(tipo_sel)
@@ -450,7 +460,7 @@ def menu_modificar_recursos_base(sistema=None):
 
         elif opcion == "D":
             tipo_sel = input("Nombre del tipo a desactivar: ").strip()
-            if tipo_sel not in TIPOS_RECOMPENSA:
+            if tipo_sel not in RECURSOS_BASE:
                 print("❌ Tipo no válido.")
                 continue
             desactivar_tipo_base(tipo_sel)

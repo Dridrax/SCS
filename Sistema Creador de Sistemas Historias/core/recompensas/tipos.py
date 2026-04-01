@@ -11,34 +11,33 @@ from core.estado_global import estado
 # ─────────────────────────────
 # Tipos base de recompensa
 # ─────────────────────────────
-TIPOS_RECOMPENSA = {
+RECURSOS_BASE = {
     "stats": None,
     "progress_stats": None,
     "objetos": "inventario",
     "puntos_stats": None,
     "puntos_habilidad": None,
     "dinero": None,
-    "nivel": "niveles",
     "tiradas": None
 }
 
 # ─────────────────────────────
 # Inicialización de tipos base
 # ─────────────────────────────
-TIPOS_RECOMPENSA_ACTIVOS = { tipo: True for tipo in TIPOS_RECOMPENSA }
+RECURSOS_BASE_ACTIVOS = { tipo: True for tipo in RECURSOS_BASE }
 
-def inicializar_tipos_recompensa_activos():
+def inicializar_recursos_base_activos():
     """
-    Inicializa TIPOS_RECOMPENSA_ACTIVOS desde el sistema cargado,
+    Inicializa RECURSOS_BASE_ACTIVOS desde el sistema cargado,
     o deja todo activo por defecto.
     """
     sistema = estado.sistema_actual
-    if sistema and "tipos_recompensa_activos" in sistema:
-        for tipo, activo in sistema["tipos_recompensa_activos"].items():
-            TIPOS_RECOMPENSA_ACTIVOS[tipo] = activo
+    if sistema and "recursos_base_activos" in sistema:
+        for tipo, activo in sistema["recursos_base_activos"].items():
+            RECURSOS_BASE_ACTIVOS[tipo] = activo
     else:
-        for tipo in TIPOS_RECOMPENSA:
-            TIPOS_RECOMPENSA_ACTIVOS[tipo] = True
+        for tipo in RECURSOS_BASE:
+            RECURSOS_BASE_ACTIVOS[tipo] = True
 
 # ─────────────────────────────
 # Recursos abstractos dinámicos
@@ -68,7 +67,7 @@ def registrar_recurso(
 
     nombre = nombre.strip()
 
-    if nombre in TIPOS_RECOMPENSA:
+    if nombre in RECURSOS_BASE:
         raise ValueError(f"'{nombre}' ya es un tipo base de recompensa")
 
     if modo not in ("simple", "contenedor"):
@@ -101,40 +100,40 @@ def cargar_recursos_desde_sistema(sistema: dict):
 # ─────────────────────────────
 def activar_tipo_base(tipo: str):
     sistema = estado.sistema_actual
-    if tipo not in TIPOS_RECOMPENSA:
+    if tipo not in RECURSOS_BASE:
         raise ValueError(f"'{tipo}' no es un tipo base válido")
-    TIPOS_RECOMPENSA_ACTIVOS[tipo] = True
+    RECURSOS_BASE_ACTIVOS[tipo] = True
     if sistema is not None:
-        sistema.setdefault("tipos_recompensa_activos", {})[tipo] = True
+        sistema.setdefault("recursos_base_activos", {})[tipo] = True
         estado.cambios_no_guardados = True
 
 def desactivar_tipo_base(tipo: str):
     sistema = estado.sistema_actual
-    if tipo not in TIPOS_RECOMPENSA:
+    if tipo not in RECURSOS_BASE:
         raise ValueError(f"'{tipo}' no es un tipo base válido")
-    TIPOS_RECOMPENSA_ACTIVOS[tipo] = False
+    RECURSOS_BASE_ACTIVOS[tipo] = False
     if sistema is not None:
-        sistema.setdefault("tipos_recompensa_activos", {})[tipo] = False
+        sistema.setdefault("recursos_base_activos", {})[tipo] = False
         estado.cambios_no_guardados = True
 
 def esta_tipo_base_activo(tipo: str) -> bool:
     """Devuelve True si el tipo base está activo"""
     sistema = estado.sistema_actual
-    if sistema and "tipos_recompensa_activos" in sistema:
-        return sistema["tipos_recompensa_activos"].get(tipo, True)
-    return TIPOS_RECOMPENSA_ACTIVOS.get(tipo, True)
+    if sistema and "recursos_base_activos" in sistema:
+        return sistema["recursos_base_activos"].get(tipo, True)
+    return RECURSOS_BASE_ACTIVOS.get(tipo, True)
 
 # ─────────────────────────────
 # API pública SCS
 # ─────────────────────────────
-def obtener_tipos_recompensa_validos():
+def obtener_tipos_recursos_validos():
     sistema = estado.sistema_actual or {}
     plugins_activos = sistema.get("plugins_activos", {})
 
     tipos_validos = set()
 
     # 1️⃣ Tipos base (considerando activación y plugin)
-    for tipo, plugin_requerido in TIPOS_RECOMPENSA.items():
+    for tipo, plugin_requerido in RECURSOS_BASE.items():
         if not esta_tipo_base_activo(tipo):
             continue  # Ignorar tipos desactivados
         if plugin_requerido is None or plugins_activos.get(plugin_requerido, False):
@@ -149,7 +148,7 @@ def obtener_tipos_recompensa_validos():
     return tipos_validos
 
 def es_tipo_recompensa_valido(tipo: str) -> bool:
-    return tipo in obtener_tipos_recompensa_validos()
+    return tipo in obtener_tipos_recursos_validos()
 
 def obtener_definicion_tipo(tipo: str) -> dict:
     """
@@ -158,11 +157,11 @@ def obtener_definicion_tipo(tipo: str) -> dict:
     """
 
     # 1️⃣ Tipo base
-    if tipo in TIPOS_RECOMPENSA:
+    if tipo in RECURSOS_BASE:
 
         return {
             "tipo": tipo,
-            "plugin": TIPOS_RECOMPENSA.get(tipo),
+            "plugin": RECURSOS_BASE.get(tipo),
             "destino": tipo,
             "modo": "base"
         }

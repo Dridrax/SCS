@@ -184,6 +184,8 @@
             "historial": []
         }
     },
-    "stats": {},
+    "stats": {
+        "Cabeza": 10
+    },
     "progress_stats": {}
 }

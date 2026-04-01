@@ -3,7 +3,7 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.recompensas.aplicar import aplicar_recompensas
-from core.recompensas.tipos import obtener_tipos_recompensa_validos
+from core.recompensas.tipos import obtener_tipos_recursos_validos
 from core.recompensas.ui_preparacion import preparar_recompensa_para_aplicar
 from core.utils.funciones_utiles import safe_float_input, safe_int_input, sync_plugin_cache
 from core.recompensas.bloques import menu_editar_bloque_interactivo

@@ -49,7 +49,7 @@ def crear_nuevo_sistema(plugins_activos=None):
 
     # 2️⃣ Crear sistema temporal para recursos dinámicos
     sistema_temp = crear_sistema_temporal_config(plugins_activos)
-    sistema_temp["tipos_recompensa_activos"] = tipos_recompensa
+    sistema_temp["recursos_base_activos"] = tipos_recompensa
 
     # 3️⃣ Crear recursos personalizados si el usuario quiere
     from core.recompensas.ui_preparacion import menu_configurar_recurso_dinamicos
@@ -190,7 +190,7 @@ def crear_nuevo_sistema(plugins_activos=None):
 
         "plugins_activos": plugins_activos or {},
 
-        "tipos_recompensa_activos": tipos_recompensa,
+        "recursos_base_activos": tipos_recompensa,
 
         "recursos_definidos": recursos_dinamicos,
 

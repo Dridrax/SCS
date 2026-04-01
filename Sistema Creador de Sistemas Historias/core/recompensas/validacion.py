@@ -1,8 +1,8 @@
 from core.estado_global import estado
 from core.recompensas.tipos import (
     RECURSOS_REGISTRADOS,
-    TIPOS_RECOMPENSA,
-    TIPOS_RECOMPENSA_ACTIVOS,
+    RECURSOS_BASE,
+    RECURSOS_BASE_ACTIVOS,
     es_tipo_recompensa_valido
 )
 
@@ -23,8 +23,8 @@ def _recorrer_recompensas_dict(recompensas: dict):
             plugin_req = RECURSOS_REGISTRADOS[tipo].get("requiere_plugin")
 
         # tipos base
-        elif tipo in TIPOS_RECOMPENSA:
-            plugin_req = TIPOS_RECOMPENSA.get(tipo)
+        elif tipo in RECURSOS_BASE:
+            plugin_req = RECURSOS_BASE.get(tipo)
 
         yield {"tipo": tipo, "plugin": plugin_req}
 
@@ -49,7 +49,7 @@ def validar_recompensas_entidad(entidad: dict):
         plugin = item["plugin"]
 
         # Tipo base desactivado
-        if tipo in TIPOS_RECOMPENSA and not TIPOS_RECOMPENSA_ACTIVOS.get(tipo, False):
+        if tipo in RECURSOS_BASE and not RECURSOS_BASE_ACTIVOS.get(tipo, False):
             invalidas.append(item)
             tipos_necesarios.add(tipo)
             if plugin:
@@ -306,14 +306,14 @@ def manejar_conflictos_objetivo(objetivo):
 def validar_recompensas_objetivo(objetivo):
     """
     Validación REAL basada en el sistema actual:
-    - Usa tipos_recompensa_activos del JSON
+    - Usa RECURSOS_BASE_activos del JSON
     - Ignora tipos vacíos
     - No mezcla plugins entre tipos
     """
 
     from core.recompensas.tipos import (
         RECURSOS_REGISTRADOS,
-        TIPOS_RECOMPENSA,
+        RECURSOS_BASE,
         es_tipo_recompensa_valido
     )
 
@@ -323,7 +323,7 @@ def validar_recompensas_objetivo(objetivo):
 
     sistema = estado.sistema_actual or {}
     plugins_activos = sistema.get("plugins_activos", {})
-    tipos_activos = sistema.get("tipos_recompensa_activos", {})  # 🔥 CLAVE
+    tipos_activos = sistema.get("recursos_base_activos", {})  # 🔥 CLAVE
 
     recompensas = objetivo.get("recompensas", {})
 
@@ -350,8 +350,8 @@ def validar_recompensas_objetivo(objetivo):
         if tipo in RECURSOS_REGISTRADOS:
             plugin_req = RECURSOS_REGISTRADOS[tipo].get("requiere_plugin")
 
-        elif tipo in TIPOS_RECOMPENSA:
-            plugin_req = TIPOS_RECOMPENSA.get(tipo)
+        elif tipo in RECURSOS_BASE:
+            plugin_req = RECURSOS_BASE.get(tipo)
 
         else:
             plugin_req = None

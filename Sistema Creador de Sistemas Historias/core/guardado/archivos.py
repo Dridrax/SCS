@@ -246,8 +246,8 @@ def cargar_sistema(nombre_archivo):
     # =========================
     # [8] Cargar tipos_recompensa_actios (recompensas base)
     # =========================
-    from core.recompensas.tipos import inicializar_tipos_recompensa_activos, inicializar_rarezas_base_activos
-    inicializar_tipos_recompensa_activos()
+    from core.recompensas.tipos import inicializar_recursos_base_activos, inicializar_rarezas_base_activos
+    inicializar_recursos_base_activos()
     inicializar_rarezas_base_activos()
 
     print(f"\n✅ Sistema cargado correctamente desde '{nombre_archivo}.json'.")
