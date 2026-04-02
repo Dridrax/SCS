@@ -1,0 +1,24 @@
+{
+    "plugins": {},
+    "stats": {},
+    "progress_stats": {
+        "Cabeza": {
+            "actual": 100,
+            "max": 640,
+            "nivel": 7,
+            "factor_escalado": 2.0
+        },
+        "Pecho": {
+            "actual": 100,
+            "max": 1280,
+            "nivel": 8,
+            "factor_escalado": 2.0
+        },
+        "Partes": {
+            "actual": 26,
+            "max": 360,
+            "nivel": 6,
+            "factor_escalado": 2.0
+        }
+    }
+}

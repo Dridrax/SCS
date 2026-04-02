@@ -57,17 +57,7 @@
             },
             "historial": {}
         },
-        "inventario": {
-            "0b70031a-f058-46fa-a1ca-58852ab1d7e4": {
-                "id": "0b70031a-f058-46fa-a1ca-58852ab1d7e4",
-                "nombre": "palo",
-                "rareza": "común",
-                "tipo": "arma",
-                "descripcion": "",
-                "cantidad": 414,
-                "efectos": {}
-            }
-        },
+        "inventario": {},
         "misiones": {
             "activas": {
                 "prueba": {

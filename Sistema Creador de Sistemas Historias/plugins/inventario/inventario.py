@@ -5,7 +5,6 @@ from core.recompensas.tipos import asignar_rareza
 
 import uuid
 
-
 # =========================
 # BUSCAR EN INVENTARIO
 # =========================
@@ -40,22 +39,24 @@ def buscar_inventario(sistema=None):
 # =========================
 def generar_firma_objeto(item_data):
     """
-    Genera una "firma" única para un objeto basada en sus propiedades
-    relevantes (ignora cantidad).
+    Genera una firma única del objeto (incluye valor).
     """
     nombre = item_data.get("nombre", "").strip().lower()
     rareza = item_data.get("rareza", "").strip().lower()
     tipo = item_data.get("tipo", "").strip().lower()
     descripcion = item_data.get("descripcion", "").strip().lower()
-    
+
     efectos = item_data.get("efectos", {})
     efectos_firma = tuple(sorted((k.lower(), v) for k, v in efectos.items()))
 
-    return (nombre, rareza, tipo, descripcion, efectos_firma)
+    valor = item_data.get("valor")
+    if isinstance(valor, dict):
+        valor_firma = (valor.get("tipo", "").lower(), valor.get("cantidad", 0))
+    else:
+        valor_firma = None
 
-# =========================
-# AGREGAR ITEM CORREGIDO
-# =========================
+    return (nombre, rareza, tipo, descripcion, efectos_firma, valor_firma)
+
 # =========================
 # AGREGAR ITEM REHECHO
 # =========================
@@ -183,3 +184,127 @@ def eliminar_item(sistema, item_id, cantidad=None):
 
     estado.cambios_no_guardados = True
     return True
+
+# =========================
+# VENDER ITEM
+# =========================
+def vender_item(sistema, item_id, cantidad=1):
+    """
+    Vende un item del inventario y otorga recompensa automáticamente,
+    ahora manejando subtipos de dinero o tiradas.
+    """
+    inventario = sistema.get("inventario", {})
+
+    if item_id not in inventario:
+        print("❌ Item no encontrado.")
+        return False
+
+    item = inventario[item_id]
+
+    if not puede_vender_item(item):
+        print(f"❌ El item '{item['nombre']}' no se puede vender.")
+        return False
+
+    cantidad = max(1, cantidad)
+    if item.get("cantidad", 1) < cantidad:
+        print(f"❌ No tienes suficiente cantidad de '{item['nombre']}'.")
+        return False
+
+    valor = item["valor"]
+    tipo = valor["tipo"]
+    valor_unitario = valor["cantidad"]
+    total = valor_unitario * cantidad
+
+    # Eliminar item
+    eliminar_item(sistema, item_id, cantidad)
+
+    # Aplicar recompensa
+    if tipo in ["dinero", "tiradas"]:
+        sistema.setdefault(tipo, {})
+        subtipo = valor.get("subtipo")  # usar el subtipo ya definido en el item
+        if not subtipo:
+            subtipo = "Común"  # fallback por si acaso
+        sistema[tipo][subtipo] = sistema[tipo].get(subtipo, 0) + total
+
+    elif tipo == "puntos_stats":
+        sistema["puntos_stats"] = sistema.get("puntos_stats", 0) + total
+
+    elif tipo == "puntos_habilidad":
+        sistema["puntos_habilidad"] = sistema.get("puntos_habilidad", 0) + total
+
+    else:
+        sistema[tipo] = sistema.get(tipo, 0) + total
+
+    #print(f"💰 Vendido '{item['nombre']}' x{cantidad} → +{total} {tipo}")
+    estado.cambios_no_guardados = True
+    return True
+
+def puede_vender_item(item):
+    """
+    Comprueba si un item se puede vender.
+    Requiere que tenga campo 'valor' válido.
+    """
+    if not isinstance(item, dict):
+        return False
+
+    valor = item.get("valor")
+    if not valor or not isinstance(valor, dict):
+        return False
+
+    if "tipo" not in valor or "cantidad" not in valor:
+        return False
+
+    return True
+
+def seleccionar_subtipo_recurso(sistema, tipo):
+    """
+    Permite seleccionar un subtipo existente de un recurso base o crear uno nuevo.
+    Solo se permiten los recursos base: puntos_stats, puntos_habilidad, dinero, tiradas.
+    Retorna el subtipo seleccionado, o None si se cancela.
+    """
+    RECURSOS_PERMITIDOS = {"puntos_stats", "puntos_habilidad", "dinero", "tiradas"}
+
+    if tipo not in RECURSOS_PERMITIDOS:
+        print(f"❌ El tipo '{tipo}' no está permitido para este menú.")
+        return None
+
+    # Detectar si el recurso tiene subtipos (dict) o es un valor directo
+    recursos = sistema.get(tipo, {})
+    tiene_subtipos = isinstance(recursos, dict)
+
+    # Si no hay subtipos, simplemente devolver el tipo como subtipo
+    if not tiene_subtipos:
+        return tipo
+
+    # Si hay subtipos, mostrar menú como antes
+    if recursos:
+        print(f"\nSubtipos existentes de {tipo}:")
+        for i, key in enumerate(recursos.keys(), 1):
+            print(f"{i}. {key} ({recursos[key]})")
+    else:
+        print(f"\nNo hay subtipos definidos para {tipo} aún.")
+
+    print(f"{len(recursos)+1}. Crear nuevo subtipo")
+    print("Presiona Enter para cancelar la selección.")
+
+    opcion = input("Elige subtipo o crea uno nuevo: ").strip()
+
+    if opcion == "":
+        print("⚠️ Selección cancelada.")
+        return None  # Cancelar selección si Enter
+
+    if opcion.isdigit():
+        opcion = int(opcion)
+        if 1 <= opcion <= len(recursos):
+            return list(recursos.keys())[opcion-1]
+        elif opcion == len(recursos)+1:
+            nuevo = input("Nombre del nuevo subtipo: ").strip()
+            if nuevo:
+                return nuevo
+            else:
+                return None
+    else:
+        return opcion  # nombre escrito manualmente
+
+    return None
+

@@ -20,9 +20,9 @@
     "plugins_activos": {
         "inventario": true,
         "misiones": false,
-        "niveles": true,
+        "niveles": false,
         "rachas": false,
-        "ruleta": true
+        "ruleta": false
     },
     "tipos_recompensa_activos": {
         "stats": true,
@@ -52,184 +52,15 @@
         "Legendario": true
     },
     "rarezas_definidas": {},
-    "ruleta": {
-        "activas": {
-            "ruleta_definitiva": {
-                "id": "ruleta_definitiva",
-                "nombre": "Ruleta Definitiva",
-                "descripcion": "Prueba de que ruleta entrega todos los tipos bien",
-                "premios": {
-                    "dinero": {
-                        "Oro": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Común"
-                        }
-                    },
-                    "objetos": [
-                        {
-                            "nombre": "palo",
-                            "cantidad": 2,
-                            "factor_escalado": 1.0,
-                            "tipo": "arma",
-                            "descripcion": "",
-                            "efectos": {},
-                            "rareza": "Común"
-                        }
-                    ],
-                    "puntos_habilidad": {
-                        "Puntos Habilidad": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Raro"
-                        }
-                    },
-                    "puntos_stats": {
-                        "Puntos stats": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Épico"
-                        }
-                    },
-                    "tiradas": {
-                        "Boleto": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Muy Raro"
-                        },
-                        "Boleto Dorado": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Legendario"
-                        }
-                    },
-                    "xp_subir": {
-                        "Xp": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Poco Común"
-                        }
-                    }
-                },
-                "eventos_narrativos": [
-                    {
-                        "titulo": "Una tirada mas gratis",
-                        "descripcion": "Prueba 1",
-                        "rareza": "legendario"
-                    },
-                    {
-                        "titulo": "Borrar pizarra",
-                        "descripcion": "Prueba 2",
-                        "rareza": "común"
-                    }
-                ],
-                "tiradas_realizadas": 896
-            },
-            "ruleta_definitiva_duplicada": {
-                "id": "ruleta_definitiva_duplicada",
-                "nombre": "Ruleta Duplicada Defi",
-                "descripcion": "prueba de duplicado",
-                "premios": {
-                    "dinero": {
-                        "Oro": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Común"
-                        }
-                    },
-                    "puntos_stats": {
-                        "Puntos stats": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Épico"
-                        }
-                    },
-                    "xp_subir": {
-                        "Xp": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Poco Común"
-                        }
-                    }
-                },
-                "eventos_narrativos": [
-                    {
-                        "titulo": "Una tirada mas gratis",
-                        "descripcion": "Prueba 1"
-                    },
-                    {
-                        "titulo": "Borrar pizarra",
-                        "descripcion": "Prueba 2"
-                    }
-                ],
-                "tiradas_realizadas": 256
-            }
-        },
-        "historial": []
-    },
-    "puntos_stats": 87,
+    "puntos_stats": 93,
     "dinero": {
-        "Oro": 261,
-        "Bronce": 37
+        "Oro": 272,
+        "Bronce": 83
     },
     "tiradas": {
-        "Boleto": 104,
-        "Boleto Dorado": 11
+        "Boleto": 112,
+        "Boleto Dorado": 51
     },
-    "puntos_habilidad": 276,
-    "inventario": {
-        "0b70031a-f058-46fa-a1ca-58852ab1d7e4": {
-            "id": "0b70031a-f058-46fa-a1ca-58852ab1d7e4",
-            "nombre": "palo",
-            "rareza": "común",
-            "tipo": "arma",
-            "descripcion": "",
-            "cantidad": 414,
-            "efectos": {}
-        }
-    },
-    "niveles": {
-        "nivel": 34,
-        "xp_actual": 128,
-        "xp_para_siguiente": 133,
-        "niveles_config": {
-            "modo_subida": "solo_puntos",
-            "puntos_por_nivel": 2,
-            "stats_automaticos": 0,
-            "factor_escalado": 1.0,
-            "tipo_recompensas": "cada_nivel",
-            "cada": 10,
-            "nivel_objetivo": 64
-        },
-        "recompensas_por_nivel": [
-            {
-                "bloque": {
-                    "dinero": {
-                        "Oro": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.0,
-                            "tope": 0
-                        }
-                    },
-                    "puntos_stats": {
-                        "puntos stats": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0
-                        }
-                    }
-                }
-            }
-        ]
-    },
-    "xp_actual": {}
+    "puntos_habilidad": 339,
+    "inventario": {}
 }
