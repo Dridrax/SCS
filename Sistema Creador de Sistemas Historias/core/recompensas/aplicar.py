@@ -165,12 +165,30 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
         # PUNTOS HABILIDAD
         # ─────────────────────────────
         if tipo == "puntos_habilidad":
+        
             if "puntos_habilidad" not in sistema:
                 resultado["ignoradas"][tipo] = "Sistema no usa puntos_habilidad"
                 continue
+            
+            if not isinstance(valor, dict):
+                resultado["ignoradas"][tipo] = "Formato inválido para puntos_habilidad"
+                continue
+            
+            for subclave, datos in valor.items():
+            
+                if isinstance(datos, dict):
+                    cantidad = datos.get("valor_base", 0)
+                    factor = datos.get("factor_escalado", 1.0)
+                    total = int(cantidad * factor)
 
-            sistema["puntos_habilidad"] += int(valor)
-            resultado["aplicadas"][tipo] = valor
+                else:
+                    total = int(datos)
+
+                sistema["puntos_habilidad"] += total
+
+                resultado["aplicadas"].setdefault(tipo, {})
+                resultado["aplicadas"][tipo][subclave] = total
+
             continue
 
         # ─────────────────────────────

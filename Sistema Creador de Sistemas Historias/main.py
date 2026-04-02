@@ -9,9 +9,6 @@ from core.utils.funciones_utiles import pedir_int
 from core.menus.menus import (menu_crear_cargar, menu_mostrar,
                               menu_modificar, configuracion)
 
-#de prueba
-from core.recompensas.bloques import menu_bloque_recursos
-
 
 # ------------------- MENÚ PRINCIPAL -------------------
 def menu_principal():
@@ -22,8 +19,7 @@ def menu_principal():
         print("2. Mostrar Sistema")
         print("3. Modificar Sistema")
         print("4. Configuracion")
-        print("5. pruebas")
-        print("6. Salir\n")
+        print("5. Salir\n")
 
         opcion = pedir_int("Elige una opción: ")
         #Crear/Cargar Sistema
@@ -42,11 +38,8 @@ def menu_principal():
         elif opcion == 4:
             configuracion(estado.sistema_actual)  
 
-        elif opcion == 5:
-            menu_bloque_recursos(estado.sistema_actual)
-
         #Salir
-        elif opcion == 6:
+        elif opcion == 5:
             salir_programa()
             break
 

@@ -293,6 +293,16 @@ def obtener_definicion_rareza(nombre: str) -> dict:
         return RAREZAS_REGISTRADAS[nombre]
     return RAREZAS_BASE.get(nombre)
 
+def normalizar_rareza_texto(rareza: str) -> str:
+    """
+    Normaliza una rareza para que coincida con las definiciones del sistema.
+    Ej: "poco común" → "Poco Común"
+    """
+    if not isinstance(rareza, str):
+        return rareza
+
+    return " ".join(p.capitalize() for p in rareza.strip().split())
+
 # ─────────────────────────────
 # Función para elegir rareza aleatoria (bases + dinámicas)
 # ─────────────────────────────
