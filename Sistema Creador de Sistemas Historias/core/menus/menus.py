@@ -5,20 +5,13 @@ from core.guardado.archivos import guardar_sistema, cargar_sistema, guardar_como
 from core.administrar_puntos.menu_admin_puntos import menu_distribuir_puntos
 
 from core.sistemas.crear_sistema import crear_nuevo_sistema
-from core.utils.funciones_utiles import pedir_int, pedir_si_no
-from core.sistemas.mostrar_sistema import mostrar_ficha
+from core.utils.funciones_utiles import pedir_int
+from core.sistemas.mostrar_sistema import que_ficha_queres
 from core.plugins.registry import PLUGINS
 
-#plugins
-from plugins.misiones.menus_misiones import mostrar_misiones, menu_administrar_misiones
-from plugins.misiones.rachas.menus_rachas import mostrar_rachas, menu_administrar_rachas
-from plugins.misiones.rachas.helpers_rachas import configurar_rachas
-
-from plugins.niveles.menu_niveles import menu_configurar_niveles
-
-from plugins.inventario.menus_inv import (menu_agregar_item, mostrar_items,
-                                          menu_modificar_item, menu_eliminar_item)
-
+from core.recompensas.ui_preparacion import (menu_configurar_recurso_dinamicos, menu_modificar_recursos_base, 
+                                             menu_configurar_rarezas_dinamicas, menu_modificar_rarezas_base,
+                                             menu_creador_recursos_base)
 
 #Stats
 from core.stats.stats import (mostrar_stats, mostrar_progress_stats_bar, 
@@ -26,10 +19,18 @@ from core.stats.stats import (mostrar_stats, mostrar_progress_stats_bar,
                               agregar_stat_simple, agregar_progress_stat,
                               eliminar_stat_simple, eliminar_progress_stat)
 
+#plugins
+from plugins.inventario.menus_inv import (menu_agregar_item, mostrar_items,
+                                          menu_modificar_item, menu_eliminar_item,
+                                          seleccionar_item_inventario)
 
+from plugins.misiones.menus_misiones import mostrar_misiones, menu_administrar_misiones
 
+from plugins.niveles.menu_niveles import menu_configurar_niveles
 
+from plugins.rachas.menus_rachas import mostrar_rachas, menu_administrar_rachas, configurar_rachas
 
+from plugins.ruleta.menu_ruleta import mostrar_ruletas_interactivo, menu_modificar_ruletas
 
 
 
@@ -100,13 +101,14 @@ def menu_mostrar(sistema):
 
         opciones = []
 
+        opciones.append(("Mostrar Ficha", lambda: que_ficha_queres(sistema)))
+
         # Stats y ficha base
         opciones.append(("Mostrar Stats", lambda: (
             mostrar_stats(sistema),
             mostrar_progress_stats_bar(sistema.get("progress_stats", {}))
         )))
-        opciones.append(("Mostrar Ficha", lambda: mostrar_ficha(sistema)))
-
+        
         # Inventario
         if plugins.get("inventario", False):
             opciones.append(("Mostrar Inventario", lambda: mostrar_items(sistema)))
@@ -116,8 +118,12 @@ def menu_mostrar(sistema):
             opciones.append(("Mostrar Misiones Activas", lambda: mostrar_misiones(sistema)))
 
         # Rachas
-        if plugins.get("misiones", False):
+        if plugins.get("rachas", False):
             opciones.append(("Mostrar Rachas", lambda: mostrar_rachas(sistema)))
+
+        # Ruleta
+        if plugins.get("ruleta", False):
+            opciones.append(("Mostrar Ruletas", lambda: mostrar_ruletas_interactivo(sistema)))
 
         # Menú numerado
         for i, (nombre, _) in enumerate(opciones, start=1):
@@ -163,8 +169,12 @@ def menu_modificar(sistema):
             opciones.append(("Administrar Misiones", lambda: menu_administrar_misiones(sistema)))
 
         # Rachas
-        if plugins.get("misiones", False):
+        if plugins.get("rachas", False):
             opciones.append(("Modificar Rachas", lambda: menu_administrar_rachas(sistema)))
+
+        # Ruleta
+        if plugins.get("ruleta", False):
+            opciones.append(("Modificar Ruletas", lambda: menu_modificar_ruletas(sistema)))
 
         # Menú numerado
         for i, (nombre, _) in enumerate(opciones, start=1):
@@ -196,17 +206,20 @@ def configuracion(sistema):
         # Opciones del menú dinámico
         opciones = []
 
-        # 1️⃣ Guardar → siempre disponible
         opciones.append(("Guardar", guardar_sistema))
 
-        # 2️⃣ Plugins → siempre disponible
+        opciones.append(("Configurar Sistema", lambda:configurar_sistema(sistema)))
+        
+        opciones.append(("Recursos", menu_configurar_recursos))
+
+        opciones.append(("Rarezas", menu_configurar_rarezas))
+        
         opciones.append(("Plugins", menu_plugins))
 
-        # 3️⃣ Niveles → SOLO si el plugin está activo
         if plugins.get("niveles", False):
             opciones.append(("Niveles", lambda: menu_configurar_niveles(sistema)))
 
-        if plugins.get("misiones", False):
+        if plugins.get("rachas", False):
             opciones.append(("Configuración Rachas", lambda: configurar_rachas(sistema)))
 
 
@@ -328,7 +341,20 @@ def menu_modificar_items(sistema):
 
         #Eliminar Items
         elif opcion == 3:
-            menu_eliminar_item()
+            item_id = seleccionar_item_inventario(sistema)
+
+            if not item_id:
+                print("\nOperación cancelada.")
+                continue
+
+            cantidad = pedir_int("\nCantidad a eliminar:",
+                                 default=0,
+                                 minimo=0)
+            if cantidad == 0:
+                print("\nOperación cancelada.")
+                continue
+
+            menu_eliminar_item(sistema, item_id, cantidad)
 
         elif opcion == 4:
             mostrar_items()
@@ -338,14 +364,6 @@ def menu_modificar_items(sistema):
             break
 
 #------------------- ADMINISTRAR PLUGINS/MENU PLUGINS -------------------
-
-# Diccionario con todos los plugins disponibles y sus funciones on_enable (opcional)
-"""PLUGINS = {
-    "inventario": {
-        "on_enable": lambda sistema: sistema.setdefault("inventario", {})
-    },
-    # "habilidades": {...}, "bendiciones": {...} etc.
-}"""
 
 def menu_plugins(autoguardar=True):
     sistema = estado.sistema_actual
@@ -393,7 +411,7 @@ def menu_plugins(autoguardar=True):
 
                 # Restaurar datos desde plugin_cache si existen
                 if key in estado.plugin_cache.get("plugins", {}):
-                    sistema[key] = estado.plugin_cache["plugins"][key]
+                    sistema[key] = estado.plugin_cache["plugins"][key].copy()
                 elif plugin_obj and plugin_obj.get("on_enable"):
                     plugin_obj["on_enable"](sistema)
 
@@ -420,7 +438,148 @@ def menu_plugins(autoguardar=True):
             estado.cambios_no_guardados = True
         else:
             print("❌ Opción no válida.")
+
+# ------------------- MODIFICAR Sistema(Nombre, Nombre del sistema, Original o fanfiction) -------------------
+
+def configurar_sistema(sistema):
+    """
+    Permite modificar valores que normalmente solo se definen al crear el sistema:
+    - Nombre del personaje
+    - Edad del personaje
+    - Nombre del sistema
+    - Datos de la historia (tipo, sinopsis, personajes, parejas, fandom)
+    """
+
+    while True:
+        print("\n=== CONFIGURAR SISTEMA ===")
+        print(f"1. Nombre del personaje: {sistema['personaje'].get('nombre')}")
+        print(f"2. Edad del personaje: {sistema['personaje'].get('edad')}")
+        print(f"3. Nombre del sistema: {sistema.get('nombre_sistema')}")
+        historia = sistema.get("historia", {})
+        print(f"4. Tipo de historia: {historia.get('tipo')}")
+        print("5. Modificar historia (sinopsis, personajes, parejas...)")
+        print("6. Salir\n")
+
+        opcion = input("Selecciona una opción (Enter para salir): ").strip()
+        if opcion == "" or opcion == "6":
+            guardar_sistema(print_msg=False)
+            break
+
+        if opcion == "1":
+            nuevo_nombre = input(f"Nuevo nombre del personaje (Enter para mantener '{sistema['personaje']['nombre']}'): ").strip()
+            if nuevo_nombre:
+                sistema['personaje']['nombre'] = nuevo_nombre
+
+        elif opcion == "2":
+            nueva_edad = input(f"Nueva edad (Enter para mantener '{sistema['personaje']['edad']}'): ").strip()
+            if nueva_edad:
+                try:
+                    sistema['personaje']['edad'] = int(nueva_edad)
+                except ValueError:
+                    print("❌ Edad inválida. No se modificó.")
+
+        elif opcion == "3":
+            nuevo_nombre_sistema = input(f"Nuevo nombre del sistema (Enter para mantener '{sistema.get('nombre_sistema')}'): ").strip()
+            if nuevo_nombre_sistema:
+                sistema['nombre_sistema'] = nuevo_nombre_sistema
+
+        elif opcion == "4":
+            while True:
+                tipo = input("Nuevo tipo de historia: Original o Fanfiction (O/F, Enter para mantener): ").lower().strip()
+                if tipo == "":
+                    break
+                if tipo in ("o", "f"):
+                    historia.clear()
+                    if tipo == "o":
+                        historia["tipo"] = "original"
+                        historia["sinopsis"] = input("Sinopsis: ")
+                        historia["personajes_principales"] = input("Personajes principales: ")
+                        historia["parejas"] = input("Parejas: ")
+                    else:
+                        historia["tipo"] = "fanfiction"
+                        historia["fandom"] = input("Fandom: ")
+                        historia["sinopsis"] = input("Sinopsis: ")
+                        historia["personajes"] = input("Personajes: ")
+                        historia["parejas"] = input("Parejas: ")
+                    break
+                else:
+                    print("❌ Tipo inválido. Usa O o F.")
+
+        elif opcion == "5":
+            if historia.get("tipo") == "original":
+                sinopsis = input(f"Sinopsis (Enter para mantener): ").strip()
+                if sinopsis:
+                    historia["sinopsis"] = sinopsis
+                personajes = input(f"Personajes principales (Enter para mantener): ").strip()
+                if personajes:
+                    historia["personajes_principales"] = personajes
+                parejas = input(f"Parejas (Enter para mantener): ").strip()
+                if parejas:
+                    historia["parejas"] = parejas
+
+            elif historia.get("tipo") == "fanfiction":
+                fandom = input(f"Fandom (Enter para mantener): ").strip()
+                if fandom:
+                    historia["fandom"] = fandom
+                sinopsis = input(f"Sinopsis (Enter para mantener): ").strip()
+                if sinopsis:
+                    historia["sinopsis"] = sinopsis
+                personajes = input(f"Personajes (Enter para mantener): ").strip()
+                if personajes:
+                    historia["personajes"] = personajes
+                parejas = input(f"Parejas (Enter para mantener): ").strip()
+                if parejas:
+                    historia["parejas"] = parejas
+            else:
+                print("❌ Historia no definida.")
+
+        else:
+            print("❌ Opción inválida.")
+
+    # Marcar cambios
+    estado.cambios_no_guardados = True
+    print("\n✅ Sistema configurado correctamente.\n")
+
+# ------------------- MENU CONFIGURAR RECURSOS BASE/DINAMICOS -------------------
+
+def menu_configurar_recursos():
+    while True:
+        print("\n=== CONFIGURACIÓN DE RECURSOS ===")
+        print("1. Activar/Desactivar Recursos")
+        print("2. Configurar recursos dinámicos")
+        print("3. Añadir Recurso Base al Sistema.")
+        print("0. Volver")
+
+        opcion = pedir_int("\nSelecciona opción:")
+
+        if opcion == 1:
+            menu_modificar_recursos_base()
+        elif opcion == 2:
+            menu_configurar_recurso_dinamicos()
+        elif opcion == 3:
+            print("\n(No se pueden crear nuevos recursos base, esto sirve solamente para añadir dinero, tiradas, puntos_stats y puntos_habilidades")
+            print("sin tener que crear una racha, mision etc con una recompensa de ese tipo.)\n")
+            menu_creador_recursos_base(estado.sistema_actual)
         
+        else:
+            break
+
+def menu_configurar_rarezas():
+    while True:
+        print("\n=== CONFIGURACIÓN DE RAREZAS ===")
+        print("1. Activar/Desactivar Rarezas Base")
+        print("2. Configurar rarezas dinámicas")
+        print("0. Volver")
+
+        opcion = pedir_int("\nSelecciona opción:")
+
+        if opcion == 1:
+            menu_modificar_rarezas_base()
+        elif opcion == 2:
+            menu_configurar_rarezas_dinamicas()
+        else:
+            break
+
 """MENUS.PY - Documentación y guía de uso
 
 Este archivo contiene los menús principales y submenús del programa SCS.

@@ -1,6 +1,13 @@
+#core/sistemas/crear_sistema.py
+
 from core.estado_global import estado
 from core.utils.funciones_utiles import pedir_int, pedir_si_no
 from core.guardado.archivos import guardar_sistema
+from .sistema_temporal import (
+    crear_sistema_temporal_config,
+    configurar_tipos_base_interactivo,
+    configurar_rarezas_base_interactivo
+)
 
 
 
@@ -32,7 +39,58 @@ def crear_nuevo_sistema(plugins_activos=None):
     # 5️⃣ Restauramos el sistema real
     estado.sistema_actual = sistema_anterior
 
+    
 
+    # --- SELECCIÓN DE RECURSOS ---
+    print("\n=== SELECCIÓN DE RECURSOS ===")
+
+    # 1️⃣ Preguntar recursos base
+    tipos_recompensa = configurar_tipos_base_interactivo()
+
+    # 2️⃣ Crear sistema temporal para recursos dinámicos
+    sistema_temp = crear_sistema_temporal_config(plugins_activos)
+    sistema_temp["recursos_base_activos"] = tipos_recompensa
+
+    # 3️⃣ Crear recursos personalizados si el usuario quiere
+    from core.recompensas.ui_preparacion import menu_configurar_recurso_dinamicos
+
+    if pedir_si_no("\n¿Quieres crear recursos personalizados? (s/n): "):
+
+        sistema_anterior = estado.sistema_actual
+        estado.sistema_actual = sistema_temp
+
+        menu_configurar_recurso_dinamicos()
+
+        estado.sistema_actual = sistema_anterior
+
+    # Guardamos los recursos creados
+    recursos_dinamicos = sistema_temp.get("recursos_definidos", {})
+
+
+    # --- SELECCIÓN DE RAREZAS ---
+    print("\n=== SELECCIÓN DE RAREZAS ===")
+    
+    # 1️⃣ Preguntar rarezas base
+    rareza_base = configurar_rarezas_base_interactivo()
+
+    # 2️⃣ Usar sistema temporal
+    sistema_temp["rarezas_base_activos"] = rareza_base
+
+    # 3️⃣ Crear rarezas dinámicas
+    from core.recompensas.ui_preparacion import menu_configurar_rarezas_dinamicas
+    if pedir_si_no("\n¿Quieres crear rarezas personalizadas? (s/n): "):
+
+        sistema_anterior = estado.sistema_actual
+        estado.sistema_actual = sistema_temp
+
+        menu_configurar_rarezas_dinamicas()
+
+        estado.sistema_actual = sistema_anterior
+
+    # Guardamos rarezas dinámicas
+    rarezas_dinamicas = sistema_temp.get("rarezas_definidas", {})
+
+    
 
 
     print("\n=== CREAR NUEVO SISTEMA / PERSONAJE ===\n")
@@ -42,7 +100,7 @@ def crear_nuevo_sistema(plugins_activos=None):
     edad = pedir_int("Edad: ")
 
     # --- NOMBRE DEL SISTEMA ---
-    if input("¿Tiene nombre el sistema? (s/n): ").lower() == "s":
+    if input("Desea nombrar el sistema? (s/n): ").lower() == "s":
         nombre_sistema = input("Nombre del sistema: ")
     else:
         nombre_sistema = None
@@ -53,7 +111,7 @@ def crear_nuevo_sistema(plugins_activos=None):
     progress_stats = {}
     
     # Stats simples (valor único)
-    if pedir_si_no("¿El sistema tiene stats simples? (s/n): "):
+    if pedir_si_no("¿Quieres añadir ahora stats simples? (s/n): "):
         print("\n— Stats simples (enter para terminar) —")
         while True:
             nombre = input("Nombre del stat: ").strip()
@@ -63,7 +121,7 @@ def crear_nuevo_sistema(plugins_activos=None):
             stats[nombre] = valor
     
     # Stats de progreso (valor actual / valor máximo)
-    if pedir_si_no("¿El sistema tiene stats de progreso? (s/n): "):
+    if pedir_si_no("¿Quieres añadir ahora stats de progreso? (s/n): "):
         print("\n— Stats de progreso (enter para terminar) —")
         while True:
             nombre = input("Nombre del stat (ej: Cabeza, Pecho): ").strip()
@@ -92,8 +150,6 @@ def crear_nuevo_sistema(plugins_activos=None):
                 "factor_escalado": factor
             }
 
-    
-
     # --- HISTORIA ---
     historia = {}
 
@@ -105,19 +161,70 @@ def crear_nuevo_sistema(plugins_activos=None):
 
     if tipo == "o":
         historia["tipo"] = "original"
-        historia["sinopsis"] = input("Sinopsis: ")
+        historia["protagonista"] = input("Nombre del Protagonista/s: ")
         historia["personajes_principales"] = input("Personajes principales: ")
         historia["parejas"] = input("Parejas: ")
+        historia["sinopsis"] = input("Sinopsis: ")
 
     else:
         historia["tipo"] = "fanfiction"
         historia["fandom"] = input("Fandom: ")
-        historia["sinopsis"] = input("Sinopsis: ")
+        historia["protagonista"] = input("Nombre del Protagonista/s: ")
+        historia["personajes_principales"] = input("Personajes principales: ")
         historia["personajes"] = input("Personajes: ")
         historia["parejas"] = input("Parejas: ")
+        historia["sinopsis"] = input("Sinopsis: ")
 
+    # --- SISTEMA FINAL ---
+    sistema = {
+        "personaje": {
+            "nombre": personaje_nombre,
+            "edad": edad,
+        },
+        "nombre_sistema": nombre_sistema,
+
+        "stats": stats,
+        "progress_stats": progress_stats,
+
+        "historia": historia,
+
+        "plugins_activos": plugins_activos or {},
+
+        "recursos_base_activos": tipos_recompensa,
+
+        "recursos_definidos": recursos_dinamicos,
+
+        "rarezas_base_activos": rareza_base,
+
+        "rarezas_definidas": rarezas_dinamicas,
         
-        """======================== SCS - SISTEMA DE STATS ========================
+    }
+
+    # Si el plugin inventario está activo, inicializamos el inventario como diccionario vacío
+    if sistema["plugins_activos"].get("inventario"):
+        sistema["inventario"] = {}
+
+    estado.sistema_actual = sistema
+
+    # Inicializar plugin_cache para este sistema
+    estado.plugin_cache = {
+        "plugins": {},
+        "stats": sistema.get("stats", {}),
+        "progress_stats": sistema.get("progress_stats", {})
+    }
+
+    
+
+    estado.cambios_no_guardados = True
+
+    nombre_mostrar = nombre_sistema if nombre_sistema else "Sin nombre"
+    print(f"\n✅ Sistema '{nombre_mostrar}' creado para '{personaje_nombre}'.\n")
+    guardar_sistema(print_msg=False)
+
+    return sistema
+
+
+"""======================== SCS - SISTEMA DE STATS ========================
         
 
         ========================
@@ -210,39 +317,3 @@ def crear_nuevo_sistema(plugins_activos=None):
 
         Esto mantiene SCS limpio, mantenible y escalable.
         """
-
-
-    # --- SISTEMA FINAL ---
-    sistema = {
-        "personaje": {
-            "nombre": personaje_nombre,
-            "edad": edad,
-        },
-        "nombre_sistema": nombre_sistema,
-        "stats": stats,
-        "progress_stats": progress_stats,
-        "historia": historia,
-        "plugins_activos": plugins_activos or {},
-    }
-
-    # Si el plugin inventario está activo, inicializamos el inventario como diccionario vacío
-    if sistema["plugins_activos"].get("inventario"):
-        sistema["inventario"] = {}
-
-    estado.sistema_actual = sistema
-
-    # Inicializar plugin_cache para este sistema
-    estado.plugin_cache = {
-        "plugins": {},
-        "stats": sistema.get("stats", {}),
-        "progress_stats": sistema.get("progress_stats", {})
-    }
-
-    
-
-    estado.cambios_no_guardados = True
-
-    nombre_mostrar = nombre_sistema if nombre_sistema else "Sin nombre"
-    print(f"\n✅ Sistema '{nombre_mostrar}' creado para '{personaje_nombre}'.\n")
-
-    return sistema

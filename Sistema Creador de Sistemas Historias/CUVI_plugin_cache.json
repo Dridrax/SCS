@@ -1,0 +1,115 @@
+{
+    "plugins": {
+        "inventario": {
+            "81b5724b-a402-4eb8-8020-91bc51d97688": {
+                "id": "81b5724b-a402-4eb8-8020-91bc51d97688",
+                "nombre": "Fragmentos de llama",
+                "rareza": "común",
+                "tipo": "Recurso",
+                "descripcion": "",
+                "cantidad": 28,
+                "efectos": {},
+                "valor": {
+                    "tipo": "dinero",
+                    "cantidad": 3,
+                    "subtipo": "Dolares"
+                }
+            },
+            "79a6cedd-7337-4e97-9578-e66636306024": {
+                "id": "79a6cedd-7337-4e97-9578-e66636306024",
+                "nombre": "Colmillos ardientes",
+                "rareza": "muy comun",
+                "tipo": "Recurso",
+                "descripcion": "",
+                "cantidad": 24,
+                "efectos": {},
+                "valor": {
+                    "tipo": "dinero",
+                    "cantidad": 7,
+                    "subtipo": "Dolares"
+                }
+            },
+            "a85d17f5-ad10-4ce6-b739-39cf24b37245": {
+                "id": "a85d17f5-ad10-4ce6-b739-39cf24b37245",
+                "nombre": "Glándulas Igneas",
+                "rareza": "muy comun",
+                "tipo": "Recurso",
+                "descripcion": "",
+                "cantidad": 8,
+                "efectos": {},
+                "valor": {
+                    "tipo": "dinero",
+                    "cantidad": 12,
+                    "subtipo": "Dolares"
+                }
+            },
+            "2ce68638-0187-4243-a55f-a8a9991044fb": {
+                "id": "2ce68638-0187-4243-a55f-a8a9991044fb",
+                "nombre": "Espada Calcinada",
+                "rareza": "poco común",
+                "tipo": "Arma",
+                "descripcion": "",
+                "cantidad": 1,
+                "efectos": {},
+                "valor": {
+                    "tipo": "dinero",
+                    "cantidad": 25,
+                    "subtipo": "Dolares"
+                }
+            },
+            "537aad20-4c54-433b-8b94-2f2164dede24": {
+                "id": "537aad20-4c54-433b-8b94-2f2164dede24",
+                "nombre": "Pluma de Fénix",
+                "rareza": "poco común",
+                "tipo": "Recurso",
+                "descripcion": "",
+                "cantidad": 4,
+                "efectos": {},
+                "valor": {
+                    "tipo": "dinero",
+                    "cantidad": 100,
+                    "subtipo": "Dolares"
+                }
+            },
+            "f74fc1ff-9684-44c9-897d-fcac9234af14": {
+                "id": "f74fc1ff-9684-44c9-897d-fcac9234af14",
+                "nombre": "Núcleos de Bronce",
+                "rareza": "común",
+                "tipo": "Recurso",
+                "descripcion": "",
+                "cantidad": 5,
+                "efectos": {},
+                "valor": {
+                    "tipo": "dinero",
+                    "cantidad": 20,
+                    "subtipo": "Dolares"
+                }
+            }
+        },
+        "ruleta": {
+            "activas": {},
+            "historial": []
+        }
+    },
+    "stats": {},
+    "progress_stats": {
+        "Cabeza": {
+            "actual": 100,
+            "max": 640,
+            "nivel": 7,
+            "factor_escalado": 2.0
+        },
+        "Pecho": {
+            "actual": 100,
+            "max": 1280,
+            "nivel": 8,
+            "factor_escalado": 2.0
+        },
+        "Partes": {
+            "actual": 26,
+            "max": 360,
+            "nivel": 6,
+            "factor_escalado": 2.0
+        }
+    }
+}

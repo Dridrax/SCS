@@ -1,0 +1,163 @@
+{
+    "personaje": {
+        "nombre": "Izuku Midoriya",
+        "edad": 15
+    },
+    "nombre_sistema": "CUVI",
+    "stats": {},
+    "progress_stats": {
+        "Cabeza": {
+            "actual": 100,
+            "max": 640,
+            "nivel": 7,
+            "factor_escalado": 2.0
+        },
+        "Pecho": {
+            "actual": 100,
+            "max": 1280,
+            "nivel": 8,
+            "factor_escalado": 2.0
+        },
+        "Partes": {
+            "actual": 26,
+            "max": 360,
+            "nivel": 6,
+            "factor_escalado": 2.0
+        }
+    },
+    "historia": {
+        "tipo": "fanfiction",
+        "fandom": "Boku no Hero Academia",
+        "protagonista": "Izuku Midoriya",
+        "personajes_principales": "",
+        "personajes": "",
+        "parejas": "",
+        "sinopsis": "Izuku, ese adolescente sin don, el paria del que todos se burlaban, el que sufría bajo la mano de su ex amigo de la infancia, el que algunas veces se había intentado quitar la vida por lo miserable de la misma, ahora tenia la oportunidad de no solo cumplir lo que todos le dijeron que era imposible si no tambien de demostrar que el Katsuki era un gilipollas asi que obviamente iba a darlo todo para lograrlo."
+    },
+    "plugins_activos": {
+        "inventario": true,
+        "misiones": true,
+        "niveles": false,
+        "rachas": true,
+        "ruleta": true
+    },
+    "recursos_base_activos": {
+        "stats": true,
+        "progress_stats": true,
+        "objetos": true,
+        "puntos_stats": true,
+        "puntos_habilidad": false,
+        "dinero": true,
+        "tiradas": true
+    },
+    "recursos_definidos": {},
+    "rarezas_base_activos": {
+        "Muy Comun": true,
+        "Común": true,
+        "Poco Común": true,
+        "Raro": true,
+        "Muy Raro": true,
+        "Épico": true,
+        "Legendario": true
+    },
+    "rarezas_definidas": {},
+    "inventario": {
+        "81b5724b-a402-4eb8-8020-91bc51d97688": {
+            "id": "81b5724b-a402-4eb8-8020-91bc51d97688",
+            "nombre": "Fragmentos de llama",
+            "rareza": "común",
+            "tipo": "Recurso",
+            "descripcion": "",
+            "cantidad": 28,
+            "efectos": {},
+            "valor": {
+                "tipo": "dinero",
+                "cantidad": 3,
+                "subtipo": "Dolares"
+            }
+        },
+        "79a6cedd-7337-4e97-9578-e66636306024": {
+            "id": "79a6cedd-7337-4e97-9578-e66636306024",
+            "nombre": "Colmillos ardientes",
+            "rareza": "muy comun",
+            "tipo": "Recurso",
+            "descripcion": "",
+            "cantidad": 24,
+            "efectos": {},
+            "valor": {
+                "tipo": "dinero",
+                "cantidad": 7,
+                "subtipo": "Dolares"
+            }
+        },
+        "a85d17f5-ad10-4ce6-b739-39cf24b37245": {
+            "id": "a85d17f5-ad10-4ce6-b739-39cf24b37245",
+            "nombre": "Glándulas Igneas",
+            "rareza": "muy comun",
+            "tipo": "Recurso",
+            "descripcion": "",
+            "cantidad": 8,
+            "efectos": {},
+            "valor": {
+                "tipo": "dinero",
+                "cantidad": 12,
+                "subtipo": "Dolares"
+            }
+        },
+        "2ce68638-0187-4243-a55f-a8a9991044fb": {
+            "id": "2ce68638-0187-4243-a55f-a8a9991044fb",
+            "nombre": "Espada Calcinada",
+            "rareza": "poco común",
+            "tipo": "Arma",
+            "descripcion": "",
+            "cantidad": 1,
+            "efectos": {},
+            "valor": {
+                "tipo": "dinero",
+                "cantidad": 25,
+                "subtipo": "Dolares"
+            }
+        },
+        "537aad20-4c54-433b-8b94-2f2164dede24": {
+            "id": "537aad20-4c54-433b-8b94-2f2164dede24",
+            "nombre": "Pluma de Fénix",
+            "rareza": "poco común",
+            "tipo": "Recurso",
+            "descripcion": "",
+            "cantidad": 4,
+            "efectos": {},
+            "valor": {
+                "tipo": "dinero",
+                "cantidad": 100,
+                "subtipo": "Dolares"
+            }
+        },
+        "f74fc1ff-9684-44c9-897d-fcac9234af14": {
+            "id": "f74fc1ff-9684-44c9-897d-fcac9234af14",
+            "nombre": "Núcleos de Bronce",
+            "rareza": "común",
+            "tipo": "Recurso",
+            "descripcion": "",
+            "cantidad": 5,
+            "efectos": {},
+            "valor": {
+                "tipo": "dinero",
+                "cantidad": 20,
+                "subtipo": "Dolares"
+            }
+        }
+    },
+    "puntos_stats": 36,
+    "dinero": {
+        "Dolares": 1781
+    },
+    "tiradas": {
+        "Bronce": 6,
+        "Plata": 0,
+        "Oro": 0
+    },
+    "ruleta": {
+        "activas": {},
+        "historial": []
+    }
+}

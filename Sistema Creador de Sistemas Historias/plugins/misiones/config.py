@@ -9,4 +9,4 @@ def inicializar_misiones(sistema):
 
     sistema.setdefault("misiones", {})
     sistema.setdefault("misiones_completadas", {})
-    sistema.setdefault("rachas", {})
+

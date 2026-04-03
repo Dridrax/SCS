@@ -1,20 +1,23 @@
 #plugins/misiones/menus_misiones.py
 from core.estado_global import estado
+from core.guardado.archivos import guardar_sistema
 from core.utils.funciones_utiles import pedir_int
+from core.recompensas.bloques import menu_editar_bloque
+from core.recompensas.tipos import RECURSOS_REGISTRADOS
+
+
 from plugins.misiones.helpers_misiones import (
     crear_mision,
     obtener_mision,
     editar_datos_basicos,
-    imprimir_resultados,
+    procesar_recompensas_objetivo,
     eliminar_mision_helper,
-    sync_misiones_plugin_cache,
     completar_mision,
     fallar_mision,
-    obtener_bloque,
-    agregar_recompensa,
-    editar_recompensa,
-    eliminar_recompensa,
+
 )
+
+from plugins.misiones.modelos import crear_modelo_objetivo
 
 # --------------------------
 # Selección de misión
@@ -50,17 +53,63 @@ def seleccionar_mision(sistema, accion="modificar"):
 # Menú crear misión
 # --------------------------
 def menu_crear_mision(sistema):
-    print("\n=== CREAR NUEVA MISIÓN ===")
-    id = input("ID única: ").strip()
-    nombre = input("Nombre: ").strip()
-    descripcion = input("Descripción: ").strip()
-    objetivo = input("Objetivo: ").strip()
+    print("\n" + "="*40)
+    print("        CREAR NUEVA MISIÓN")
+    print("="*40)
 
-    m = crear_mision(sistema, id=id, nombre=nombre, descripcion=descripcion, objetivo=objetivo)
+    id = input("🆔 ID única: ").strip()
+    if not id:
+        print("❌ ID obligatoria.")
+        return
+
+    nombre = input("📛 Nombre de la misión: ").strip()
+    descripcion = input("📝 Descripción: ").strip()
+
+    objetivos = []
+
+    while True:
+        print("\n" + "-"*30)
+        print("➕ NUEVO OBJETIVO")
+        print("-"*30)
+
+        if input("¿Añadir objetivo? (s/n): ").lower() != "s":
+            break
+
+        desc = input("📌 Descripción del objetivo: ").strip()
+        interno = input("¿Es interno? (s/n): ").lower() == "s"
+        cantidad = pedir_int("🎯 Cantidad necesaria: ", default=1)
+
+        obj = crear_modelo_objetivo(descripcion=desc, interno=interno)
+
+        obj["estado_objetivo"] = "pendiente"
+        obj["cantidad_base"] = cantidad
+        obj["progreso"] = 0
+        obj.setdefault("recompensas", {})
+        obj.setdefault("penalizaciones", {})
+
+        print("\n🎁 Configuración de recompensas:")
+        if input("¿Añadir recompensas ahora? (s/n): ").lower() == "s":
+            menu_editar_bloque(obj, "recompensas")
+
+        print("\n⚠ Configuración de penalizaciones:")
+        if input("¿Añadir penalizaciones ahora? (s/n): ").lower() == "s":
+            menu_editar_bloque(obj, "penalizaciones")
+
+        objetivos.append(obj)
+        print("✅ Objetivo añadido correctamente.")
+
+    m = crear_mision(
+        sistema,
+        id=id,
+        nombre=nombre,
+        descripcion=descripcion,
+        objetivos=objetivos
+    )
+
     if m:
-        print(f"✅ Misión '{nombre}' creada.")
+        print(f"\n🎉 Misión '{nombre}' creada correctamente.")
     else:
-        print(f"❌ Error: ya existe misión con ID '{id}'.")
+        print(f"\n❌ Ya existe una misión con ID '{id}'.")
 
 # --------------------------
 # Menú modificar misión
@@ -74,65 +123,124 @@ def modificar_mision(sistema, mision_id):
     while True:
         print(f"\n--- MODIFICAR MISIÓN {mision['nombre']} ---")
         print("1. Editar datos básicos")
-        print("2. Editar recompensas")
-        print("3. Editar penalizaciones")
-        print("4. Volver")
-        opcion = pedir_int("Elige opción: ", default=4)
+        print("2. Editar objetivos")
+        print("3. Volver")
+        opcion = pedir_int("Elige opción: ", default=3)
 
         if opcion == 1:
             nombre = input(f"Nombre ({mision['nombre']}): ").strip() or mision['nombre']
             descripcion = input(f"Descripción ({mision['descripcion']}): ").strip() or mision['descripcion']
-            objetivo = input(f"Objetivo ({mision['objetivo']}): ").strip() or mision['objetivo']
-            editar_datos_basicos(mision, nombre=nombre, descripcion=descripcion, objetivo=objetivo)
+            editar_datos_basicos(mision, nombre=nombre, descripcion=descripcion)
             print("✅ Datos básicos actualizados.")
 
         elif opcion == 2:
-            menu_editar_bloque(mision, "recompensas")
-        elif opcion == 3:
-            menu_editar_bloque(mision, "penalizaciones")
+            menu_editar_objetivos(mision)
         else:
             break
 
-def menu_editar_bloque(mision, clave):
-    bloque = obtener_bloque(mision, clave)
+# --------------------------
+# Menú objetivos
+# --------------------------
+def menu_editar_objetivos(mision):
     while True:
-        print(f"\n--- {clave.upper()} ---")
-        print("1. Agregar")
-        print("2. Editar")
-        print("3. Eliminar")
-        print("4. Volver")
-        opcion = pedir_int("Opción: ", default=4)
-        if opcion == 1:
-            tipo = input("Tipo (objetos/stats/dinero/progress_stats/puntos_stats/nivel/tiradas): ").strip()
-            datos = {}
-            if tipo == "objetos":
-                datos["nombre"] = input("Nombre objeto: ")
-                datos["cantidad"] = int(input("Cantidad: "))
-                datos["rareza"] = input("Rareza: ")
-                datos["tipo"] = input("Tipo: ")
-            else:
-                datos["nombre"] = input("Nombre: ")
-                datos["valor"] = int(input("Valor: "))
-            agregar_recompensa(bloque, tipo, datos)
-            print("✅ Recompensa agregada.")
-        elif opcion == 2:
-            tipo = input("Tipo a editar: ").strip()
-            clave_dato = input("Clave (nombre del stat/objeto): ").strip() or None
-            valor = input("Valor/Actualizar (si es dict, ignorar por ahora): ").strip()
-            try: valor = int(valor)
-            except: pass
-            editar_recompensa(bloque, tipo, clave=clave_dato, valor=valor)
-            print("✅ Recompensa editada.")
-        elif opcion == 3:
-            tipo = input("Tipo a eliminar: ").strip()
-            clave_dato = input("Clave a eliminar (opcional): ").strip() or None
-            index = None
-            if tipo == "objetos":
-                index = int(input("Index objeto: "))
-            eliminar_recompensa(bloque, tipo=tipo, clave=clave_dato, index=index)
-            print("✅ Eliminado.")
-        else:
+        print("\nObjetivos:")
+        for idx, obj in enumerate(mision["objetivos"], 1):
+            tipo = "Interno" if obj["interno"] else "Normal"
+            print(f"{idx}. {obj['descripcion']} [{tipo}]")
+
+        seleccion = input("Elige objetivo por número para editar (Enter para salir): ").strip()
+        if not seleccion:
             break
+        if not seleccion.isdigit() or int(seleccion)-1 >= len(mision["objetivos"]):
+            print("❌ Objetivo no encontrado.")
+            continue
+
+        obj = mision["objetivos"][int(seleccion)-1]
+
+        obj.setdefault("recompensas", {"objetos":[]})
+        obj.setdefault("penalizaciones", {"objetos":[]})
+
+        print(f"--- Editando objetivo: {obj['descripcion']} ---")
+        nueva_desc = input(f"Descripción ({obj['descripcion']}): ").strip() or obj['descripcion']
+        obj['descripcion'] = nueva_desc
+        obj['cantidad_base'] = pedir_int(f"Cantidad necesaria ({obj['cantidad_base']}): ", default=obj['cantidad_base'])
+
+        obj['interno'] = input(f"Interno? (s/n) [{ 's' if obj['interno'] else 'n'}]: ").lower() == "s"
+
+        while True:
+            print("1. Editar recompensas")
+            print("2. Editar penalizaciones")
+            print("3. Volver")
+            opt = pedir_int("Opción: ", default=3)
+            if opt == 1:
+                menu_editar_bloque(obj, "recompensas")
+            elif opt == 2:
+                menu_editar_bloque(obj, "penalizaciones")
+            else:
+                break
+
+def menu_modificar_progreso(mision):
+    """
+    Permite al usuario cambiar progreso de objetivos manualmente y gestionar recompensas.
+    Gestiona estados: 'pendiente', 'pendiente_entrega', 'entregado'
+    """
+    print(f"\n=== Modificar progreso de {mision['nombre']} ===")
+
+    for idx, obj in enumerate(mision['objetivos'], 1):
+        prog = obj.get("progreso", 0)
+        base = obj.get("cantidad_base", 1)
+        estado_obj = obj.get("estado_objetivo", "pendiente")
+
+        # Ignorar objetivos ya entregados
+        if estado_obj == "entregado":
+            print(f"{idx}. {obj['descripcion']} | Progreso actual: {prog}/{base} | Estado: entregado ✅ (no modificable)")
+            continue  # saltar al siguiente objetivo
+        
+        print(f"{idx}. {obj['descripcion']} | Progreso actual: {prog}/{base} | Estado: {estado_obj}")
+
+        nuevo = input("Nuevo progreso (Enter = mantener actual): ").strip()
+
+        if nuevo:
+            try:
+                obj["progreso"] = max(0, int(nuevo))
+            except ValueError:
+                print("Valor no válido, se mantiene progreso actual.")
+                continue  # pasa al siguiente objetivo
+
+        prog = obj.get("progreso", 0)  # actualizar después de cambio
+
+        # Detectar objetivo completado
+        if prog >= base and estado_obj != "entregado":
+            print(f"\n🎯 Objetivo '{obj['descripcion']}' completado!")
+            while True:
+                print("¿Qué deseas hacer con este objetivo?")
+                print("1. Entregar recompensas ahora")
+                print("2. Dejar como pendiente de entrega")
+                print("3. Modificar progreso manualmente")
+                opcion = input("Elige opción (1/2/3): ").strip()
+        
+                if opcion == "1":
+                    # Entregar recompensas con validación de plugins y tipos
+                    from plugins.misiones.helpers_misiones import procesar_recompensas_objetivo
+                    procesar_recompensas_objetivo(estado.sistema_actual, obj)
+                    obj["estado_objetivo"] = "entregado"
+                    print("✅ Recompensas entregadas.")
+                    guardar_sistema(print_msg=False)
+                    break
+                elif opcion == "2":
+                    obj["estado_objetivo"] = "pendiente_entrega"
+                    print("⏳ Objetivo dejado pendiente de entrega.")
+                    guardar_sistema(print_msg=False)
+                    break
+                elif opcion == "3":
+                    obj["estado_objetivo"] = "pendiente"
+                    print("✏ Puedes seguir modificando el progreso de este objetivo.")
+                    break
+                else:
+                    print("❌ Opción no válida, elige 1, 2 o 3.")
+
+    estado.cambios_no_guardados = True
+    print("✅ Progreso actualizado.")
 
 # --------------------------
 # Menú administración
@@ -179,7 +287,7 @@ def mostrar_misiones(sistema=None):
         return
 
     activas = sistema.get("misiones", {}).get("activas", {})
-    misiones_list = [m for m in activas.values() if isinstance(m, dict) and "id" in m and "nombre" in m]
+    misiones_list = list(activas.values())
     if not misiones_list:
         print("❌ No hay misiones activas.")
         return
@@ -210,164 +318,111 @@ def mostrar_misiones(sistema=None):
 
         gestion_mision(sistema, mision, misiones_list)
 
+# --------------------------
+# Gestión de una misión
+# --------------------------
 def gestion_mision(sistema, mision, misiones_list):
     while True:
         print(f"\n--- DETALLES DE {mision['nombre']} ---")
         print(f"ID: {mision['id']}")
         print(f"Descripción: {mision['descripcion']}")
-        print(f"Objetivo: {mision['objetivo']}")
-        imprimir_resultados("Recompensas", mision.get("recompensas", {}))
-        imprimir_resultados("Penalizaciones", mision.get("penalizaciones", {}))
 
-        print("\n[C] Completar   [F] Fallar   [D] Eliminar   [Enter] Volver")
+        # Mostrar objetivos normales e internos
+        normales = [o for o in mision["objetivos"] if not o["interno"]]
+        internos = [o for o in mision["objetivos"] if o["interno"]]
+
+        def imprimir_bloque(titulo, bloque):
+            if not bloque:
+                print(f"{titulo}: (vacío)")
+                return
+            print(f"{titulo}:")
+            for tipo, items in bloque.items():
+                # items puede ser dict o lista
+                if isinstance(items, dict):
+                    for nombre, valor in items.items():
+                        destino = ""
+                        if nombre in RECURSOS_REGISTRADOS:
+                            destino = f" (destino: {RECURSOS_REGISTRADOS[nombre].get('destino')})"
+                        # Para objetos guardamos cantidad dentro de dict
+                        if isinstance(valor, dict) and "cantidad" in valor:
+                            val_disp = valor["cantidad"]
+                        elif isinstance(valor, dict) and "valor" in valor:
+                            val_disp = valor.get("valor", 0)
+                        else:
+                            val_disp = valor
+                        print(f"  - {tipo} | {nombre}: {val_disp}{destino}")
+                elif isinstance(items, list):
+                    for idx, item in enumerate(items):
+                    
+                        if tipo == "objetos" and isinstance(item, dict):
+                            nombre = item.get("nombre", "objeto")
+                            cantidad = item.get("cantidad", item.get("cantidad_base", 0))
+                            tipo_obj = item.get("tipo", "")
+                            rareza = item.get("rareza", "")
+                
+                            extra = []
+                            if tipo_obj:
+                                extra.append(f"tipo: {tipo_obj}")
+                            if rareza:
+                                extra.append(f"rareza: {rareza}")
+                
+                            extra_txt = f" ({', '.join(extra)})" if extra else ""
+                
+                            print(f"  - {nombre}: {cantidad}{extra_txt}")
+                
+                        else:
+                            print(f"  - {tipo} [{idx}]: {item}")
+                else:
+                    print(f"  - {tipo}: {items}")
+
+        if normales:
+            print("\nObjetivos normales:")
+            for o in normales:
+                print(f"  - {o['descripcion']} | Progreso: {o['progreso']}/{o['cantidad_base']} | Estado: {o.get('estado_objetivo','pendiente')}")
+                imprimir_bloque("    Recompensas", o.get("recompensas", {}))
+                imprimir_bloque("    Penalizaciones", o.get("penalizaciones", {}))
+
+        if internos:
+            print("\nObjetivos internos:")
+            for o in internos:
+                print(f"  - {o['descripcion']} | Progreso: {o['progreso']}/{o['cantidad_base']} | Estado: {o.get('estado_objetivo','pendiente')}")
+                imprimir_bloque("    Recompensas", o.get("recompensas", {}))
+                imprimir_bloque("    Penalizaciones", o.get("penalizaciones", {}))
+
+        print("\n[P] Modificar Progreso   [C] Completar   [F] Fallar   [D] Eliminar   [Enter] Volver")
         accion = input("> ").strip().lower()
-        if accion=="c":
-            completar_mision(sistema, mision["id"])
-            misiones_list.remove(mision)
-            print("✅ Completada.")
+
+
+        if accion == "p":
+            menu_modificar_progreso(mision)
+        
+        elif accion == "c":
+            exito = completar_mision(sistema, mision["id"], forzar=True)
+            if exito:
+                misiones_list.remove(mision)
+            else:
+                print("🔹 La misión no se completó todavía.")
             break
-        elif accion=="f":
+
+        elif accion == "f":
             fallar_mision(sistema, mision["id"])
             misiones_list.remove(mision)
             print("❌ Fallada.")
             break
-        elif accion=="d":
+
+        elif accion == "d":
             confirmar = input("Confirmar eliminación (s/n): ").lower()
-            if confirmar=="s":
+            if confirmar == "s":
                 eliminar_mision_helper(sistema, mision["id"])
                 misiones_list.remove(mision)
                 print("✅ Eliminada.")
                 break
+
         else:
+            guardar_sistema(print_msg=False)
             break
 
 
 
-"""
-DOCUMENTACIÓN DEL PLUGIN DE MISIONES
 
-===========================
-1️⃣ Estructura de archivos
-===========================
-plugins/misiones/
-│
-├─ helpers_misiones.py   # Funciones internas de gestión de misiones
-├─ menus_misiones.py     # Menús interactivos de creación, edición y visualización
-├─ modelos.py            # Modelos de datos para misiones
-└─ __init__.py
 
-Integración:
-- Plugins activos: "misiones": True en sistema["plugins_activos"]
-- Menús principales:
-    - menu_mostrar → mostrar_misiones(sistema)
-    - menu_modificar → menu_administrar_misiones(sistema)
-
-===========================
-2️⃣ helpers_misiones.py
-===========================
-
-Inicialización:
----------------
-def inicializar_misiones(sistema)
-- Crea estructura base sistema["misiones"] si no existe.
-- Sincroniza plugin_cache para mantener versión rápida de misiones activas.
-
-Crear misión:
--------------
-def crear_mision(sistema, *, id, nombre, descripcion="", objetivo="", recompensas=None, penalizaciones=None) -> bool
-- Crea una nueva misión en sistema["misiones"]["activas"].
-- Retorna True si se creó, False si ya existía.
-- Parámetros:
-    - id: identificador único
-    - nombre: nombre visible
-    - descripcion: descripción narrativa
-    - objetivo: objetivo de la misión
-    - recompensas: dict inicial de recompensas
-    - penalizaciones: dict inicial de penalizaciones
-
-def menu_crear_mision(sistema)
-- Menú interactivo para crear misión y agregar recompensas/penalizaciones.
-
-Modificar misión:
------------------
-def modificar_mision(sistema, mision_id) -> bool
-- Edita datos básicos, recompensas o penalizaciones.
-- Retorna False si no existe la misión.
-
-def editar_datos_basicos_mision(mision)
-- Edita nombre, descripción y objetivo.
-
-def menu_editar_recompensas(sistema, mision, clave="recompensas")
-- Menú para agregar/editar/eliminar recompensas o penalizaciones.
-- clave puede ser "recompensas" o "penalizaciones".
-
-def añadir_recompensa(sistema, bloque)
-- Añade un tipo de recompensa/penalización:
-  - objetos → items para inventario
-  - stats → stats básicos
-  - progress_stats → stats de progreso con nivel y máximo
-  - puntos_stats, nivel, tiradas
-  - dinero
-
-def editar_recompensa_existente(bloque)
-- Edita item existente, stat o dinero.
-
-def eliminar_recompensa(bloque)
-- Elimina recompensas/penalizaciones existentes.
-
-def elegir_destino() -> str|None
-- Pregunta si la acción va en recompensas o penalizaciones.
-- Retorna "recompensas", "penalizaciones" o None si se cancela.
-
-Eliminar misión:
-----------------
-def eliminar_mision(sistema, id) -> bool
-- Elimina misión activa del sistema.
-- Pide confirmación interactiva.
-- Retorna True si se eliminó, False si no.
-
-Completar o fallar misión:
---------------------------
-def completar_mision(sistema, mision_id) -> bool
-- Aplica recompensas y elimina misión de activas.
-
-def fallar_mision(sistema, mision_id) -> bool
-- Aplica penalizaciones y elimina misión de activas.
-
-def imprimir_resultados(titulo, datos)
-- Imprime recompensas o penalizaciones de forma legible.
-- Formatea objetos, stats, dinero, niveles y tiradas.
-
-Sincronización de cache:
-------------------------
-def sync_misiones_plugin_cache(sistema)
-- Mantiene estado.plugin_cache["plugins"]["misiones"]["activas"] actualizado.
-
-===========================
-3️⃣ menus_misiones.py
-===========================
-
-Selección de misión:
--------------------
-def seleccionar_mision(sistema, accion="modificar") -> dict|None
-- Lista todas las misiones activas.
-- Permite seleccionar por número o nombre.
-- Retorna misión seleccionada o None si se cancela/no encuentra.
-
-Menú principal de administración:
----------------------------------
-def menu_administrar_misiones(sistema=None)
-- Menú interactivo:
-    - Crear nueva misión
-    - Modificar misión
-    - Eliminar misión
-- Llama a funciones de helpers_misiones.py
-- Gestiona sincronización de cache y guardado automático.
-
-Visualización de misiones:
---------------------------
-def mostrar_misiones(sistema=None)
-- Muestra todas las misiones activas de forma interactiva.
-- Permite ver detalles, completar, fallar o eliminar misiones.
-- Aplica recompensas y penalizaciones automáticamente.
-"""
