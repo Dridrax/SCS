@@ -6,7 +6,6 @@ from core.utils.funciones_utiles import sync_plugin_cache
 from core.recompensas.aplicar import aplicar_recompensas
 from core.recompensas.ui_preparacion import preparar_recompensa_para_aplicar
 from core.recompensas.tipos import obtener_definicion_rareza
-from core.recompensas.bloques import menu_editar_bloque_interactivo
 from core.recompensas.tipos import es_rareza_valida, normalizar_rareza_texto
 import random
 from copy import deepcopy
@@ -25,107 +24,65 @@ def inicializar_ruletas(sistema):
 # ----------------------------
 def normalizar_premios(bloque):
     """
-    Normaliza un bloque de premios:
-    - Asegura estructuras correctas (lista/dict)
-    - Normaliza rarezas correctamente (capitalización consistente)
-    - NO fuerza rareza por defecto innecesariamente
-    - Evita mutaciones del original
+    Normaliza premios de ruleta SIN convertir a dict
+
+    ✔ Mantiene listas (permite duplicados)
+    ✔ Limpia datos inválidos
+    ✔ Normaliza rareza
+    ✔ NO destruye estructura
     """
 
-    bloque_final = {}
+    resultado = {}
 
     if not isinstance(bloque, dict):
-        return bloque_final
+        return resultado
 
-    for tipo, items in bloque.items():
+    for tipo, lista in bloque.items():
 
-        # ─────────────────────────────
-        # 🔹 OBJETOS → LISTA
-        # ─────────────────────────────
-        if tipo == "objetos":
-
-            bloque_final[tipo] = []
-
-            if not isinstance(items, list):
-                continue
-
-            for obj in items:
-
-                if not isinstance(obj, dict):
-                    continue
-
-                nuevo = obj.copy()
-
-                # -------------------------
-                # 🧬 NORMALIZAR RAREZA
-                # -------------------------
-                rareza = nuevo.get("rareza")
-
-                if rareza:
-                    rareza_norm = normalizar_rareza_texto(rareza)
-
-                    if es_rareza_valida(rareza_norm):
-                        nuevo["rareza"] = rareza_norm
-                    else:
-                        print(f"⚠ Rareza inválida en objeto '{nuevo.get('nombre','?')}', eliminada.")
-                        nuevo.pop("rareza", None)
-
-                # ⚠ IMPORTANTE: NO poner "común" automáticamente
-
-                # -------------------------
-                # 📦 NORMALIZAR CANTIDAD
-                # -------------------------
-                if "cantidad" not in nuevo and "cantidad_base" not in nuevo:
-                    nuevo["cantidad"] = 1
-
-                bloque_final[tipo].append(nuevo)
-
+        if not isinstance(lista, list):
             continue
 
-        # ─────────────────────────────
-        # 🔹 RESTO DE TIPOS → DICT
-        # ─────────────────────────────
-        bloque_final[tipo] = {}
+        resultado[tipo] = []
 
-        if not isinstance(items, dict):
-            continue
+        for elem in lista:
 
-        for nombre, info in items.items():
-
-            if not isinstance(info, dict):
+            if not isinstance(elem, dict):
                 continue
 
-            nuevo = info.copy()
+            nuevo = elem.copy()
 
-            # -------------------------
-            # 🧬 NORMALIZAR RAREZA
-            # -------------------------
+            # ─────────────
+            # NOMBRE
+            # ─────────────
+            nuevo["nombre"] = nuevo.get("nombre", "recurso")
+
+            # ─────────────
+            # RAREZA
+            # ─────────────
             rareza = nuevo.get("rareza")
 
             if rareza:
-                rareza_norm = normalizar_rareza_texto(rareza)
+                rareza = normalizar_rareza_texto(rareza)
 
-                if es_rareza_valida(rareza_norm):
-                    nuevo["rareza"] = rareza_norm
+                if es_rareza_valida(rareza):
+                    nuevo["rareza"] = rareza
                 else:
-                    print(f"⚠ Rareza inválida en '{nombre}', eliminada.")
+                    print(f"⚠ Rareza inválida en '{nuevo['nombre']}', eliminada.")
                     nuevo.pop("rareza", None)
 
-            # ⚠ IMPORTANTE: NO poner "común" automáticamente
+            # ─────────────
+            # VALORES
+            # ─────────────
+            if tipo == "objetos":
+                if "cantidad" not in nuevo:
+                    nuevo["cantidad"] = 1
+            else:
+                if "valor" not in nuevo:
+                    nuevo["valor"] = 1
 
-            # -------------------------
-            # 🔢 NORMALIZAR VALOR
-            # -------------------------
-            if (
-                "valor_base" not in nuevo and
-                "valor" not in nuevo and
-                "cantidad" not in nuevo
-            ):
-                nuevo["valor_base"] = 1
+            resultado[tipo].append(nuevo)
 
-            bloque_final[tipo][nombre] = nuevo
-
-    return bloque_final
+    return resultado
 
 def normalizar_eventos(eventos):
     lista = []
@@ -397,11 +354,17 @@ def gestion_ruleta(sistema, ruleta, ruletas_list):
         total_premios = contar_premios_ruleta(ruleta)
         print(f"Total premios: {total_premios}")
 
+        
+
         # -------------------------
         # PREMIOS SISTEMA
         # -------------------------
-        total_sistema = sum(len(items) if isinstance(items, list) else len(items.keys()) if isinstance(items, dict) else 0 for items in premios.values())
-        print(f"\n🎁 Premios sistema: {total_sistema}")
+        total_sistema = sum(
+                    len(items) if isinstance(items, list) 
+                    else len(items.keys()) if isinstance(items, dict) 
+                    else 0 
+                    for items in premios.values()
+                )
 
         if total_sistema == 0:
             print("    (sin premios)")
@@ -412,7 +375,8 @@ def gestion_ruleta(sistema, ruleta, ruletas_list):
                         nombre = obj.get("nombre", "Premio")
                         desc = obj.get("descripcion", "")
                         rareza = obj.get("rareza", "-")
-                        cantidad = obj.get("valor_base") or obj.get("cantidad") or 1
+                        # 🔹 PRIORIDAD VALOR REAL
+                        cantidad = obj.get("valor") or obj.get("valor_base") or obj.get("cantidad") or 1
 
                         linea = f"    - {nombre} x{cantidad}"
                         if desc:
@@ -424,10 +388,17 @@ def gestion_ruleta(sistema, ruleta, ruletas_list):
 
                 elif isinstance(items, dict):
                     for k, v in items.items():
-                        cantidad = v.get("valor_base") or v.get("cantidad") or 1
+                        # 🔹 PRIORIDAD VALOR REAL
+                        cantidad = v.get("valor") or v.get("valor_base") or v.get("cantidad") or 1
                         rareza = v.get("rareza", "-")
+                        desc = v.get("descripcion", "")
 
-                        linea = f"    - {k} x{cantidad} [{rareza}]"
+                        linea = f"    - {k} x{cantidad}"
+                        if desc:
+                            linea += f" ({desc})"
+                        if rareza:
+                            linea += f" [{rareza}]"
+
                         print(linea)
 
         # -------------------------
@@ -544,6 +515,22 @@ def tirar_ruleta_una_vez(sistema, ruleta_id):
 
     print(f"*** ¡Obtuviste {nombre} x{cantidad_ganada} [{rareza}]! ***")
 
+    """print("\n=== RESULTADO ===")
+
+    data = r["data"]
+    
+    nombre = data.get("nombre") or data.get("titulo") or "evento"
+    rareza = data.get("rareza", "-")
+    
+    valor = data.get("valor") or data.get("cantidad") or 1
+    veces = 1
+    total = valor * veces
+    
+    if veces == 1:
+        print(f"*** ¡Obtuviste {nombre} ({valor}) x{total} [{rareza}]! ***")
+    else:
+        print(f"*** ¡Obtuviste {nombre} x{veces} ({valor}) x{total} [{rareza}]! ***")"""
+
     # -------------------------
     # GUARDAR
     # -------------------------
@@ -635,20 +622,36 @@ def tirar_ruleta_multiples_veces(sistema, ruleta_id):
     # -------------------------
     if cantidad > 5:
         resumen = {}
+
         for r in resultados:
             data = r["data"]
+
             nombre = data.get("nombre") or data.get("titulo") or "evento"
             rareza = data.get("rareza", "-")
-            cantidad_ganada = data.get("valor") or data.get("cantidad") or 1
 
-            if nombre not in resumen:
-                resumen[nombre] = {"cantidad": 0, "rareza": rareza}
+            valor = data.get("valor") or data.get("cantidad") or 1
 
-            resumen[nombre]["cantidad"] += cantidad_ganada
+            # 🔥 CLAVE ÚNICA (IMPORTANTE)
+            clave = (nombre, valor, rareza)
+
+            if clave not in resumen:
+                resumen[clave] = 0
+
+            resumen[clave] += 1  # número de veces que salió
 
         print("\n=== RESULTADOS ===")
-        for nombre, info in resumen.items():
-            print(f"*** ¡Obtuviste {nombre} x{info['cantidad']} [{info['rareza']}]! ***")
+        for (nombre, valor, rareza), veces in resumen.items():
+            total = valor * veces
+
+            print(
+                f"*** ¡Obtuviste {nombre} x{veces} ({valor}) x{total} [{rareza}]! ***"
+            )
+            #*** Oro → 25 veces × 9 = 225 [Raro] ***
+
+            #print(
+            #    f"*** {nombre} → {veces} veces × {valor} = {total} [{rareza}] ***"
+            #)
+            #*** Oro → 25 veces × 9 = 225 [Raro] ***
 
     # -------------------------
     # GUARDAR
@@ -661,34 +664,33 @@ def tirar_ruleta_multiples_veces(sistema, ruleta_id):
 # ----------------------------
 # OBTENER/PROCESAR RESULTADO
 # ----------------------------
+
 def obtener_resultado_ruleta(ruleta):
+    """
+    Elige un resultado de la ruleta respetando pesos de rareza y eventos.
+    Clona cada opción para evitar referencias repetidas.
+    """
     opciones = []
 
+    # 🔹 PREMIOS
     premios = normalizar_premios(ruleta.get("premios", {}))
-
-    # 🎁 PREMIOS
     for tipo, items in premios.items():
-        if isinstance(items, list):
-            for obj in items:
-                rareza = obj.get("rareza")
-                peso = 1.0
-                if rareza:
-                    definicion = obtener_definicion_rareza(normalizar_rareza_texto(rareza))
-                    if definicion:
-                        peso = definicion.get("peso", 1.0)
-                opciones.append({"tipo": "sistema", "subtipo": tipo, "data": obj, "peso": peso})
-        elif isinstance(items, dict):
-            for nombre, info in items.items():
-                rareza = info.get("rareza")
-                peso = 1.0
-                if rareza:
-                    definicion = obtener_definicion_rareza(normalizar_rareza_texto(rareza))
-                    if definicion:
-                        peso = definicion.get("peso", 1.0)
-                data = {"nombre": nombre, **info}
-                opciones.append({"tipo": "sistema", "subtipo": tipo, "data": data, "peso": peso})
+        for obj in items:
+            rareza = obj.get("rareza")
+            peso = 1.0
+            if rareza:
+                definicion = obtener_definicion_rareza(normalizar_rareza_texto(rareza))
+                if definicion:
+                    peso = definicion.get("peso", 1.0)
 
-    # 📖 EVENTOS
+            opciones.append({
+                "tipo": "sistema",
+                "subtipo": tipo,
+                "data": deepcopy(obj),  # 🔹 CLONAR objeto para independencia
+                "peso": peso
+            })
+
+    # 🔹 EVENTOS NARRATIVOS
     for ev in ruleta.get("eventos_narrativos", []):
         rareza = ev.get("rareza")
         peso = 1.0
@@ -696,44 +698,48 @@ def obtener_resultado_ruleta(ruleta):
             definicion = obtener_definicion_rareza(normalizar_rareza_texto(rareza))
             if definicion:
                 peso = definicion.get("peso", 1.0)
-        opciones.append({"tipo": "narrativo", "data": ev, "peso": peso})
+
+        opciones.append({
+            "tipo": "narrativo",
+            "data": deepcopy(ev),  # 🔹 CLONAR
+            "peso": peso
+        })
 
     if not opciones:
         return None
 
-    total_peso = sum(op["peso"] for op in opciones)
-    if total_peso <= 0:
-        total_peso = len(opciones)  # fallback para pesos inválidos
+    # 🔹 Selección ponderada
+    pesos = [op["peso"] for op in opciones]
+    elegido = random.choices(opciones, weights=pesos, k=1)[0]
 
-    r = random.uniform(0, total_peso)
-    acumulado = 0
-    for op in opciones:
-        acumulado += op["peso"]
-        if r <= acumulado:
-            return op
-
-    return opciones[-1]
+    return {
+        "tipo": elegido["tipo"],
+        "subtipo": elegido.get("subtipo"),
+        "data": elegido["data"]
+    }
 
 def procesar_resultado(sistema, ruleta, resultado, mostrar=True):
     if not resultado:
         return
 
     tipo = resultado["tipo"]
-    data = deepcopy(resultado["data"])  # Copia para no mutar original
+    data = deepcopy(resultado["data"])
     rareza = data.get("rareza", "-")
 
     if tipo == "sistema":
         subtipo = resultado["subtipo"]
-        recompensa = {subtipo: {}}
+        nombre = data.get("nombre", "recurso")
 
-        if isinstance(ruleta["premios"].get(subtipo), list):
-            cantidad = data.pop("cantidad_base", data.pop("cantidad", 1))
-            data["cantidad"] = cantidad
-            recompensa[subtipo] = {data.get("nombre", "objeto"): data}
+        # 🔹 Detectar valor
+        if "valor" in data:
+            valor = data["valor"]
+        elif "cantidad" in data:
+            valor = data["cantidad"]
         else:
-            valor = data.get("valor", data.get("cantidad", 1))
-            data["valor"] = valor
-            recompensa[subtipo] = {data.get("nombre", "recurso"): data}
+            valor = 1
+
+        # 🔹 Crear estructura compatible con aplicar_recompensas
+        recompensa = {subtipo: {nombre: {"valor_base": valor, "rareza": rareza}}}
 
         aplicar_recompensas(
             sistema,
@@ -741,13 +747,12 @@ def procesar_resultado(sistema, ruleta, resultado, mostrar=True):
         )
 
         if mostrar:
-            print(f"🎉 {data.get('nombre', 'recurso')} x{data.get('cantidad', data.get('valor',1))} [{rareza}]")
+            print(f"🎉 {nombre} x{valor} [{rareza}]")
 
-    else:  # narrativo
+    else:
         if mostrar:
             print(f"📖 {data.get('titulo', 'Evento')} [{rareza}]")
 
-    # actualizar contador
     ruleta["tiradas_realizadas"] = ruleta.get("tiradas_realizadas", 0) + 1
 
 # ----------------------------

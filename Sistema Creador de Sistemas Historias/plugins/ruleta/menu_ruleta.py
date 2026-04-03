@@ -3,7 +3,7 @@
 from core.estado_global import estado
 from core.guardado.archivos import guardar_sistema
 from core.utils.funciones_utiles import pedir_int, pedir_str, seleccionar_opcion
-from core.recompensas.bloques import menu_editar_bloque_interactivo
+from core.recompensas.bloques import menu_editar_bloque_ruleta
 from core.recompensas.tipos import seleccionar_rareza
 from core.utils.funciones_utiles import safe_int_input
 from .helpers_ruleta import (
@@ -172,46 +172,45 @@ def menu_modificar_ruletas(sistema):
         opcion = pedir_int("Elige una opción: ", default=6)
         activas = sistema["ruleta"]["activas"]
 
-        # -------------------------
-        #  CREAR RULETA
-        # -------------------------
+        # =========================================================
+        # 🎡 CREAR RULETA
+        # =========================================================
         if opcion == 1:
             id = input("ID de la ruleta: ").strip()
             nombre = input("Nombre de la ruleta: ").strip()
             descripcion = input("Descripción: ").strip()
 
-            # -------------------------
-            # 🎁 PREMIOS SISTEMA
-            # -------------------------
+            # 🔹 PREMIOS
             premios_sistema = {}
             print("\n--- CONFIGURAR PREMIOS DE SISTEMA ---")
-            menu_editar_bloque_interactivo(premios_sistema, "Premios sistema")
 
-            # 🔹 NORMALIZAR PREMIOS (objetos y dicts) sin forzar rareza
+            # 🔥 NUEVO MENÚ
+            menu_editar_bloque_ruleta(premios_sistema)
+
+            # 🔹 NORMALIZAR
             premios_sistema = normalizar_premios(premios_sistema)
 
-            # 🔹 ASIGNAR RAREZA OPCIONAL A LOS PREMIOS
+            # 🔹 RAREZA OPCIONAL
             for tipo, items in premios_sistema.items():
-                # LISTA DE OBJETOS
+
                 if isinstance(items, list):
                     for obj in items:
                         nombre_obj = obj.get("nombre", "objeto")
                         rareza_actual = obj.get("rareza", "ninguna")
+
                         print(f"\nAsignar rareza para '{nombre_obj}'? (actual: {rareza_actual}) [s/n]")
                         if input("> ").lower() == "s":
                             obj["rareza"] = seleccionar_rareza(default=obj.get("rareza"))
 
-                # DICT DE RECURSOS
                 elif isinstance(items, dict):
                     for nombre_rec, info in items.items():
                         rareza_actual = info.get("rareza", "ninguna")
+
                         print(f"\nAsignar rareza para '{nombre_rec}'? (actual: {rareza_actual}) [s/n]")
                         if input("> ").lower() == "s":
                             info["rareza"] = seleccionar_rareza(default=info.get("rareza"))
 
-            # -------------------------
-            # 🎡 CREAR RULETA (SIN EVENTOS AÚN)
-            # -------------------------
+            # 🔹 CREAR RULETA
             creada = crear_ruleta(
                 sistema,
                 id=id,
@@ -224,45 +223,42 @@ def menu_modificar_ruletas(sistema):
             if not creada:
                 print("❌ No se pudo crear la ruleta.")
                 continue
-            
-            # -------------------------
-            # 📖 CONFIGURAR EVENTOS NARRATIVOS
-            # -------------------------
+
+            # 🔹 EVENTOS
             print("\n--- CONFIGURAR EVENTOS NARRATIVOS ---")
-
             ruleta = sistema["ruleta"]["activas"][id]
-
             menu_eventos_narrativos(ruleta)
 
             print("✅ Ruleta configurada completamente.")
 
-        # -------------------------
-        #  MODIFICAR RULETA
-        # -------------------------
+        # =========================================================
+        # 🛠 MODIFICAR RULETA
+        # =========================================================
         elif opcion == 2:
             if not activas:
                 print("❌ No hay ruletas disponibles.")
                 continue
-            
-            # -------------------------
-            # 🔎 SELECCIONAR RULETA
-            # -------------------------
+
             lista = list(activas.values())
+
             print("\n--- RULETAS DISPONIBLES ---")
             mostrar_ruletas(sistema)
+
             print("\n--- SELECCIÓN ---")
             for i, r in enumerate(lista, 1):
                 print(f"{i}. {r['nombre']}")
+
             idx = pedir_int("Elige una ruleta: ", default=None)
+
             if idx is None or idx < 1 or idx > len(lista):
                 print("❌ Selección inválida.")
                 continue
-            
+
             ruleta = lista[idx - 1]
             ruleta_id = ruleta["id"]
-        
+
             # -------------------------
-            # 🛠 SUBMENÚ MODIFICAR
+            # SUBMENÚ
             # -------------------------
             while True:
                 print(f"\n--- MODIFICAR RULETA: {ruleta['nombre']} ---")
@@ -274,47 +270,47 @@ def menu_modificar_ruletas(sistema):
 
                 sub = pedir_int("Opción: ", default=5)
 
-                # -------------------------
                 # ✏️ NOMBRE
-                # -------------------------
                 if sub == 1:
                     nuevo = input(f"Nuevo nombre ({ruleta['nombre']}): ").strip()
                     if nuevo:
                         modificar_ruleta(sistema, ruleta_id, nombre=nuevo)
 
-                # -------------------------
                 # 📝 DESCRIPCIÓN
-                # -------------------------
                 elif sub == 2:
                     nueva = input(f"Nueva descripción ({ruleta['descripcion']}): ").strip()
                     if nueva:
                         modificar_ruleta(sistema, ruleta_id, descripcion=nueva)
 
-                # -------------------------
                 # 🎁 PREMIOS
-                # -------------------------
                 elif sub == 3:
                     print("\n--- EDITAR PREMIOS ---")
-                    menu_editar_bloque_interactivo(
+
+                    # 🔥 NUEVO MENÚ
+                    menu_editar_bloque_ruleta(
                         ruleta.setdefault("premios", {}),
                         "Premios de la ruleta"
                     )
 
-                    # 🔹 NORMALIZAR PREMIOS después de editar
+                    # 🔹 NORMALIZAR
                     ruleta["premios"] = normalizar_premios(ruleta["premios"])
 
-                    # 🔹 ASIGNAR RAREZA OPCIONAL
+                    # 🔹 RAREZA
                     for tipo, items in ruleta["premios"].items():
-                        if isinstance(items, list):  # lista de objetos
+
+                        if isinstance(items, list):
                             for obj in items:
                                 nombre_obj = obj.get("nombre", "objeto")
                                 rareza_actual = obj.get("rareza", "ninguna")
+
                                 print(f"\nAsignar rareza para '{nombre_obj}'? (actual: {rareza_actual}) [s/n]")
                                 if input("> ").lower() == "s":
                                     obj["rareza"] = seleccionar_rareza(default=obj.get("rareza"))
-                        elif isinstance(items, dict):  # dict de recursos
+
+                        elif isinstance(items, dict):
                             for nombre_rec, info in items.items():
                                 rareza_actual = info.get("rareza", "ninguna")
+
                                 print(f"\nAsignar rareza para '{nombre_rec}'? (actual: {rareza_actual}) [s/n]")
                                 if input("> ").lower() == "s":
                                     info["rareza"] = seleccionar_rareza(default=info.get("rareza"))
@@ -325,11 +321,10 @@ def menu_modificar_ruletas(sistema):
                         premios=ruleta["premios"]
                     )
 
-                # -------------------------
-                # 📖 EVENTOS NARRATIVOS
-                # -------------------------
+                # 📖 EVENTOS
                 elif sub == 4:
                     print("\n--- EDITAR EVENTOS NARRATIVOS ---")
+
                     menu_eventos_narrativos(ruleta)
 
                     modificar_ruleta(

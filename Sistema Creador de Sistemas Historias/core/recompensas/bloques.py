@@ -582,3 +582,163 @@ def menu_editar_bloque(objeto, clave):
             estado.cambios_no_guardados = True
             print("✅ Eliminado correctamente.")
 
+# ─────────────────────────────
+# MENÚ SIMPLE PARA RULETA
+# ─────────────────────────────
+def menu_editar_bloque_ruleta(bloque, nombre_bloque="premios"):
+    """
+    Editor de bloques para RULETA (versión correcta REAL)
+
+    ✔ Usa LISTAS (permite duplicados)
+    ✔ Sin estructuras raras
+    ✔ UI limpia
+    ✔ Compatible con normalización ligera
+    """
+
+    cargar_recursos_desde_sistema(estado.sistema_actual)
+
+    while True:
+        print(f"\n--- {nombre_bloque.upper()} (RULETA) ---")
+
+        # ─────────────
+        # MOSTRAR ACTUAL
+        # ─────────────
+        if bloque:
+            for tipo, lista in bloque.items():
+                print(f" {tipo}:")
+
+                for i, item in enumerate(lista):
+                    nombre = item.get("nombre", "?")
+                    valor = item.get("valor") or item.get("cantidad") or 1
+                    rareza = item.get("rareza", "-")
+
+                    print(f"   [{i}] {nombre} x{valor} [{rareza}]")
+        else:
+            print(" (vacío)")
+
+        print("\n1. Agregar")
+        print("2. Editar")
+        print("3. Eliminar")
+        print("4. Volver")
+
+        opcion = pedir_int("Opción: ", default=4)
+
+        if opcion == 4:
+            break
+
+        tipos_validos = obtener_tipos_recursos_validos()
+
+        print("\nTipos disponibles:")
+        for t in sorted(tipos_validos):
+            print(f" - {t}")
+
+        tipo = input("Tipo: ").strip()
+
+        if tipo not in tipos_validos:
+            print("❌ Tipo inválido.")
+            continue
+
+        bloque.setdefault(tipo, [])
+
+        # ==================================================
+        # ➕ AGREGAR
+        # ==================================================
+        if opcion == 1:
+
+            mostrar_recursos_existentes(estado.sistema_actual, tipo)
+
+            nombre = input("Nombre: ").strip()
+
+            if tipo == "objetos":
+                valor = pedir_int("Cantidad: ", default=1)
+            else:
+                valor = pedir_int("Valor: ", default=1)
+
+            rareza = seleccionar_rareza(prompt="Rareza (opcional): ")
+
+            nuevo = {
+                "nombre": nombre
+            }
+
+            if tipo == "objetos":
+                nuevo["cantidad"] = valor
+            else:
+                nuevo["valor"] = valor
+
+            if rareza:
+                nuevo["rareza"] = rareza
+
+            bloque[tipo].append(nuevo)
+
+            estado.cambios_no_guardados = True
+            print("✅ Agregado.")
+
+        # ==================================================
+        # ✏️ EDITAR
+        # ==================================================
+        elif opcion == 2:
+
+            if not bloque[tipo]:
+                print("❌ No hay elementos.")
+                continue
+
+            for i, item in enumerate(bloque[tipo]):
+                print(f"{i}. {item}")
+
+            idx = pedir_int("Índice: ", default=-1)
+
+            if idx < 0 or idx >= len(bloque[tipo]):
+                print("❌ Índice inválido.")
+                continue
+
+            item = bloque[tipo][idx]
+
+            item["nombre"] = input(
+                f"Nombre ({item.get('nombre')}): "
+            ).strip() or item.get("nombre")
+
+            actual = item.get("valor") or item.get("cantidad") or 1
+
+            nuevo_valor = pedir_int(
+                f"Valor ({actual}): ",
+                default=actual
+            )
+
+            if tipo == "objetos":
+                item["cantidad"] = nuevo_valor
+            else:
+                item["valor"] = nuevo_valor
+
+            item["rareza"] = seleccionar_rareza(
+                prompt=f"Rareza ({item.get('rareza','-')}): ",
+                default=item.get("rareza")
+            )
+
+            estado.cambios_no_guardados = True
+            print("✅ Editado.")
+
+        # ==================================================
+        # ❌ ELIMINAR
+        # ==================================================
+        elif opcion == 3:
+
+            if not bloque[tipo]:
+                print("❌ No hay elementos.")
+                continue
+
+            for i, item in enumerate(bloque[tipo]):
+                print(f"{i}. {item}")
+
+            idx = pedir_int("Índice: ", default=-1)
+
+            if idx < 0 or idx >= len(bloque[tipo]):
+                print("❌ Índice inválido.")
+                continue
+
+            bloque[tipo].pop(idx)
+
+            if not bloque[tipo]:
+                del bloque[tipo]
+
+            estado.cambios_no_guardados = True
+            print("✅ Eliminado.")

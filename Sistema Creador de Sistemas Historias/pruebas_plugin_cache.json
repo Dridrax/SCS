@@ -246,6 +246,32 @@
                         }
                     ],
                     "tiradas_realizadas": 256
+                },
+                "ruleta_1": {
+                    "id": "ruleta_1",
+                    "nombre": "ruleta 1",
+                    "descripcion": "",
+                    "premios": {
+                        "dinero": [
+                            {
+                                "nombre": "Oro",
+                                "valor": 10,
+                                "rareza": "Raro"
+                            },
+                            {
+                                "nombre": "Oro",
+                                "valor": 9,
+                                "rareza": "Raro"
+                            },
+                            {
+                                "nombre": "Oro",
+                                "valor": 1,
+                                "rareza": "Muy Comun"
+                            }
+                        ]
+                    },
+                    "eventos_narrativos": [],
+                    "tiradas_realizadas": 1745
                 }
             },
             "historial": []
