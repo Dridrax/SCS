@@ -254,5 +254,12 @@
     "stats": {
         "Cabeza": 10
     },
-    "progress_stats": {}
+    "progress_stats": {
+        "Cabeza": {
+            "actual": 2,
+            "max": 10,
+            "nivel": 1,
+            "factor_escalado": 2.0
+        }
+    }
 }

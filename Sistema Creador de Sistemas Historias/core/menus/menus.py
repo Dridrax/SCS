@@ -101,13 +101,14 @@ def menu_mostrar(sistema):
 
         opciones = []
 
+        opciones.append(("Mostrar Ficha", lambda: que_ficha_queres(sistema)))
+
         # Stats y ficha base
         opciones.append(("Mostrar Stats", lambda: (
             mostrar_stats(sistema),
             mostrar_progress_stats_bar(sistema.get("progress_stats", {}))
         )))
-        opciones.append(("Mostrar Ficha", lambda: que_ficha_queres(sistema)))
-
+        
         # Inventario
         if plugins.get("inventario", False):
             opciones.append(("Mostrar Inventario", lambda: mostrar_items(sistema)))
