@@ -13,7 +13,7 @@ def salir_programa():
 
         if opcion_salir == "1":
             try:
-                guardar_sistema(estado.sistema_actual)
+                guardar_sistema()
             except NameError:
                 print("❌ No hay sistema cargado para guardar.")
             return True  # salir

@@ -1,32 +1,9 @@
+#plugins/inventario/inventario.py
 from core.estado_global import estado
 from core.utils.busqueda import buscar
-from core.guardado.archivos import guardar_sistema
-from core.utils.la_gran_enciclopedia import registrar_objeto, desactivar_objeto, reactivar_objeto
+from core.recompensas.tipos import asignar_rareza
+
 import uuid
-
-# =========================
-# MOSTRAR INVENTARIO
-# =========================
-def mostrar_inventario(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
-
-    print("\n📦 INVENTARIO\n")
-
-    if not sistema.get("inventario"):
-        print("El inventario está vacío.")
-        return
-
-    for i, obj in enumerate(sistema["inventario"], 1):
-        print(f"{i}. {obj['nombre']}")
-        print(f"   Clase: {obj['clase']}")
-        print(f"   Categoría: {obj['categoria']}")
-        print(f"   Efectos: {obj['efectos']}")
-        # 🔹 Indicar si está activo o desactivado según enciclopedia
-        enc = buscar_objeto_enciclopedia(obj['id'], sistema, "inventario")
-        estado_str = "Activo" if enc.get("activo") else "Desactivado"
-        print(f"   Estado en Enciclopedia: {estado_str}\n")
-
 
 # =========================
 # BUSCAR EN INVENTARIO
@@ -57,153 +34,277 @@ def buscar_inventario(sistema=None):
     for obj in resultados:
         print(f"- {obj['nombre']} ({obj['clase']}) | {obj['categoria']} | {obj['efectos']}")
 
+# =========================
+# GENERAR FIRMA DEL OBJETO
+# =========================
+def generar_firma_objeto(item_data):
+    """
+    Genera una firma única del objeto (incluye valor).
+    """
+    nombre = item_data.get("nombre", "").strip().lower()
+    rareza = item_data.get("rareza", "").strip().lower()
+    tipo = item_data.get("tipo", "").strip().lower()
+    descripcion = item_data.get("descripcion", "").strip().lower()
+
+    efectos = item_data.get("efectos", {})
+    efectos_firma = tuple(sorted((k.lower(), v) for k, v in efectos.items()))
+
+    valor = item_data.get("valor")
+    if isinstance(valor, dict):
+        valor_firma = (valor.get("tipo", "").lower(), valor.get("cantidad", 0))
+    else:
+        valor_firma = None
+
+    return (nombre, rareza, tipo, descripcion, efectos_firma, valor_firma)
 
 # =========================
-# AÑADIR OBJETO
+# AGREGAR ITEM REHECHO
 # =========================
-def añadir_objeto(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+def agregar_item(sistema, item_data):
+    """
+    Agrega un item al inventario del sistema.
+    Si un objeto idéntico ya existe, incrementa su cantidad en lugar de crear uno nuevo.
+    La rareza se respeta desde item_data o se asigna automáticamente si no existe.
+    """
+    if "inventario" not in sistema or sistema["inventario"] is None:
+        sistema["inventario"] = {}
 
-    print("\n➕ AÑADIR OBJETO\n")
+    inventario = sistema["inventario"]
+    cantidad_nueva = max(1, item_data.get("cantidad", 1))
 
-    # 🔹 Crear objeto con ID único
-    objeto = {
-        "id": str(uuid.uuid4()),
-        "nombre": input("Nombre del objeto: "),
-        "clase": input("Clase: "),
-        "categoria": input("Categoría: "),
-        "efectos": input("Efectos: ")
+    # Generar la firma del objeto (ignora cantidad)
+    firma_nueva = generar_firma_objeto(item_data)
+
+    # Buscar objeto idéntico
+    for obj_id, obj in inventario.items():
+        if generar_firma_objeto(obj) == firma_nueva:
+            # Sumar cantidad
+            obj["cantidad"] = obj.get("cantidad", 0) + cantidad_nueva
+
+            # Solo aseguramos rareza válida (sin interacción)
+            asignar_rareza(obj, item_data.get("rareza"))
+
+            # Actualizar plugin_cache
+            estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})[obj_id] = obj
+            estado.cambios_no_guardados = True
+            return obj_id
+
+    # Crear nuevo objeto con cantidad correcta
+    item_id = str(uuid.uuid4())
+    item_nuevo = {
+        "id": item_id,
+        **item_data,
+        "cantidad": cantidad_nueva
     }
 
-    # 🔹 Añadir al inventario
-    sistema.setdefault("inventario", []).append(objeto)
+    # Asignar rareza si no viene en item_data
+    asignar_rareza(item_nuevo, item_data.get("rareza"))
 
-    # 🔹 Registrar en LA GRAN ENCICLOPEDIA
-    registrar_objeto(sistema, "inventario", objeto)
-
+    inventario[item_id] = item_nuevo
+    estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})[item_id] = item_nuevo
     estado.cambios_no_guardados = True
-    print("✅ Objeto añadido al inventario y registrado en la enciclopedia.")
-
+    return item_id
 
 # =========================
-# MODIFICAR OBJETO
+# MODIFICAR ITEM REHECHO
 # =========================
-def modificar_objeto(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+def modificar_item(sistema, item_id, nuevos_datos):
+    """
+    Modifica un item existente en el inventario del sistema.
+    - sistema: dict del sistema actual
+    - item_id: id del item a modificar
+    - nuevos_datos: dict con campos a actualizar
 
-    if not sistema.get("inventario"):
-        print("❌ No hay objetos para modificar.")
-        return
+    Si la cantidad final es <= 0, elimina el item automáticamente.
+    La rareza se respeta desde nuevos_datos o se mantiene la existente.
+    """
+    inventario = sistema.setdefault("inventario", {})
 
-    for i, obj in enumerate(sistema["inventario"], 1):
-        print(f"{i}. {obj['nombre']}")
+    if item_id not in inventario:
+        print(f"❌ No se encontró el item con ID '{item_id}'.")
+        return False
 
-    try:
-        indice = int(input("Número del objeto a modificar: ")) - 1
-        obj = sistema["inventario"][indice]
-    except (ValueError, IndexError):
-        print("❌ Selección inválida.")
-        return
+    item = inventario[item_id]
 
-    print(f"\nObjeto seleccionado: {obj['nombre']}")
+    # Comprobar cantidad antes de actualizar
+    if "cantidad" in nuevos_datos and nuevos_datos["cantidad"] <= 0:
+        return eliminar_item(sistema, item_id)
 
-    # 🔹 Modificación de campos
-    obj["nombre"] = input("Nuevo nombre (enter): ") or obj["nombre"]
-    obj["clase"] = input("Nueva clase (enter): ") or obj["clase"]
-    obj["categoria"] = input("Nueva categoría (enter): ") or obj["categoria"]
-    obj["efectos"] = input("Nuevos efectos (enter): ") or obj["efectos"]
+    # Actualizar campos
+    item.update(nuevos_datos)
 
-    # 🔹 Actualizar también en enciclopedia
-    registrar_objeto(sistema, "inventario", obj, actualizar=True)
+    # Asignar rareza solo para validar o completar si no existe
+    asignar_rareza(item, nuevos_datos.get("rareza"))
+
+    # Actualizar plugin_cache
+    estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})[item_id] = item
 
     estado.cambios_no_guardados = True
-    print("✅ Objeto modificado correctamente en inventario y enciclopedia.")
-
+    print(f"✅ Item '{item.get('nombre', item_id)}' modificado correctamente.")
+    return True
 
 # =========================
 # ELIMINAR OBJETO
 # =========================
-def eliminar_objeto(sistema):
-    inventario = sistema.get("inventario", [])
-    if not inventario:
-        print("❌ Inventario vacío.")
-        return
+def eliminar_item(sistema, item_id, cantidad=None):
+    """
+    Elimina un item o reduce su cantidad en el inventario.
+    - sistema: dict del sistema actual
+    - item_id: id del item a eliminar
+    - cantidad: cantidad a eliminar (default None = eliminar todo)
 
-    # Mostrar inventario
-    for i, obj in enumerate(inventario, 1):
-        print(f"{i}. {obj['nombre']}")
+    Si la cantidad es menor que la existente, se resta.
+    Si la cantidad es mayor o igual, se elimina por completo.
+    """
+    inventario = sistema.get("inventario", {})
 
-    try:
-        index = int(input("Número del objeto a eliminar: ")) - 1
-        obj = inventario[index]
-    except (ValueError, IndexError):
-        print("❌ Opción inválida.")
-        return
+    if item_id not in inventario:
+        print(f"❌ No se encontró el item con ID '{item_id}'.")
+        return False
 
-    # Desactivar en enciclopedia usando ID
-    from core.utils.la_gran_enciclopedia import desactivar_objeto
-    desactivar_objeto(sistema, "inventario", obj["id"])
+    item = inventario[item_id]
 
-    # También lo quitamos del inventario
-    inventario.pop(index)
-    
-    print(f"❌ Objeto '{obj['nombre']}' eliminado del inventario y desactivado en la enciclopedia.")
+    if cantidad is None or cantidad >= item.get("cantidad", 1):
+        # eliminar el item por completo
+        del inventario[item_id]
+        print(f"✅ Item '{item['nombre']}' eliminado del inventario.")
+    else:
+        # restar cantidad
+        item["cantidad"] -= cantidad
+        print(f"✅ Se eliminaron {cantidad} de '{item['nombre']}'. Quedan {item['cantidad']}.")
 
+    # Actualizar plugin_cache si existe
+    if "plugins" in estado.plugin_cache:
+        plugin_inv = estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})
+        if item_id in plugin_inv:
+            if item_id in inventario:
+                plugin_inv[item_id] = inventario[item_id]
+            else:
+                del plugin_inv[item_id]
 
+    estado.cambios_no_guardados = True
+    return True
 
 # =========================
-# HELPER: Buscar objeto en enciclopedia
+# VENDER ITEM
 # =========================
-def buscar_objeto_enciclopedia(obj_id, sistema, tipo):
-    """Devuelve el objeto de la enciclopedia según su ID"""
-    enc = sistema.get("enciclopedias", {}).get(tipo, [])
-    for o in enc:
-        if o["id"] == obj_id:
-            return o
-    return {}
+def vender_item(sistema, item_id, cantidad=1):
+    """
+    Vende un item del inventario y otorga recompensa automáticamente,
+    ahora manejando subtipos de dinero o tiradas.
+    """
+    inventario = sistema.get("inventario", {})
 
+    if item_id not in inventario:
+        print("❌ Item no encontrado.")
+        return False
 
-# =========================
-# MENÚ DE INVENTARIO
-# =========================
-def menu_inventario(sistema=None):
-    if sistema is None:
-        sistema = estado.sistema_actual
+    item = inventario[item_id]
 
-    while True:
-        print("\n=== MENÚ DE INVENTARIO ===")
-        print("1. Ver inventario")
-        print("2. Buscar objeto 🔍")
-        print("3. Añadir objeto")
-        print("4. Modificar objeto")
-        print("5. Eliminar objeto")
-        print("6. Volver")
+    if not puede_vender_item(item):
+        print(f"❌ El item '{item['nombre']}' no se puede vender.")
+        return False
 
-        opcion = input("Elige una opción: ")
+    cantidad = max(1, cantidad)
+    if item.get("cantidad", 1) < cantidad:
+        print(f"❌ No tienes suficiente cantidad de '{item['nombre']}'.")
+        return False
 
-        if opcion == "1":
-            mostrar_inventario(sistema)
-        elif opcion == "2":
-            buscar_inventario(sistema)
-        elif opcion == "3":
-            añadir_objeto(sistema)
-        elif opcion == "4":
-            modificar_objeto(sistema)
-        elif opcion == "5":
-            eliminar_objeto(sistema)
-        elif opcion == "6":
-            guardar_sistema(sistema)
-            break
-        else:
-            print("❌ Opción no válida.")
+    valor = item["valor"]
+    tipo = valor["tipo"]
+    valor_unitario = valor["cantidad"]
+    total = valor_unitario * cantidad
 
-# 💡 COMENTARIOS PARA REPLICAR EN OTROS PLUGINS:
-# 1. Cambiar todos los nombres de funciones y claves a la sección correspondiente.
-#    Ejemplo: habilidades -> menu_habilidades, añadir_habilidad, etc.
-# 2. Usar registrar_objeto/desactivar_objeto/reactivar_objeto para mantener todo en enciclopedia.
-# 3. Para nuevas secciones como tienda, ruleta:
-#    - Crear lista vacía en sistema y enciclopedia.
-#    - Registrar objetos/elementos mediante registrar_objeto.
-#    - Usar desactivar_objeto/reactivar_objeto para historial y log.
+    # Eliminar item
+    eliminar_item(sistema, item_id, cantidad)
+
+    # Aplicar recompensa
+    if tipo in ["dinero", "tiradas"]:
+        sistema.setdefault(tipo, {})
+        subtipo = valor.get("subtipo")  # usar el subtipo ya definido en el item
+        if not subtipo:
+            subtipo = "Común"  # fallback por si acaso
+        sistema[tipo][subtipo] = sistema[tipo].get(subtipo, 0) + total
+
+    elif tipo == "puntos_stats":
+        sistema["puntos_stats"] = sistema.get("puntos_stats", 0) + total
+
+    elif tipo == "puntos_habilidad":
+        sistema["puntos_habilidad"] = sistema.get("puntos_habilidad", 0) + total
+
+    else:
+        sistema[tipo] = sistema.get(tipo, 0) + total
+
+    #print(f"💰 Vendido '{item['nombre']}' x{cantidad} → +{total} {tipo}")
+    estado.cambios_no_guardados = True
+    return True
+
+def puede_vender_item(item):
+    """
+    Comprueba si un item se puede vender.
+    Requiere que tenga campo 'valor' válido.
+    """
+    if not isinstance(item, dict):
+        return False
+
+    valor = item.get("valor")
+    if not valor or not isinstance(valor, dict):
+        return False
+
+    if "tipo" not in valor or "cantidad" not in valor:
+        return False
+
+    return True
+
+def seleccionar_subtipo_recurso(sistema, tipo):
+    """
+    Permite seleccionar un subtipo existente de un recurso base o crear uno nuevo.
+    Solo se permiten los recursos base: puntos_stats, puntos_habilidad, dinero, tiradas.
+    Retorna el subtipo seleccionado, o None si se cancela.
+    """
+    RECURSOS_PERMITIDOS = {"puntos_stats", "puntos_habilidad", "dinero", "tiradas"}
+
+    if tipo not in RECURSOS_PERMITIDOS:
+        print(f"❌ El tipo '{tipo}' no está permitido para este menú.")
+        return None
+
+    # Detectar si el recurso tiene subtipos (dict) o es un valor directo
+    recursos = sistema.get(tipo, {})
+    tiene_subtipos = isinstance(recursos, dict)
+
+    # Si no hay subtipos, simplemente devolver el tipo como subtipo
+    if not tiene_subtipos:
+        return tipo
+
+    # Si hay subtipos, mostrar menú como antes
+    if recursos:
+        print(f"\nSubtipos existentes de {tipo}:")
+        for i, key in enumerate(recursos.keys(), 1):
+            print(f"{i}. {key} ({recursos[key]})")
+    else:
+        print(f"\nNo hay subtipos definidos para {tipo} aún.")
+
+    print(f"{len(recursos)+1}. Crear nuevo subtipo")
+    print("Presiona Enter para cancelar la selección.")
+
+    opcion = input("Elige subtipo o crea uno nuevo: ").strip()
+
+    if opcion == "":
+        print("⚠️ Selección cancelada.")
+        return None  # Cancelar selección si Enter
+
+    if opcion.isdigit():
+        opcion = int(opcion)
+        if 1 <= opcion <= len(recursos):
+            return list(recursos.keys())[opcion-1]
+        elif opcion == len(recursos)+1:
+            nuevo = input("Nombre del nuevo subtipo: ").strip()
+            if nuevo:
+                return nuevo
+            else:
+                return None
+    else:
+        return opcion  # nombre escrito manualmente
+
+    return None
+
