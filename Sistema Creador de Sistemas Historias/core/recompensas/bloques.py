@@ -92,7 +92,7 @@ def eliminar_recompensa(bloque, tipo=None, clave=None, index=None):
     estado.cambios_no_guardados = True
     return True
 
-
+# ────────────── Funciones auxiliares ──────────────
 def seleccionar_objeto_base(sistema: dict):
     """
     Selecciona o crea un objeto base SIMPLIFICADO.
@@ -180,13 +180,6 @@ def seleccionar_objeto_base(sistema: dict):
         "tipo": normalizar(obj.get("tipo")),
         "rareza": normalizar(obj.get("rareza"))
     }
-
-
-# ────────────── Funciones auxiliares ──────────────
-
-
-
-
 
 # ─────────────────────────────
 # MENÚ INTERACTIVO GENÉRICO
@@ -428,7 +421,6 @@ def menu_editar_bloque_interactivo(bloque, nombre_bloque):
 
             estado.cambios_no_guardados = True
             print("✅ Eliminado.")
-
 
 # ─────────────────────────────
 # MENÚ SIMPLE BASADO EN CLAVES

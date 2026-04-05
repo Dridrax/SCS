@@ -27,7 +27,6 @@ def revisar_y_subir_nivel_destino(sistema, destino=None):
 
     subir_nivel_desde_config(sistema, config_nivel)
 
-
 def subir_nivel_desde_config(sistema, config_nivel):
     """
     Maneja subida de nivel usando sistema["niveles"]
@@ -48,6 +47,9 @@ def subir_nivel_desde_config(sistema, config_nivel):
     niveles.setdefault(nivel_key, 1)
     niveles.setdefault(xp_key, 0)
     niveles.setdefault(xp_siguiente_key, 100)
+
+    # Guardar nivel inicial para mostrar salto final
+    nivel_inicial = niveles[nivel_key]
 
     while niveles[xp_key] >= niveles[xp_siguiente_key]:
         xp_necesaria = niveles[xp_siguiente_key]
@@ -135,13 +137,14 @@ def subir_nivel_desde_config(sistema, config_nivel):
                 aplicar_recompensas(sistema, preparar_recompensa_para_aplicar(sistema, recompensa.get("bloque", {})))
             
 
-
         # -------------------------
         # 📈 Escalado de XP
         # -------------------------
         nueva_xp = max(int(xp_necesaria * factor_escalado), xp_necesaria + 1)
         niveles[xp_siguiente_key] = nueva_xp
 
-        print(f"✅ ¡Subiste nivel al nivel {niveles[nivel_key]}!")
+    # Mostrar solo el salto final de nivel
+    if nivel_inicial != niveles[nivel_key]:
+        print(f"✅ Nivel {nivel_inicial} -> {niveles[nivel_key]}!")
 
     estado.cambios_no_guardados = True

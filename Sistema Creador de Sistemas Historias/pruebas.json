@@ -28,7 +28,7 @@
         "inventario": true,
         "misiones": false,
         "niveles": true,
-        "rachas": true,
+        "rachas": false,
         "ruleta": false
     },
     "tipos_recompensa_activos": {
@@ -59,17 +59,17 @@
         "Legendario": true
     },
     "rarezas_definidas": {},
-    "puntos_stats": 36208,
+    "puntos_stats": 18,
     "dinero": {
-        "Oro": 206981,
-        "Bronce": 1,
-        "Platino": 765
+        "Oro": 18,
+        "Bronce": 252,
+        "Platino": 0
     },
     "tiradas": {
         "Boleto": 191,
         "Boleto Dorado": 52
     },
-    "puntos_habilidad": 349,
+    "puntos_habilidad": 0,
     "inventario": {
         "750c88b5-cf19-44f9-a5e6-616adbb3023b": {
             "id": "750c88b5-cf19-44f9-a5e6-616adbb3023b",
@@ -114,12 +114,12 @@
         }
     },
     "niveles": {
-        "nivel": 1,
-        "xp_actual": 0,
-        "xp_para_siguiente": 100,
+        "nivel": 10,
+        "xp_actual": 64,
+        "xp_para_siguiente": 109,
         "niveles_config": {
             "modo_subida": "solo_puntos",
-            "puntos_por_nivel": 2,
+            "puntos_por_nivel": 0,
             "stats_automaticos": 0,
             "factor_escalado": 1.0,
             "tipo_recompensas": "cada_nivel",
@@ -129,16 +129,21 @@
         "recompensas_por_nivel": [
             {
                 "bloque": {
-                    "dinero": {
-                        "Oro": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.0,
+                    "puntos_stats": {
+                        "Puntos de Estadistica": {
+                            "valor_base": 8,
+                            "factor_escalado": 0.0,
                             "tope": 0
                         }
                     },
-                    "puntos_stats": {
-                        "puntos stats": {
+                    "dinero": {
+                        "Oro": {
                             "valor_base": 1,
+                            "factor_escalado": 1.0,
+                            "tope": 0
+                        },
+                        "Bronce": {
+                            "valor_base": 14,
                             "factor_escalado": 1.0,
                             "tope": 0
                         }
@@ -146,49 +151,6 @@
                 }
             }
         ]
-    },
-    "rachas": {
-        "activas": {
-            "racha_objetos": {
-                "id": "racha_objetos",
-                "nombre": "Racha de Objetos",
-                "descripcion": "",
-                "objetivos": [
-                    {
-                        "descripcion": "Recolecta piedras",
-                        "cantidad_base": 10,
-                        "factor_escalado": 1.3,
-                        "tope": 0,
-                        "nivel": 5,
-                        "progreso": 0
-                    }
-                ],
-                "recompensas": {
-                    "objetos": [
-                        {
-                            "nombre": "palo",
-                            "tipo": "arma",
-                            "rareza": "muy comun",
-                            "cantidad_base": 1,
-                            "factor_escalado": 1.3,
-                            "tope": null
-                        },
-                        {
-                            "nombre": "gema",
-                            "tipo": "tesoro",
-                            "rareza": "raro",
-                            "cantidad_base": 1,
-                            "factor_escalado": 1.2,
-                            "tope": null
-                        }
-                    ]
-                },
-                "penalizaciones": {},
-                "veces_completada": 5,
-                "fallos_consecutivos": 0
-            }
-        },
-        "historial": {}
     },
     "configuracion": {
         "racha_tipo_escalado": "lineal"
