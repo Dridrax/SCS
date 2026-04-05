@@ -1,0 +1,532 @@
+#plugins/inventario/menus_inv.py
+from core.estado_global import estado
+from core.guardado.archivos import guardar_sistema
+from core.utils.funciones_utiles import pedir_int
+from core.recompensas.tipos import seleccionar_rareza
+from plugins.inventario.inventario import (agregar_item, modificar_item, eliminar_item,
+                                           vender_item, seleccionar_subtipo_recurso)
+
+
+# _________________________
+# MENU AGREGAR ITEM
+# _________________________
+def menu_agregar_item():
+    sistema = estado.sistema_actual
+    if not sistema:
+        print("❌ No hay sistema cargado.")
+        return
+
+    if not sistema.get("plugins_activos", {}).get("inventario"):
+        print("❌ El plugin inventario no está activo.")
+        return
+
+    sistema.setdefault("inventario", {})
+
+    print("\n=== AÑADIR ITEM ===")
+    nombre = input("Nombre del item: ").strip()
+    if not nombre:
+        print("❌ No se puede añadir un item sin nombre.")
+        return
+
+    # Selección de rareza
+    rareza = seleccionar_rareza(default=None)
+
+    tipo = input("Tipo: ").strip()
+    descripcion = input("Descripción: ").strip()
+    cantidad = pedir_int("Cantidad: ")
+
+    # Efectos
+    efectos = {}
+    if input("¿Tiene efectos? (s/n): ").lower() == "s":
+        while True:
+            key = input("Efecto (enter para terminar): ").strip()
+            if not key:
+                break
+            valor_efecto = pedir_int(f"Valor de {key}: ")
+            efectos[key] = valor_efecto
+
+    # Valor (venta/intercambio)
+    valor = None
+    if input("¿El item tiene valor (para vender/intercambiar)? (s/n): ").lower() == "s":
+        TIPOS_VALOR_PERMITIDOS = ["puntos_stats", "puntos_habilidad", "dinero", "tiradas"]
+        print("\nTipos de valor disponibles:")
+        for t in TIPOS_VALOR_PERMITIDOS:
+            print(f" - {t}")
+
+        tipo_valor = input("Selecciona tipo de recurso: ").strip()
+        if tipo_valor not in TIPOS_VALOR_PERMITIDOS or not tipo_valor:
+            print("⚠️ Selección cancelada.")
+            tipo_valor = None
+
+        if tipo_valor:
+            # Usar la función adaptada que maneja recursos sin subtipos
+            subtipo_valor = seleccionar_subtipo_recurso(sistema, tipo_valor)
+            if subtipo_valor:
+                cantidad_valor = pedir_int("Valor por unidad: ")
+                if cantidad_valor > 0:
+                    # Si no hay subtipos reales, no agregamos la clave 'subtipo'
+                    valor = {
+                        "tipo": tipo_valor,
+                        "cantidad": cantidad_valor
+                    }
+                    # Solo agregamos subtipo si es distinto al tipo (para dinero/tiradas)
+                    if subtipo_valor != tipo_valor:
+                        valor["subtipo"] = subtipo_valor
+
+    # Construcción del item
+    item_data = {
+        "nombre": nombre,
+        "rareza": rareza,
+        "tipo": tipo,
+        "descripcion": descripcion,
+        "cantidad": cantidad,
+        "efectos": efectos
+    }
+
+    if valor:
+        item_data["valor"] = valor
+
+    item_id = agregar_item(sistema, item_data)
+
+    print(f"\n✅ Item '{item_data['nombre']}' añadido con ID {item_id} (Rareza: {item_data['rareza']}).")
+    if valor:
+        subtipo_texto = f" ({valor['subtipo']})" if "subtipo" in valor else ""
+        print(f"💰 Valor: {valor['cantidad']} {valor['tipo']}{subtipo_texto} por unidad")
+
+    guardar_sistema()
+    estado.cambios_no_guardados = True
+
+# _________________________
+# MENU MODIFICAR ITEM
+# _________________________
+def menu_modificar_item():
+    sistema = estado.sistema_actual
+    if not sistema:
+        print("❌ No hay sistema cargado.")
+        return
+
+    inventario = sistema.get("inventario", {})
+    if not inventario:
+        print("❌ No hay items en el inventario.")
+        return
+
+    while True:
+        print("\n=== MODIFICAR ITEM ===")
+        items = list(inventario.values())
+        for i, item in enumerate(items, 1):
+            print(f"{i}. {item['nombre']} | Rareza: {item['rareza']} | Cantidad: {item['cantidad']}")
+        print(f"{len(items)+1}. Volver")
+
+        entrada = input("\nSelecciona un item por número o nombre: ").strip()
+        if entrada == str(len(items)+1) or entrada.lower() == "volver":
+            break
+
+        item_sel = None
+        if entrada.isdigit():
+            idx = int(entrada) - 1
+            if 0 <= idx < len(items):
+                item_sel = items[idx]
+        else:
+            for item in items:
+                if item['nombre'].lower() == entrada.lower():
+                    item_sel = item
+                    break
+
+        if not item_sel:
+            print("❌ Item no encontrado.")
+            continue
+
+        print(f"\nModificando '{item_sel['nombre']}' (enter para mantener el valor actual)")
+
+        nombre = input(f"Nombre [{item_sel['nombre']}]: ").strip() or item_sel['nombre']
+        rareza = seleccionar_rareza(default=item_sel['rareza'])
+        tipo = input(f"Tipo [{item_sel['tipo']}]: ").strip() or item_sel['tipo']
+        descripcion = input(f"Descripción [{item_sel['descripcion']}]: ").strip() or item_sel['descripcion']
+
+        cantidad_input = input(f"Cantidad [{item_sel['cantidad']}]: ").strip()
+        cantidad = int(cantidad_input) if cantidad_input.isdigit() else item_sel['cantidad']
+
+        # Efectos
+        efectos = item_sel.get("efectos", {}).copy()
+        if input("¿Modificar efectos? (s/n): ").lower() == "s":
+            efectos.clear()
+            while True:
+                k = input("Nombre del efecto (enter para terminar): ").strip()
+                if not k:
+                    break
+                v = pedir_int("Valor del efecto: ")
+                efectos[k] = v
+
+        # 🔥 VALOR (NUEVO)
+        valor_actual = item_sel.get("valor")
+
+        if valor_actual:
+            print(f"Valor actual: {valor_actual['cantidad']} {valor_actual['tipo']}")
+            opcion_valor = input("¿Modificar valor? (s = modificar / n = mantener / d = eliminar): ").lower()
+        else:
+            opcion_valor = input("¿Añadir valor al item? (s/n): ").lower()
+
+        valor = valor_actual
+
+        if opcion_valor == "s":
+            tipo_valor = input("Nuevo tipo de valor: ").strip()
+            cantidad_valor = pedir_int("Nuevo valor por unidad: ")
+
+            if tipo_valor and cantidad_valor > 0:
+                valor = {
+                    "tipo": tipo_valor,
+                    "cantidad": cantidad_valor
+                }
+
+        elif opcion_valor == "d":
+            valor = None
+
+        # Construcción final
+        nuevos_datos = {
+            "nombre": nombre,
+            "rareza": rareza,
+            "tipo": tipo,
+            "descripcion": descripcion,
+            "cantidad": cantidad,
+            "efectos": efectos
+        }
+
+        # 🔥 aplicar valor
+        if valor:
+            nuevos_datos["valor"] = valor
+        else:
+            # eliminar si existía
+            if "valor" in item_sel:
+                item_sel.pop("valor", None)
+
+        modificar_item(sistema, item_sel['id'], nuevos_datos)
+
+        if cantidad <= 0:
+            print(f"\nItem '{item_sel['nombre']}' eliminado por tener cantidad 0.")
+            items.remove(item_sel)
+
+# _________________________
+# SELECCIONAR ITEMS DE INVENTARIO
+# _________________________
+def seleccionar_item_inventario(sistema):
+    inventario = sistema.get("inventario", {})
+
+    if not inventario:
+        print("❌ No hay items.")
+        return None
+
+    items_lista = list(inventario.items())
+
+    print("\n--- ITEMS DISPONIBLES ---")
+    for i, (item_id, item) in enumerate(items_lista, 1):
+        texto = f"{i}. {item['nombre']} (x{item.get('cantidad',1)})"
+
+        # Comprobamos que 'valor' sea dict no vacío y tenga 'cantidad' y 'tipo'
+        v = item.get("valor")
+        if isinstance(v, dict) and v and "cantidad" in v and "tipo" in v:
+            texto += f" | 💰 {v['cantidad']} {v['tipo']}"
+        else:
+            texto += " | 💰 Sin valor"
+
+        print(texto)
+
+    entrada = input("\nElige número o escribe nombre (Enter cancelar): ").strip()
+
+    if entrada == "":
+        return None
+
+    # Selección por número
+    if entrada.isdigit():
+        indice = int(entrada)
+        if 1 <= indice <= len(items_lista):
+            return items_lista[indice-1][0]
+        return None
+
+    # Búsqueda por nombre parcial
+    coincidencias = [
+        (iid, item)
+        for iid, item in inventario.items()
+        if entrada.lower() in item["nombre"].lower()
+    ]
+
+    if not coincidencias:
+        print("❌ No se encontraron coincidencias.")
+        return None
+
+    if len(coincidencias) == 1:
+        return coincidencias[0][0]
+
+    # Mostrar múltiples coincidencias
+    print("\n--- COINCIDENCIAS ---")
+    for i, (iid, item) in enumerate(coincidencias, 1):
+        texto = f"{i}. {item['nombre']}"
+
+        v = item.get("valor")
+        if isinstance(v, dict) and v and "cantidad" in v and "tipo" in v:
+            texto += f" | 💰 {v['cantidad']} {v['tipo']}"
+        else:
+            texto += " | 💰 Sin valor"
+
+        print(texto)
+
+    indice = pedir_int(
+        "Elegir número (0 cancelar): ",
+        default=0,
+        minimo=0,
+        maximo=len(coincidencias)
+    )
+
+    if indice == 0:
+        return None
+
+    return coincidencias[indice-1][0]
+
+# _________________________
+# MENU ELIMINAR ITEM
+# _________________________
+def menu_eliminar_item(sistema, item_id, cantidad=1):
+    """
+    Elimina un item del inventario.
+    - sistema: dict del sistema actual
+    - item_id: id del item a eliminar
+    - cantidad: cantidad a eliminar (default 1)
+    
+    Si la cantidad es menor que la existente, se resta.
+    Si la cantidad es mayor o igual, se elimina por completo.
+    """
+    inventario = sistema.get("inventario", {})
+
+    if item_id not in inventario:
+        print(f"❌ No se encontró el item con ID '{item_id}'.")
+        return False
+
+    item = inventario[item_id]
+    if item.get("cantidad", 1) > cantidad:
+        item["cantidad"] -= cantidad
+        print(f"✅ Se eliminaron {cantidad} de '{item['nombre']}'. Quedan {item['cantidad']}.")
+    else:
+        del inventario[item_id]
+        print(f"✅ Item '{item['nombre']}' eliminado del inventario.")
+
+    # Actualizar plugin_cache
+    if "plugins" in estado.plugin_cache:
+        plugin_inv = estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})
+        if item_id in plugin_inv:
+            if item_id in inventario:
+                plugin_inv[item_id] = inventario[item_id]
+            else:
+                del plugin_inv[item_id]
+
+    estado.cambios_no_guardados = True
+    return True
+
+# _________________________
+# MOSTRAR ITEM
+# _________________________
+def mostrar_items(sistema=None):
+    """
+    Muestra los items del inventario del sistema.
+    Permite seleccionar un item por número o por nombre para ver sus detalles.
+    Dentro del detalle del item, permite Modificar (M), Eliminar (D) o Vender (V) con confirmación.
+    """
+    if sistema is None:
+        sistema = estado.sistema_actual
+
+    if not sistema:
+        print("❌ No hay sistema cargado.")
+        return
+
+    while True:
+        inventario = sistema.get("inventario", {})
+        if not inventario:
+            print("❌ No hay items en el inventario.")
+            return
+
+        items_list = list(inventario.values())
+
+        print("\n=== INVENTARIO ===")
+        for idx, item in enumerate(items_list, 1):
+            print(f"{idx}. {item['nombre']} | Rareza: {item['rareza']} | Cantidad: {item['cantidad']}")
+
+        seleccion = input("\nElige un item por número o nombre (Enter para salir): ").strip()
+        if not seleccion:
+            break
+
+        # Selección por número o nombre
+        item_obj = None
+        if seleccion.isdigit():
+            index = int(seleccion) - 1
+            if 0 <= index < len(items_list):
+                item_obj = items_list[index]
+            else:
+                print("❌ Número inválido.")
+                continue
+        else:
+            for item in items_list:
+                if item['nombre'].lower() == seleccion.lower():
+                    item_obj = item
+                    break
+            if item_obj is None:
+                print("❌ No se encontró ningún item con ese nombre.")
+                continue
+
+        # Función interna para modificar item
+        def editar_item_interactivo(item):
+            nuevos_datos = {}
+            nuevos_datos["nombre"] = input(f"Nuevo nombre ({item['nombre']}): ") or item['nombre']
+            nuevos_datos["rareza"] = seleccionar_rareza(default=item['rareza'])
+            nuevos_datos["tipo"] = input(f"Nuevo tipo ({item['tipo']}): ") or item['tipo']
+            nuevos_datos["descripcion"] = input(f"Nueva descripción ({item['descripcion']}): ") or item['descripcion']
+            nuevos_datos["cantidad"] = pedir_int(f"Nueva cantidad ({item['cantidad']}): ") or item['cantidad']
+
+            # Editar efectos
+            efectos = item.get("efectos", {}).copy()
+            if input("¿Modificar efectos? (s/n): ").lower() == "s":
+                efectos.clear()
+                while True:
+                    k = input("Nombre del efecto (enter para terminar): ").strip()
+                    if not k:
+                        break
+                    v = pedir_int(f"Valor del efecto {k}: ")
+                    efectos[k] = v
+            nuevos_datos["efectos"] = efectos
+
+            # Editar valor
+            valor_actual = item.get("valor")
+            if valor_actual:
+                subtipo_texto = f" ({valor_actual['subtipo']})" if "subtipo" in valor_actual else ""
+                print(f"Valor actual: {valor_actual['cantidad']} {valor_actual['tipo']}{subtipo_texto}")
+                opcion_valor = input("¿Modificar valor? (s = modificar / n = mantener / d = eliminar): ").lower()
+            else:
+                opcion_valor = input("¿Añadir valor al item? (s/n): ").lower()
+
+            valor = valor_actual
+            if opcion_valor == "s":
+                tipo_valor = input("Nuevo tipo de valor: ").strip()
+                cantidad_valor = pedir_int("Nuevo valor por unidad: ")
+                subtipo_valor = input("Nuevo subtipo (opcional): ").strip()
+                if tipo_valor and cantidad_valor > 0:
+                    valor = {"tipo": tipo_valor, "cantidad": cantidad_valor}
+                    if subtipo_valor:
+                        valor["subtipo"] = subtipo_valor
+            elif opcion_valor == "d":
+                valor = None
+
+            if valor:
+                nuevos_datos["valor"] = valor
+            else:
+                item.pop("valor", None)
+
+            modificar_item(estado.sistema_actual, item['id'], nuevos_datos)
+            estado.cambios_no_guardados = True
+            guardar_sistema()
+            print(f"✅ Item '{nuevos_datos['nombre']}' modificado.")
+
+        # Función interna para eliminar item
+        def eliminar_item_interactivo(item):
+            print(f"Cantidad actual de '{item['nombre']}': {item['cantidad']}")
+            cantidad = pedir_int("Cantidad a eliminar: ")
+            if cantidad <= 0:
+                print("❌ Operación cancelada.")
+                return
+            confirmar = input(f"⚠️ ¿Eliminar {cantidad} de '{item['nombre']}'? (s/n): ").lower()
+            if confirmar == "s":
+                eliminar_item(sistema, item['id'], cantidad)
+                if item.get("cantidad", 0) <= 0:
+                    items_list.remove(item)
+                estado.cambios_no_guardados = True
+                guardar_sistema()
+                print(f"✅ Item '{item['nombre']}' actualizado.")
+
+        # Función interna para vender item
+        def vender_item_interactivo(item):
+            # Comprobar cantidad a vender
+            cantidad = pedir_int("Cantidad a vender: ")
+            if cantidad <= 0:
+                print("❌ Cancelado.")
+                return
+        
+            # Obtener valor actual del item
+            valor_item = item.get("valor")
+        
+            # Si el valor es None o dict vacío, preguntar si se quiere añadir valor
+            if not isinstance(valor_item, dict) or not valor_item:
+                print("⚠️ Este item no tiene valor asignado.")
+                opcion_valor = input("¿Deseas añadir un valor a este item? (s/n): ").lower()
+                if opcion_valor != "s":
+                    print("❌ Venta cancelada. Este item no tiene valor.")
+                    return
+        
+                # Crear nuevo valor usando la misma lógica que en editar_item_interactivo
+                tipo_valor = input("Nuevo tipo de valor: ").strip()
+                cantidad_valor = pedir_int("Nuevo valor por unidad: ")
+                subtipo_valor = input("Nuevo subtipo (opcional): ").strip()
+        
+                if tipo_valor and cantidad_valor > 0:
+                    valor_item = {"tipo": tipo_valor, "cantidad": cantidad_valor}
+                    if subtipo_valor:
+                        valor_item["subtipo"] = subtipo_valor
+                    # Guardamos el nuevo valor en el item
+                    item["valor"] = valor_item
+                    modificar_item(estado.sistema_actual, item['id'], {"valor": valor_item})
+                    estado.cambios_no_guardados = True
+                    guardar_sistema()
+                    print(f"✅ Valor añadido al item '{item['nombre']}'.")
+                else:
+                    print("❌ Valor inválido. Venta cancelada.")
+                    return
+        
+            # Ahora valor_item ya tiene datos válidos
+            subtipo_texto = f" ({valor_item['subtipo']})" if "subtipo" in valor_item else ""
+            vender_item(sistema, item["id"], cantidad)
+            print(f"💰 Vendido '{item['nombre']}' x{cantidad} → +{cantidad * valor_item['cantidad']} {valor_item['tipo']}{subtipo_texto}")
+            if item.get("cantidad", 0) <= 0:
+                items_list.remove(item)
+            estado.cambios_no_guardados = True
+            guardar_sistema()
+
+        # Mostrar detalles del item
+        while True:
+            print("\n--- DETALLES DEL ITEM ---")
+            print(f"ID: {item_obj['id']}")
+            print(f"Nombre: {item_obj['nombre']}")
+            print(f"Rareza: {item_obj['rareza']}")
+            print(f"Tipo: {item_obj['tipo']}")
+            print(f"Descripción: {item_obj['descripcion']}")
+            print(f"Cantidad: {item_obj['cantidad']}")
+
+            # -------------------------------
+            # Valor
+            # -------------------------------
+            v = item_obj.get("valor")
+            if v and isinstance(v, dict) and v:  # Solo si es un dict no vacío
+                subtipo_texto = f" ({v['subtipo']})" if "subtipo" in v else ""
+                cantidad_valor = v.get("cantidad", "?")
+                tipo_valor = v.get("tipo", "?")
+                print(f"Valor: {cantidad_valor} {tipo_valor}{subtipo_texto} por unidad")
+            else:
+                print("Valor: Este item no tiene valor por unidad")
+
+            # -------------------------------
+            # Efectos
+            # -------------------------------
+            print("Efectos:")
+            if item_obj.get("efectos"):
+                for k, v in item_obj["efectos"].items():
+                    print(f"  - {k}: {v}")
+            else:
+                print("  Ninguno")
+
+            print("\n[M] Modificar   [D] Eliminar   [V] Vender   [Enter] Volver")
+            accion = input("> ").strip().lower()
+
+            if accion == "m":
+                editar_item_interactivo(item_obj)
+            elif accion == "d":
+                eliminar_item_interactivo(item_obj)
+                break
+            elif accion == "v":
+                vender_item_interactivo(item_obj)
+                break
+            else:
+                break
