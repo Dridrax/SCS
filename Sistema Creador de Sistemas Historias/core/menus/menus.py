@@ -329,7 +329,7 @@ def menu_modificar_items(sistema):
         print("4. Mostrar Items.")
         print("5. Volver.")
 
-        opcion = pedir_int("\nElige una opción: ")
+        opcion = pedir_int("\nElige una opción: ", default=5)
         
         #Modificar Items
         if opcion == 1:
@@ -355,6 +355,7 @@ def menu_modificar_items(sistema):
                 continue
 
             menu_eliminar_item(sistema, item_id, cantidad)
+            guardar_sistema(print_msg=False)
 
         elif opcion == 4:
             mostrar_items()

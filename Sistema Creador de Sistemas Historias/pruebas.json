@@ -26,10 +26,10 @@
     },
     "plugins_activos": {
         "inventario": true,
-        "misiones": true,
+        "misiones": false,
         "niveles": true,
         "rachas": true,
-        "ruleta": true
+        "ruleta": false
     },
     "tipos_recompensa_activos": {
         "stats": true,
@@ -59,55 +59,64 @@
         "Legendario": true
     },
     "rarezas_definidas": {},
-    "puntos_stats": 93,
+    "puntos_stats": 36208,
     "dinero": {
-        "Oro": 3432,
-        "Bronce": 83
+        "Oro": 206981,
+        "Bronce": 1,
+        "Platino": 765
     },
     "tiradas": {
-        "Boleto": 112,
-        "Boleto Dorado": 51
+        "Boleto": 191,
+        "Boleto Dorado": 52
     },
-    "puntos_habilidad": 339,
-    "inventario": {},
-    "misiones": {
-        "activas": {
-            "prueba": {
-                "id": "prueba",
-                "nombre": "mision",
-                "descripcion": "1",
-                "objetivos": [
-                    {
-                        "id": "a70dc26b-2844-4e19-a143-9e5ba87de297",
-                        "descripcion": "a",
-                        "cantidad_base": 1,
-                        "progreso": 0,
-                        "interno": false,
-                        "recompensas": {
-                            "objetos": [
-                                {
-                                    "nombre": "gema",
-                                    "cantidad": 1,
-                                    "tipo": "reliquia",
-                                    "rareza": "poco común",
-                                    "descripcion": "",
-                                    "efectos": {}
-                                }
-                            ]
-                        },
-                        "penalizaciones": {
-                            "objetos": []
-                        },
-                        "estado_objetivo": "pendiente"
-                    }
-                ]
+    "puntos_habilidad": 349,
+    "inventario": {
+        "750c88b5-cf19-44f9-a5e6-616adbb3023b": {
+            "id": "750c88b5-cf19-44f9-a5e6-616adbb3023b",
+            "nombre": "palo",
+            "rareza": "muy comun",
+            "tipo": "arma",
+            "descripcion": "",
+            "cantidad": 114,
+            "efectos": {},
+            "valor": {
+                "tipo": "dinero",
+                "cantidad": 1,
+                "subtipo": "Oro"
+            }
+        },
+        "903fe76d-ae1f-4838-9f8f-bbb90b6ef23e": {
+            "id": "903fe76d-ae1f-4838-9f8f-bbb90b6ef23e",
+            "nombre": "tecla",
+            "tipo": "teclado",
+            "rareza": "raro",
+            "descripcion": "",
+            "efectos": {},
+            "cantidad": 9,
+            "valor": {
+                "tipo": "puntos_stats",
+                "cantidad": 10
+            }
+        },
+        "25028391-7efd-4ef6-a30b-9e202b5be6e0": {
+            "id": "25028391-7efd-4ef6-a30b-9e202b5be6e0",
+            "nombre": "gema",
+            "tipo": "tesoro",
+            "rareza": "raro",
+            "descripcion": "",
+            "efectos": {},
+            "cantidad": 3,
+            "valor": {
+                "tipo": "dinero",
+                "cantidad": 1,
+                "subtipo": "Oro"
             }
         }
     },
     "niveles": {
-        "nivel": 34,
-        "xp_actual": 128,
-        "xp_para_siguiente": 133,
+        "nivel": 1,
+        "xp_actual": 0,
+        "xp_para_siguiente": 100,
         "niveles_config": {
             "modo_subida": "solo_puntos",
             "puntos_por_nivel": 2,
@@ -140,25 +149,17 @@
     },
     "rachas": {
         "activas": {
-            "prueba": {
-                "id": "prueba",
-                "nombre": "racha",
-                "descripcion": "a",
+            "racha_objetos": {
+                "id": "racha_objetos",
+                "nombre": "Racha de Objetos",
+                "descripcion": "",
                 "objetivos": [
                     {
-                        "descripcion": "b",
-                        "cantidad_base": 1,
-                        "factor_escalado": 1.5,
+                        "descripcion": "Recolecta piedras",
+                        "cantidad_base": 10,
+                        "factor_escalado": 1.3,
                         "tope": 0,
-                        "nivel": 90,
-                        "progreso": 0
-                    },
-                    {
-                        "descripcion": "n",
-                        "cantidad_base": 3,
-                        "factor_escalado": 1.2,
-                        "tope": 0,
-                        "nivel": 48,
+                        "nivel": 5,
                         "progreso": 0
                     }
                 ],
@@ -167,182 +168,29 @@
                         {
                             "nombre": "palo",
                             "tipo": "arma",
-                            "rareza": "común",
-                            "descripcion": "",
-                            "efectos": {},
-                            "cantidad_base": 1
-                        }
-                    ],
-                    "dinero": {
-                        "Oro": {
-                            "valor_base": 3,
+                            "rareza": "muy comun",
+                            "cantidad_base": 1,
                             "factor_escalado": 1.3,
-                            "tope": 0
+                            "tope": null
+                        },
+                        {
+                            "nombre": "gema",
+                            "tipo": "tesoro",
+                            "rareza": "raro",
+                            "cantidad_base": 1,
+                            "factor_escalado": 1.2,
+                            "tope": null
                         }
-                    },
-                    "xp_subir": {
-                        "xp_subir": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.5,
-                            "tope": 0
-                        }
-                    }
+                    ]
                 },
                 "penalizaciones": {},
-                "veces_completada": 39,
+                "veces_completada": 5,
                 "fallos_consecutivos": 0
             }
         },
         "historial": {}
     },
-    "ruleta": {
-        "activas": {
-            "ruleta_definitiva": {
-                "id": "ruleta_definitiva",
-                "nombre": "Ruleta Definitiva",
-                "descripcion": "Prueba de que ruleta entrega todos los tipos bien",
-                "premios": {
-                    "dinero": {
-                        "Oro": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Común"
-                        }
-                    },
-                    "objetos": [
-                        {
-                            "nombre": "palo",
-                            "cantidad": 2,
-                            "factor_escalado": 1.0,
-                            "tipo": "arma",
-                            "descripcion": "",
-                            "efectos": {},
-                            "rareza": "Común"
-                        }
-                    ],
-                    "puntos_habilidad": {
-                        "Puntos Habilidad": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Raro"
-                        }
-                    },
-                    "puntos_stats": {
-                        "Puntos stats": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Épico"
-                        }
-                    },
-                    "tiradas": {
-                        "Boleto": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Muy Raro"
-                        },
-                        "Boleto Dorado": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Legendario"
-                        }
-                    },
-                    "xp_subir": {
-                        "Xp": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Poco Común"
-                        }
-                    }
-                },
-                "eventos_narrativos": [
-                    {
-                        "titulo": "Una tirada mas gratis",
-                        "descripcion": "Prueba 1",
-                        "rareza": "legendario"
-                    },
-                    {
-                        "titulo": "Borrar pizarra",
-                        "descripcion": "Prueba 2",
-                        "rareza": "común"
-                    }
-                ],
-                "tiradas_realizadas": 896
-            },
-            "ruleta_definitiva_duplicada": {
-                "id": "ruleta_definitiva_duplicada",
-                "nombre": "Ruleta Duplicada Defi",
-                "descripcion": "prueba de duplicado",
-                "premios": {
-                    "dinero": {
-                        "Oro": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Común"
-                        }
-                    },
-                    "puntos_stats": {
-                        "Puntos stats": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Épico"
-                        }
-                    },
-                    "xp_subir": {
-                        "Xp": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Poco Común"
-                        }
-                    }
-                },
-                "eventos_narrativos": [
-                    {
-                        "titulo": "Una tirada mas gratis",
-                        "descripcion": "Prueba 1"
-                    },
-                    {
-                        "titulo": "Borrar pizarra",
-                        "descripcion": "Prueba 2"
-                    }
-                ],
-                "tiradas_realizadas": 256
-            },
-            "ruleta_1": {
-                "id": "ruleta_1",
-                "nombre": "ruleta 1",
-                "descripcion": "",
-                "premios": {
-                    "dinero": [
-                        {
-                            "nombre": "Oro",
-                            "valor": 10,
-                            "rareza": "Raro"
-                        },
-                        {
-                            "nombre": "Oro",
-                            "valor": 9,
-                            "rareza": "Raro"
-                        },
-                        {
-                            "nombre": "Oro",
-                            "valor": 1,
-                            "rareza": "Muy Comun"
-                        }
-                    ]
-                },
-                "eventos_narrativos": [],
-                "tiradas_realizadas": 1745
-            }
-        },
-        "historial": []
+    "configuracion": {
+        "racha_tipo_escalado": "lineal"
     }
 }

@@ -39,70 +39,129 @@ def buscar_inventario(sistema=None):
 # =========================
 def generar_firma_objeto(item_data):
     """
-    Genera una firma única del objeto (incluye valor).
+    Genera una firma única del objeto IGNORANDO cantidad y valor.
+
+    🔥 Nueva lógica:
+    - SOLO importa: nombre, tipo, rareza
+    - Esto evita duplicados innecesarios
+    - Compatible con el nuevo sistema simplificado de objetos
     """
-    nombre = item_data.get("nombre", "").strip().lower()
-    rareza = item_data.get("rareza", "").strip().lower()
-    tipo = item_data.get("tipo", "").strip().lower()
-    descripcion = item_data.get("descripcion", "").strip().lower()
 
-    efectos = item_data.get("efectos", {})
-    efectos_firma = tuple(sorted((k.lower(), v) for k, v in efectos.items()))
+    def normalizar(x):
+        return str(x).strip().lower() if x is not None else ""
 
-    valor = item_data.get("valor")
+    nombre = normalizar(item_data.get("nombre"))
+    tipo = normalizar(item_data.get("tipo"))
+    rareza = normalizar(item_data.get("rareza"))
+
+    return (nombre, tipo, rareza)
+
+
+def normalizar_valor(valor):
+    if valor is None:
+        return None
+
     if isinstance(valor, dict):
-        valor_firma = (valor.get("tipo", "").lower(), valor.get("cantidad", 0))
-    else:
-        valor_firma = None
+        return {
+            "tipo": valor.get("tipo", ""),
+            "cantidad": int(valor.get("cantidad", 0)),
+            "subtipo": valor.get("subtipo")
+        }
 
-    return (nombre, rareza, tipo, descripcion, efectos_firma, valor_firma)
-
+    # Si es int → convertir a formato estándar
+    return {
+        "tipo": "dinero",  # o default que uses
+        "cantidad": int(valor),
+        "subtipo": None
+    }
 # =========================
 # AGREGAR ITEM REHECHO
 # =========================
 def agregar_item(sistema, item_data):
     """
-    Agrega un item al inventario del sistema.
-    Si un objeto idéntico ya existe, incrementa su cantidad en lugar de crear uno nuevo.
-    La rareza se respeta desde item_data o se asigna automáticamente si no existe.
+    Agrega un item al inventario.
+
+    🔥 Nueva lógica:
+    - Stack por (nombre, tipo, rareza)
+    - IGNORA valor para detectar duplicados
+    - Valor es opcional y no afecta al stack
     """
+
     if "inventario" not in sistema or sistema["inventario"] is None:
         sistema["inventario"] = {}
 
     inventario = sistema["inventario"]
-    cantidad_nueva = max(1, item_data.get("cantidad", 1))
 
-    # Generar la firma del objeto (ignora cantidad)
+    # ─────────────────────────────
+    # NORMALIZACIÓN BÁSICA
+    # ─────────────────────────────
+    item_data = item_data.copy()
+
+    def norm(x):
+        return str(x).strip().lower() if x is not None else ""
+
+    item_data["nombre"] = norm(item_data.get("nombre"))
+    item_data["tipo"] = norm(item_data.get("tipo"))
+    item_data["rareza"] = norm(item_data.get("rareza"))
+
+    cantidad_nueva = max(1, int(item_data.get("cantidad", 1)))
+
+    # ⚠️ IMPORTANTE: el valor ya NO define el objeto
+    valor_nuevo = item_data.get("valor")
+
+    # ─────────────────────────────
+    # FIRMA (SIN VALOR)
+    # ─────────────────────────────
     firma_nueva = generar_firma_objeto(item_data)
 
-    # Buscar objeto idéntico
+    # ─────────────────────────────
+    # 🔍 BUSCAR STACK
+    # ─────────────────────────────
     for obj_id, obj in inventario.items():
+
         if generar_firma_objeto(obj) == firma_nueva:
-            # Sumar cantidad
+
+            # ✅ SUMAR CANTIDAD
             obj["cantidad"] = obj.get("cantidad", 0) + cantidad_nueva
 
-            # Solo aseguramos rareza válida (sin interacción)
+            # ✅ ASEGURAR RAREZA
             asignar_rareza(obj, item_data.get("rareza"))
 
-            # Actualizar plugin_cache
+            # ─────────────────────────────
+            # 🔥 GESTIÓN DE VALOR (NUEVA)
+            # ─────────────────────────────
+            if not obj.get("valor") and valor_nuevo:
+                # Solo asigna valor si el objeto no tenía
+                obj["valor"] = valor_nuevo
+
             estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})[obj_id] = obj
             estado.cambios_no_guardados = True
+
             return obj_id
 
-    # Crear nuevo objeto con cantidad correcta
+    # ─────────────────────────────
+    # ➕ CREAR NUEVO OBJETO
+    # ─────────────────────────────
     item_id = str(uuid.uuid4())
+
     item_nuevo = {
         "id": item_id,
-        **item_data,
-        "cantidad": cantidad_nueva
+        "nombre": item_data["nombre"],
+        "tipo": item_data["tipo"],
+        "rareza": item_data["rareza"],
+        "descripcion": item_data.get("descripcion", ""),
+        "efectos": item_data.get("efectos", {}),
+        "cantidad": cantidad_nueva,
+        "valor": valor_nuevo if valor_nuevo else {}
     }
 
-    # Asignar rareza si no viene en item_data
     asignar_rareza(item_nuevo, item_data.get("rareza"))
 
     inventario[item_id] = item_nuevo
+
     estado.plugin_cache.setdefault("plugins", {}).setdefault("inventario", {})[item_id] = item_nuevo
     estado.cambios_no_guardados = True
+
     return item_id
 
 # =========================

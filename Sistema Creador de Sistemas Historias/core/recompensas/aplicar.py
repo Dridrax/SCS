@@ -213,121 +213,82 @@ def aplicar_recompensas(sistema: dict, recompensas: dict) -> dict:
             continue
 
         # ─────────────────────────────
-        # OBJETOS (PLUGIN)
+        # OBJETOS (PLUGIN) REHECHO
         # ─────────────────────────────
         if tipo == "objetos":
-
+        
+            # Validar formato
             if not isinstance(valor, (list, dict)):
                 resultado["ignoradas"][tipo] = "Formato inválido para objetos"
                 continue
-
+            
             resultado["aplicadas"].setdefault(tipo, {})
-
-            # ─────────────────────────
-            # FUNCIÓN INTERNA SEGURA
-            # ─────────────────────────
+            sistema.setdefault("inventario", {})  # asegurar inventario
+        
+            # Función interna para calcular cantidad total
             def calcular_total(datos: dict) -> int:
-                cantidad = (
-                    datos.get("cantidad_base")
-                    if datos.get("cantidad_base") is not None
-                    else datos.get("cantidad")
-                )
-
-                if cantidad is None:
+                cantidad = datos.get("cantidad_base") or datos.get("cantidad") or 1
+                try:
+                    cantidad = int(cantidad)
+                except (ValueError, TypeError):
                     cantidad = 1
-
                 factor = datos.get("factor_escalado", 1.0)
-                return int(cantidad * factor)
-
-            # ─────────────────────────
-            # FORMATO NUEVO (DICT)
-            # ─────────────────────────
+                try:
+                    factor = float(factor)
+                except (ValueError, TypeError):
+                    factor = 1.0
+                return max(int(cantidad * factor), 0)
+        
+            # Normalizar items a lista uniforme
+            items = []
             if isinstance(valor, dict):
-                for nombre_objeto, datos in valor.items():
+                # Dict tipo {nombre_objeto: datos}
+                for nombre_obj, datos in valor.items():
                     if not isinstance(datos, dict):
                         continue
-
-                    total = calcular_total(datos)
-
-                    item_data = {
-                        "nombre": nombre_objeto,
-                        "rareza": datos.get("rareza", ""),
-                        "tipo": datos.get("tipo", ""),
-                        "descripcion": datos.get("descripcion", ""),
-                        "efectos": datos.get("efectos", {}),
-                        "cantidad": total
-                    }
-
-                    if total > 0:
-                        agregar_item(sistema, item_data)
-
-                    elif total < 0:
-                        # Buscar objeto existente por firma
-                        inventario = sistema.get("inventario", {})
-                        for obj_id, obj in inventario.items():
-                            if (
-                                obj.get("nombre") == item_data["nombre"]
-                                and obj.get("tipo") == item_data["tipo"]
-                                and obj.get("rareza") == item_data["rareza"]
-                                and obj.get("descripcion") == item_data["descripcion"]
-                                and obj.get("efectos") == item_data["efectos"]
-                            ):
-                                eliminar_item(sistema, obj_id, cantidad=abs(total))
-                                break
-
-                    resultado["aplicadas"][tipo][nombre_objeto] = {
-                        "cantidad": total,
-                        "tipo": item_data["tipo"],
-                        "rareza": item_data["rareza"],
-                        "descripcion": item_data["descripcion"],
-                        "efectos": item_data["efectos"]
-                    }
-
-            # ─────────────────────────
-            # FORMATO LISTA (ANTIGUO)
-            # ─────────────────────────
+                    datos = datos.copy()
+                    datos["nombre"] = nombre_obj
+                    items.append(datos)
             else:
+                # Lista de dicts
                 for datos in valor:
                     if not isinstance(datos, dict):
                         continue
-
-                    nombre_objeto = datos.get("nombre", "objeto")
-                    total = calcular_total(datos)
-
-                    item_data = {
-                        "nombre": nombre_objeto,
-                        "rareza": datos.get("rareza", "comun"),
-                        "tipo": datos.get("tipo", "general"),
-                        "descripcion": datos.get("descripcion", ""),
-                        "efectos": datos.get("efectos", {}),
-                        "cantidad": total
-                    }
-
-                    if total > 0:
-                        agregar_item(sistema, item_data)
-                    
-                    elif total < 0:
-                        # Buscar objeto existente por firma
-                        inventario = sistema.get("inventario", {})
-                        for obj_id, obj in inventario.items():
-                            if (
-                                obj.get("nombre") == item_data["nombre"]
-                                and obj.get("tipo") == item_data["tipo"]
-                                and obj.get("rareza") == item_data["rareza"]
-                                and obj.get("descripcion") == item_data["descripcion"]
-                                and obj.get("efectos") == item_data["efectos"]
-                            ):
-                                eliminar_item(sistema, obj_id, cantidad=abs(total))
-                                break
-
-                    resultado["aplicadas"][tipo][nombre_objeto] = {
-                        "cantidad": total,
-                        "tipo": item_data["tipo"],
-                        "rareza": item_data["rareza"],
-                        "descripcion": item_data["descripcion"],
-                        "efectos": item_data["efectos"]
-                    }
-
+                    items.append(datos)
+        
+            # Procesar cada item
+            for datos in items:
+                total = calcular_total(datos)
+                if total <= 0:
+                    continue  # no agregamos objetos de cantidad 0
+                
+                nombre_obj = datos.get("nombre", "objeto")
+                tipo_obj = datos.get("tipo", "general")
+                rareza = datos.get("rareza", "comun")
+                descripcion = datos.get("descripcion", "")
+                efectos = datos.get("efectos", {})
+        
+                item_data = {
+                    "nombre": nombre_obj,
+                    "tipo": tipo_obj,
+                    "rareza": rareza,
+                    "descripcion": descripcion,
+                    "efectos": efectos,
+                    "cantidad": total
+                }
+        
+                # 🔹 Agregar objeto
+                agregar_item(sistema, item_data)
+        
+                # Registrar en resultado
+                resultado["aplicadas"][tipo][nombre_obj] = {
+                    "cantidad": total,
+                    "tipo": tipo_obj,
+                    "rareza": rareza,
+                    "descripcion": descripcion,
+                    "efectos": efectos
+                }
+        
             continue
 
         # ─────────────────────────────

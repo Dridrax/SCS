@@ -25,7 +25,7 @@ def menu_configurar_niveles(sistema):
         print("3. Configurar recompensas por nivel (bloques)")
         print("4. Volver")
 
-        opcion = pedir_int("\nElige una opción: ", default=3)
+        opcion = pedir_int("\nElige una opción: ", default=4)
 
         if opcion == 1:
             # -------------------------

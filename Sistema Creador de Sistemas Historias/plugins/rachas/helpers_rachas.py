@@ -47,47 +47,32 @@ def crear_racha(
     # ----------------------------
     def normalizar_bloque(bloque):
         bloque_final = {}
-
+    
         for tipo, items in (bloque or {}).items():
-
             # 🔹 CASO OBJETOS → LISTA SIMPLE (SIN ESCALADO)
             if tipo == "objetos":
                 bloque_final[tipo] = []
-
                 for obj in items or []:
                     nuevo_obj = obj.copy()
-
-                    # Convertir cantidad a cantidad_base si existe
                     if "cantidad" in nuevo_obj:
                         nuevo_obj["cantidad_base"] = nuevo_obj.pop("cantidad")
-
-                    # Eliminar cosas que NO queremos en rachas
-                    nuevo_obj.pop("factor_escalado", None)
-                    nuevo_obj.pop("tope", None)
-
+                    nuevo_obj.setdefault("factor_escalado", 1.0)
+                    nuevo_obj.setdefault("tope", None)
                     bloque_final[tipo].append(nuevo_obj)
-
-                continue
-
+    
             # 🔹 RESTO DE TIPOS → dict normal
-            bloque_final[tipo] = {}
-
-            for nombre, info in (items or {}).items():
-                nueva_info = info.copy()
-
-                # Convertir valor/cantidad a base
-                if "valor" in nueva_info:
-                    nueva_info["valor_base"] = nueva_info.pop("valor")
-
-                if "cantidad" in nueva_info:
-                    nueva_info["cantidad_base"] = nueva_info.pop("cantidad")
-
-                # En rachas NO forzamos escalado
-                nueva_info.setdefault("factor_escalado", 1.0)
-                nueva_info.setdefault("tope", None)
-
-                bloque_final[tipo][nombre] = nueva_info
-
+            else:
+                bloque_final[tipo] = {}
+                for nombre, info in (items or {}).items():
+                    nueva_info = info.copy()
+                    if "valor" in nueva_info:
+                        nueva_info["valor_base"] = nueva_info.pop("valor")
+                    if "cantidad" in nueva_info:
+                        nueva_info["cantidad_base"] = nueva_info.pop("cantidad")
+                    nueva_info.setdefault("factor_escalado", 1.0)
+                    nueva_info.setdefault("tope", None)
+                    bloque_final[tipo][nombre] = nueva_info
+    
         return bloque_final
 
     # ----------------------------

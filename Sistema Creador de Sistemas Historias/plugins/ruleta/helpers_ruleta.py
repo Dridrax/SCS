@@ -339,10 +339,42 @@ def gestion_ruleta(sistema, ruleta, ruletas_list):
     - Eliminar
     - Volver
     """
+
+    def imprimir_premio(nombre, datos):
+        """
+        Muestra un premio correctamente con:
+        - cantidad
+        - valor bonito si existe
+        - descripción y rareza
+        """
+        cantidad = datos.get("cantidad", 1)
+
+        valor_data = datos.get("valor")
+
+        # 🔹 Manejar int o dict
+        if isinstance(valor_data, dict):
+            tipo_valor = valor_data.get("tipo", "")
+            cantidad_valor = valor_data.get("cantidad", 0)
+            subtipo = valor_data.get("subtipo", "")
+            valor_str = f"{cantidad_valor} {subtipo or tipo_valor}"
+            linea = f"    - {nombre} x{cantidad} ({valor_str})"
+        elif isinstance(valor_data, (int, float)):
+            linea = f"    - {nombre} x{cantidad} ({valor_data})"
+        else:
+            linea = f"    - {nombre} x{cantidad}"
+
+        desc = datos.get("descripcion", "")
+        if desc:
+            linea += f" ({desc})"
+
+        rareza = datos.get("rareza", "-")
+        if rareza:
+            linea += f" [{rareza}]"
+
+        print(linea)
+
     while True:
-        # -------------------------
-        # INFORMACIÓN RULETA
-        # -------------------------
+        # --- Información de la ruleta ---
         print(f"\n--- RULETA: {ruleta['nombre']} ---")
         print(f"ID: {ruleta['id']}")
         print(f"Descripción: {ruleta.get('descripcion', '')}")
@@ -354,56 +386,20 @@ def gestion_ruleta(sistema, ruleta, ruletas_list):
         total_premios = contar_premios_ruleta(ruleta)
         print(f"Total premios: {total_premios}")
 
-        
-
-        # -------------------------
-        # PREMIOS SISTEMA
-        # -------------------------
-        total_sistema = sum(
-                    len(items) if isinstance(items, list) 
-                    else len(items.keys()) if isinstance(items, dict) 
-                    else 0 
-                    for items in premios.values()
-                )
-
-        if total_sistema == 0:
+        # --- Mostrar premios ---
+        if not premios:
             print("    (sin premios)")
         else:
             for tipo, items in premios.items():
                 if isinstance(items, list):
                     for obj in items:
                         nombre = obj.get("nombre", "Premio")
-                        desc = obj.get("descripcion", "")
-                        rareza = obj.get("rareza", "-")
-                        # 🔹 PRIORIDAD VALOR REAL
-                        cantidad = obj.get("valor") or obj.get("valor_base") or obj.get("cantidad") or 1
-
-                        linea = f"    - {nombre} x{cantidad}"
-                        if desc:
-                            linea += f" ({desc})"
-                        if rareza:
-                            linea += f" [{rareza}]"
-
-                        print(linea)
-
+                        imprimir_premio(nombre, obj)
                 elif isinstance(items, dict):
                     for k, v in items.items():
-                        # 🔹 PRIORIDAD VALOR REAL
-                        cantidad = v.get("valor") or v.get("valor_base") or v.get("cantidad") or 1
-                        rareza = v.get("rareza", "-")
-                        desc = v.get("descripcion", "")
+                        imprimir_premio(k, v)
 
-                        linea = f"    - {k} x{cantidad}"
-                        if desc:
-                            linea += f" ({desc})"
-                        if rareza:
-                            linea += f" [{rareza}]"
-
-                        print(linea)
-
-        # -------------------------
-        # EVENTOS
-        # -------------------------
+        # --- Eventos narrativos ---
         print(f"\n📖 Eventos narrativos: {len(eventos)}")
         if not eventos:
             print("    (sin eventos)")
@@ -413,29 +409,14 @@ def gestion_ruleta(sistema, ruleta, ruletas_list):
                 rareza = e.get("rareza", "-")
                 print(f"    - {texto} [{rareza}]")
 
-        # -------------------------
-        # MENÚ
-        # -------------------------
+        # --- Menú ---
         print("\n[T] Tirar 1 vez   [M] Tiradas múltiples   [D] Eliminar   [Enter] Volver")
         accion = input("> ").strip().lower()
 
-        # -------------------------
-        # TIRADA SIMPLE
-        # -------------------------
         if accion == "t":
             tirar_ruleta_una_vez(sistema, ruleta["id"])
-            continue
-
-        # -------------------------
-        # TIRADAS MÚLTIPLES
-        # -------------------------
         elif accion == "m":
             tirar_ruleta_multiples_veces(sistema, ruleta["id"])
-            continue
-
-        # -------------------------
-        # ELIMINAR
-        # -------------------------
         elif accion == "d":
             confirmar = input("⚠ Confirmar eliminación (s/n): ").lower()
             if confirmar == "s":
@@ -444,13 +425,7 @@ def gestion_ruleta(sistema, ruleta, ruletas_list):
                     eliminar_ruleta(sistema, ruleta["id"])
                     ruletas_list.remove(ruleta)
                     print("✅ Ruleta eliminada.")
-                else:
-                    print("❌ Cancelado.")
             break
-
-        # -------------------------
-        # VOLVER
-        # -------------------------
         else:
             break
 
@@ -727,19 +702,35 @@ def procesar_resultado(sistema, ruleta, resultado, mostrar=True):
     rareza = data.get("rareza", "-")
 
     if tipo == "sistema":
-        subtipo = resultado["subtipo"]
+        subtipo = resultado.get("subtipo")
         nombre = data.get("nombre", "recurso")
 
-        # 🔹 Detectar valor
+        # ────────────── Obtener cantidad segura ──────────────
         if "valor" in data:
-            valor = data["valor"]
+            if isinstance(data["valor"], dict):
+                valor = data["valor"].get("cantidad", 1)
+            else:  # int directo
+                valor = data["valor"]
         elif "cantidad" in data:
             valor = data["cantidad"]
         else:
             valor = 1
 
-        # 🔹 Crear estructura compatible con aplicar_recompensas
-        recompensa = {subtipo: {nombre: {"valor_base": valor, "rareza": rareza}}}
+        # ────────────── Construir estructura de recompensa ──────────────
+        if subtipo == "objetos":
+            recompensa = {
+                "objetos": {
+                    nombre: {
+                        "rareza": data.get("rareza", "comun"),
+                        "tipo": data.get("tipo", "general"),
+                        "descripcion": data.get("descripcion", ""),
+                        "efectos": data.get("efectos", {}),
+                        "cantidad": valor
+                    }
+                }
+            }
+        else:
+            recompensa = {subtipo: {nombre: {"valor_base": valor, "rareza": rareza}}}
 
         aplicar_recompensas(
             sistema,

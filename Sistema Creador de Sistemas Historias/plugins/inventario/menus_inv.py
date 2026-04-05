@@ -221,9 +221,12 @@ def seleccionar_item_inventario(sistema):
     for i, (item_id, item) in enumerate(items_lista, 1):
         texto = f"{i}. {item['nombre']} (x{item.get('cantidad',1)})"
 
-        if "valor" in item:
-            v = item["valor"]
+        # Comprobamos que 'valor' sea dict no vacío y tenga 'cantidad' y 'tipo'
+        v = item.get("valor")
+        if isinstance(v, dict) and v and "cantidad" in v and "tipo" in v:
             texto += f" | 💰 {v['cantidad']} {v['tipo']}"
+        else:
+            texto += " | 💰 Sin valor"
 
         print(texto)
 
@@ -258,9 +261,11 @@ def seleccionar_item_inventario(sistema):
     for i, (iid, item) in enumerate(coincidencias, 1):
         texto = f"{i}. {item['nombre']}"
 
-        if "valor" in item:
-            v = item["valor"]
+        v = item.get("valor")
+        if isinstance(v, dict) and v and "cantidad" in v and "tipo" in v:
             texto += f" | 💰 {v['cantidad']} {v['tipo']}"
+        else:
+            texto += " | 💰 Sin valor"
 
         print(texto)
 
@@ -435,12 +440,43 @@ def mostrar_items(sistema=None):
 
         # Función interna para vender item
         def vender_item_interactivo(item):
+            # Comprobar cantidad a vender
             cantidad = pedir_int("Cantidad a vender: ")
             if cantidad <= 0:
                 print("❌ Cancelado.")
                 return
-            # Usar directamente el subtipo definido en el item, no preguntar
-            valor_item = item.get("valor", {})
+        
+            # Obtener valor actual del item
+            valor_item = item.get("valor")
+        
+            # Si el valor es None o dict vacío, preguntar si se quiere añadir valor
+            if not isinstance(valor_item, dict) or not valor_item:
+                print("⚠️ Este item no tiene valor asignado.")
+                opcion_valor = input("¿Deseas añadir un valor a este item? (s/n): ").lower()
+                if opcion_valor != "s":
+                    print("❌ Venta cancelada. Este item no tiene valor.")
+                    return
+        
+                # Crear nuevo valor usando la misma lógica que en editar_item_interactivo
+                tipo_valor = input("Nuevo tipo de valor: ").strip()
+                cantidad_valor = pedir_int("Nuevo valor por unidad: ")
+                subtipo_valor = input("Nuevo subtipo (opcional): ").strip()
+        
+                if tipo_valor and cantidad_valor > 0:
+                    valor_item = {"tipo": tipo_valor, "cantidad": cantidad_valor}
+                    if subtipo_valor:
+                        valor_item["subtipo"] = subtipo_valor
+                    # Guardamos el nuevo valor en el item
+                    item["valor"] = valor_item
+                    modificar_item(estado.sistema_actual, item['id'], {"valor": valor_item})
+                    estado.cambios_no_guardados = True
+                    guardar_sistema()
+                    print(f"✅ Valor añadido al item '{item['nombre']}'.")
+                else:
+                    print("❌ Valor inválido. Venta cancelada.")
+                    return
+        
+            # Ahora valor_item ya tiene datos válidos
             subtipo_texto = f" ({valor_item['subtipo']})" if "subtipo" in valor_item else ""
             vender_item(sistema, item["id"], cantidad)
             print(f"💰 Vendido '{item['nombre']}' x{cantidad} → +{cantidad * valor_item['cantidad']} {valor_item['tipo']}{subtipo_texto}")
@@ -458,10 +494,22 @@ def mostrar_items(sistema=None):
             print(f"Tipo: {item_obj['tipo']}")
             print(f"Descripción: {item_obj['descripcion']}")
             print(f"Cantidad: {item_obj['cantidad']}")
-            if "valor" in item_obj:
-                v = item_obj["valor"]
+
+            # -------------------------------
+            # Valor
+            # -------------------------------
+            v = item_obj.get("valor")
+            if v and isinstance(v, dict) and v:  # Solo si es un dict no vacío
                 subtipo_texto = f" ({v['subtipo']})" if "subtipo" in v else ""
-                print(f"Valor: {v['cantidad']} {v['tipo']}{subtipo_texto} por unidad")
+                cantidad_valor = v.get("cantidad", "?")
+                tipo_valor = v.get("tipo", "?")
+                print(f"Valor: {cantidad_valor} {tipo_valor}{subtipo_texto} por unidad")
+            else:
+                print("Valor: Este item no tiene valor por unidad")
+
+            # -------------------------------
+            # Efectos
+            # -------------------------------
             print("Efectos:")
             if item_obj.get("efectos"):
                 for k, v in item_obj["efectos"].items():

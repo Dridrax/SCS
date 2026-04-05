@@ -156,80 +156,15 @@
         "Plata": 0,
         "Oro": 0
     },
-    "ruleta": {
-        "activas": {
-            "Ruleta_de_Bronce": {
-                "id": "Ruleta_de_Bronce",
-                "nombre": "Ruleta de Bronce",
-                "descripcion": "¡La ruleta de bronce te da objetos muy buenos, puede otorgar hasta 10 puntos de estadística o un premio en metálico de hasta 10 millones de dólares!",
-                "premios": {
-                    "puntos_stats": {
-                        "Puntos de Estaditisica 1": {
-                            "valor_base": 10,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Legendario"
-                        },
-                        "Puntos de Estadistica 2": {
-                            "valor_base": 6,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Raro"
-                        },
-                        "Puntos de Estadistica 3": {
-                            "valor_base": 4,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Poco Común"
-                        },
-                        "Puntos de Estadistica 4": {
-                            "valor_base": 2,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Común"
-                        },
-                        "Puntos de Estadistica 5": {
-                            "valor_base": 1,
-                            "factor_escalado": 1.0,
-                            "tope": 0,
-                            "rareza": "Muy Comun"
-                        }
-                    },
-                    "dinero": {
-                        "Dolares": {
-                            "valor_base": 5000,
-                            "factor_escalado": 1.0,
-                            "tope": 0
-                        }
-                    }
-                },
-                "eventos_narrativos": [],
-                "tiradas_realizadas": 0
-            },
-            "ruleta_plateada": {
-                "id": "ruleta_plateada",
-                "nombre": "Ruleta Plateada",
-                "descripcion": "¡La ruleta plateada te da objetos muy buenos, puede otorgar hasta 100 puntos de estadística o un elemento consumible increíble!ç",
-                "premios": {},
-                "eventos_narrativos": [],
-                "tiradas_realizadas": 0
-            },
-            "ruleta_dorada": {
-                "id": "ruleta_dorada",
-                "nombre": "Ruleta Dorada",
-                "descripcion": "¡La ruleta dorada te da objetos muy buenos, puede otorgar hasta 1.000 puntos de estadísticas o un objeto mágica increíble!",
-                "premios": {},
-                "eventos_narrativos": [],
-                "tiradas_realizadas": 0
-            }
-        },
-        "historial": []
-    },
     "rachas": {
         "activas": {},
         "historial": {}
     },
     "configuracion": {
         "racha_tipo_escalado": "lineal"
+    },
+    "ruleta": {
+        "activas": {},
+        "historial": []
     }
 }
