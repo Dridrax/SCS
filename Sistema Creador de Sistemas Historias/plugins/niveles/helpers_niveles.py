@@ -1,6 +1,7 @@
 #plugins/niveles/helpers_niveles.py
 from core.estado_global import estado
 from core.utils.funciones_utiles import modificar_progreso  
+from core.recompensas.tipos import obtener_tipos_recursos_validos
 
 def revisar_y_subir_nivel_destino(sistema, destino=None):
     """
@@ -26,6 +27,59 @@ def revisar_y_subir_nivel_destino(sistema, destino=None):
     }
 
     subir_nivel_desde_config(sistema, config_nivel)
+
+def mostrar_recompensas_por_nivel(sistema, nivel_inicial, nivel_final):
+    """
+    Muestra las recompensas acumuladas de forma simple:
+    base × niveles_subidos
+    SOLO visual, sin lógica real.
+    """
+    if not sistema:
+        print("❌ Sistema vacío")
+        return
+
+    niveles = sistema.get("niveles", {})
+    if not niveles:
+        print("❌ No hay información de niveles")
+        return
+
+    recompensas = niveles.get("recompensas_por_nivel", [])
+    if not recompensas:
+        print(" (sin recompensas configuradas)")
+        return
+
+    tipos_validos = obtener_tipos_recursos_validos()
+
+    niveles_subidos = nivel_final - nivel_inicial
+
+    if niveles_subidos <= 0:
+        return
+
+    print("\n--- RECOMPENSAS ACUMULADAS ---\n")
+    print(f"(Subida de +{niveles_subidos} niveles)\n")
+
+    for idx, rec in enumerate(recompensas, 1):
+        print(f"Recompensa {idx}:")
+        bloque = rec.get("bloque", {})
+
+        for tipo, detalle in bloque.items():
+            if tipo not in tipos_validos:
+                continue
+
+            # Tipos con subclaves (dinero, puntos, etc.)
+            if isinstance(detalle, dict) and all(isinstance(v, dict) for v in detalle.values()):
+                for subclave, subdetalle in detalle.items():
+                    base = subdetalle.get("valor_base", 0)
+                    total = base * niveles_subidos
+                    print(f"  {subclave}: {base} x (Lv: +{niveles_subidos}) = {total}")
+            else:
+                # Otros tipos simples
+                if isinstance(detalle, dict):
+                    base = detalle.get("valor_base", 0)
+                    total = base * niveles_subidos
+                    print(f"  {tipo}: {base} x (Lv: +{niveles_subidos}) = {total}")
+                else:
+                    print(f"  {tipo}: {detalle}")
 
 def subir_nivel_desde_config(sistema, config_nivel):
     """
@@ -146,5 +200,6 @@ def subir_nivel_desde_config(sistema, config_nivel):
     # Mostrar solo el salto final de nivel
     if nivel_inicial != niveles[nivel_key]:
         print(f"✅ Nivel {nivel_inicial} -> {niveles[nivel_key]}!")
+        mostrar_recompensas_por_nivel(sistema, nivel_inicial, niveles[nivel_key])
 
     estado.cambios_no_guardados = True

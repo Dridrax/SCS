@@ -59,10 +59,10 @@
         "Legendario": true
     },
     "rarezas_definidas": {},
-    "puntos_stats": 18,
+    "puntos_stats": 24,
     "dinero": {
-        "Oro": 18,
-        "Bronce": 252,
+        "Oro": 3,
+        "Bronce": 42,
         "Platino": 0
     },
     "tiradas": {
@@ -114,9 +114,9 @@
         }
     },
     "niveles": {
-        "nivel": 10,
-        "xp_actual": 64,
-        "xp_para_siguiente": 109,
+        "nivel": 3,
+        "xp_actual": 48,
+        "xp_para_siguiente": 103,
         "niveles_config": {
             "modo_subida": "solo_puntos",
             "puntos_por_nivel": 0,
@@ -129,13 +129,6 @@
         "recompensas_por_nivel": [
             {
                 "bloque": {
-                    "puntos_stats": {
-                        "Puntos de Estadistica": {
-                            "valor_base": 8,
-                            "factor_escalado": 0.0,
-                            "tope": 0
-                        }
-                    },
                     "dinero": {
                         "Oro": {
                             "valor_base": 1,
@@ -144,6 +137,13 @@
                         },
                         "Bronce": {
                             "valor_base": 14,
+                            "factor_escalado": 1.0,
+                            "tope": 0
+                        }
+                    },
+                    "puntos_stats": {
+                        "Puntos de Estadistica": {
+                            "valor_base": 8,
                             "factor_escalado": 1.0,
                             "tope": 0
                         }
